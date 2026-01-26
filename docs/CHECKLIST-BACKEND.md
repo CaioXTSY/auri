@@ -14,7 +14,7 @@
 | **Usuários** | 13 | 13 | 0 | 0 | 100% |
 | **Disciplinas** | 6 | 6 | 0 | 0 | 100% |
 | **Turmas** | 6 | 6 | 0 | 0 | 100% |
-| **Atividades** | 8 | 0 | 0 | 8 | 0% |
+| **Atividades** | 8 | 8 | 0 | 0 | 100% |
 | **Submissões** | 7 | 0 | 0 | 7 | 0% |
 | **Gamificação** | 10 | 0 | 0 | 10 | 0% |
 | **Missões** | 7 | 0 | 0 | 7 | 0% |
@@ -22,7 +22,7 @@
 | **Notificações** | 5 | 0 | 0 | 5 | 0% |
 | **Dashboard** | 6 | 0 | 0 | 6 | 0% |
 | **Testes** | 8 | 0 | 0 | 8 | 0% |
-| **TOTAL** | **97** | **46** | **0** | **51** | **47%** |
+| **TOTAL** | **97** | **54** | **0** | **43** | **56%** |
 
 ---
 
@@ -193,11 +193,53 @@
 ## 🧩 6. Módulo de Atividades (Activities)
 
 ### 6.1 Estrutura
-- [ ] ActivitiesModule criado
-- [ ] ActivitiesController criado
-- [ ] ActivitiesService criado
-- [ ] DTOs criados
-- [ ] TestCasesService criado
+- [x] ActivitiesModule criado
+- [x] ActivitiesController criado
+- [x] ActivitiesService criado
+- [x] DTOs criados (5 DTOs)
+- [x] Swagger documentação completa
+
+### 6.2 Funcionalidades
+- [x] **POST /activities** - Criar atividade (Admin/Professor)
+- [x] **GET /activities** - Listar atividades com paginação e filtros
+- [x] **GET /activities/:id** - Buscar atividade por ID
+- [x] **PATCH /activities/:id** - Atualizar atividade (Admin/Professor)
+- [x] **DELETE /activities/:id** - Remover atividade (Admin apenas)
+- [x] **POST /activities/:id/test-cases** - Adicionar caso de teste
+- [x] **GET /activities/:id/test-cases** - Listar casos de teste
+- [x] **DELETE /activities/:id/test-cases/:testId** - Remover caso de teste
+- [x] Paginação na listagem
+- [x] 6 filtros (disciplineId, classId, type, difficulty, status, title)
+- [x] Ordenação configurável
+- [x] Sistema de casos de teste completo
+
+### 6.3 Regras de Negócio
+- [x] Atividades podem ser independentes (sem turma) ou vinculadas
+- [x] Validação de disciplina existente obrigatória
+- [x] Validação de turma existente (se fornecida)
+- [x] Deadline não pode estar no passado
+- [x] Não permite deletar atividade com submissões
+- [x] Casos de teste podem ser visíveis ou ocultos
+- [x] Sistema de pontuação por casos de teste
+- [x] Código inicial (starterCode) opcional
+
+### 6.4 Testes
+- [x] Testes unitários (23 testes)
+  - [x] Criação de atividade com validações
+  - [x] Listagem paginada com filtros
+  - [x] Busca por ID
+  - [x] Atualização com validações
+  - [x] Remoção com proteção
+  - [x] CRUD de casos de teste (3 operações)
+- [ ] Testes E2E
+- [x] Testes de permissões
+
+### 6.5 Banco de Dados
+- [x] Schema Prisma atualizado
+- [x] Model Activity criado (16 campos)
+- [x] Model TestCase criado (8 campos)
+- [x] Relações configuradas (Activity ↔ Discipline, Class, User, TestCase)
+- [x] Migrations aplicadas (db push)
 
 ### 6.2 Funcionalidades
 - [ ] **POST /activities** - Criar atividade

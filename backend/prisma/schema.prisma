@@ -85,18 +85,19 @@ model User {
 }
 
 model Discipline {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
-  description String?  @db.Text
-  language    String   // Python, Java, C, etc
-  status      String   @default("ATIVA") // ATIVA, ENCERRADA
-  createdById String   @map("created_by_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  description String?    @db.Text
+  language    String     // Python, Java, C, etc
+  status      String     @default("ATIVA") // ATIVA, ENCERRADA
+  createdById String     @map("created_by_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
 
   // Relações
-  createdBy User    @relation(fields: [createdById], references: [id])
-  classes   Class[]
+  createdBy  User       @relation(fields: [createdById], references: [id])
+  classes    Class[]
+  activities Activity[]
 
   @@map("disciplines")
 }
@@ -136,21 +137,25 @@ model ClassStudent {
 }
 
 model Activity {
-  id            String       @id @default(uuid())
-  classId       String       @map("class_id")
-  title         String
-  description   String       @db.Text
-  type          ActivityType
-  difficulty    Difficulty
-  points        Int          @default(0)
-  deadline      DateTime?
-  allowResubmit Boolean      @default(true) @map("allow_resubmit")
-  createdById   String       @map("created_by_id")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  id                  String       @id @default(uuid())
+  classId             String?      @map("class_id")
+  disciplineId        String       @map("discipline_id")
+  title               String       @db.VarChar(200)
+  description         String       @db.Text
+  type                ActivityType
+  difficulty          Difficulty
+  points              Int
+  deadline            DateTime?
+  starterCode         String?      @db.Text @map("starter_code")
+  allowLateSubmission Boolean      @default(true) @map("allow_late_submission")
+  status              String       @default("ATIVA")
+  createdById         String       @map("created_by_id")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
 
   // Relações
-  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class       Class?       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  discipline  Discipline   @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
   createdBy   User         @relation(fields: [createdById], references: [id])
   submissions Submission[]
   testCases   TestCase[]
@@ -159,13 +164,14 @@ model Activity {
 }
 
 model TestCase {
-  id         String   @id @default(uuid())
-  activityId String   @map("activity_id")
-  input      String   @db.Text
-  output     String   @db.Text
-  points     Int      @default(0)
-  isPublic   Boolean  @default(false) @map("is_public")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid())
+  activityId     String   @map("activity_id")
+  input          String   @db.Text
+  expectedOutput String   @db.Text @map("expected_output")
+  points         Int
+  isVisible      Boolean  @default(true) @map("is_visible")
+  description    String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
 
   // Relações
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
