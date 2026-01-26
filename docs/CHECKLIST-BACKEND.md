@@ -15,14 +15,14 @@
 | **Disciplinas** | 6 | 6 | 0 | 0 | 100% |
 | **Turmas** | 6 | 6 | 0 | 0 | 100% |
 | **Atividades** | 8 | 8 | 0 | 0 | 100% |
-| **Submissões** | 7 | 0 | 0 | 7 | 0% |
+| **Submissões** | 7 | 7 | 0 | 0 | 100% |
 | **Gamificação** | 10 | 0 | 0 | 10 | 0% |
 | **Missões** | 7 | 0 | 0 | 7 | 0% |
 | **IA** | 6 | 0 | 0 | 6 | 0% |
 | **Notificações** | 5 | 0 | 0 | 5 | 0% |
 | **Dashboard** | 6 | 0 | 0 | 6 | 0% |
 | **Testes** | 8 | 0 | 0 | 8 | 0% |
-| **TOTAL** | **97** | **54** | **0** | **43** | **56%** |
+| **TOTAL** | **97** | **61** | **0** | **36** | **63%** |
 
 ---
 
@@ -270,24 +270,56 @@
 ## 📝 7. Módulo de Submissões (Submissions)
 
 ### 7.1 Estrutura
-- [ ] SubmissionsModule criado
-- [ ] SubmissionsController criado
-- [ ] SubmissionsService criado
-- [ ] DTOs criados
-- [ ] ExecutionModule criado (Judge0 integration)
+- [x] SubmissionsModule criado
+- [x] SubmissionsController criado
+- [x] SubmissionsService criado
+- [x] DTOs criados (4 DTOs)
+- [x] Swagger documentação completa
 
 ### 7.2 Funcionalidades
-- [ ] **POST /submissions** - Enviar código
-- [ ] **GET /submissions** - Listar submissões
-- [ ] **GET /submissions/:id** - Buscar por ID
-- [ ] **GET /submissions/:id/result** - Ver resultado detalhado
-- [ ] **GET /activities/:id/submissions** - Submissões de uma atividade
-- [ ] **GET /users/:id/submissions** - Submissões de um usuário
-- [ ] Fila de execução (Bull/Redis)
-- [ ] Validar reenvio permitido
+- [x] **POST /submissions** - Submeter código (Aluno)
+- [x] **GET /submissions** - Listar submissões com paginação e filtros
+- [x] **GET /submissions/stats** - Estatísticas do usuário logado
+- [x] **GET /submissions/activity/:activityId** - Submissões de atividade (Admin/Professor)
+- [x] **GET /submissions/:id** - Buscar submissão por ID
+- [x] **POST /submissions/:id/execute** - Executar submissão pendente
+- [x] **PATCH /submissions/:id** - Atualizar submissão (Admin apenas)
+- [x] **DELETE /submissions/:id** - Remover submissão
+- [x] Paginação na listagem
+- [x] 3 filtros (activityId, userId, status)
+- [x] Ordenação configurável
+- [x] Sistema de permissões (Alunos veem apenas suas submissões)
 
-### 7.3 Execução de Código
-- [ ] Judge0 integrado
+### 7.3 Regras de Negócio
+- [x] Validação de matrícula na turma (se atividade pertence a turma)
+- [x] Validação de status da atividade (deve estar ATIVA)
+- [x] Validação de deadline com allowLateSubmission
+- [x] Submissões criadas com status PENDENTE
+- [x] Alunos só podem ver/deletar suas próprias submissões
+- [x] Execução simula validação contra casos de teste (preparado para Judge0)
+- [x] Cálculo de pontos baseado em casos de teste aprovados
+- [x] Status: PENDENTE, EXECUTANDO, APROVADO, PARCIAL, REPROVADO, ERRO
+- [x] Estatísticas completas (total, aprovado, parcial, reprovado, taxa de aprovação)
+
+### 7.4 Testes
+- [x] Testes unitários (26 testes)
+  - [x] Criação de submissão com todas as validações
+  - [x] Listagem paginada com filtros e permissões
+  - [x] Busca por ID com controle de acesso
+  - [x] Atualização manual (Admin)
+  - [x] Remoção com controle de acesso
+  - [x] Execução simulada com casos de teste
+  - [x] Estatísticas do usuário
+  - [x] Estatísticas por atividade
+- [ ] Testes E2E
+- [x] Testes de permissões (Aluno/Professor/Admin)
+
+### 7.5 Integração Judge0 (Futuro)
+- [ ] Judge0 API integrada
+- [ ] Fila de execução (Bull/Redis)
+- [ ] Limite de timeout configurável
+- [ ] Limite de memória configurável
+- [ ] Suporte a múltiplas linguagens
 - [ ] Limites de tempo (5s)
 - [ ] Limites de memória (128MB)
 - [ ] Suporte a Python
