@@ -223,7 +223,7 @@ model Achievement {
   points      Int      @default(0)
   rarity      String   @default("COMUM") // COMUM, INCOMUM, RARO, ÉPICO, LENDÁRIO
   condition   String   @unique // Identificador único para verificação automática
-  criteria    String   @db.Text @default("{}") // JSON com critérios detalhados
+  criteria    String   @db.Text // JSON com critérios detalhados
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relações

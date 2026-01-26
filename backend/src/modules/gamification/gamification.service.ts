@@ -175,11 +175,13 @@ export class GamificationService {
     points: number;
     rarity?: string;
     condition: string;
+    criteria?: string;
   }) {
     return this.prisma.achievement.create({
       data: {
         ...data,
         rarity: data.rarity || 'COMUM',
+        criteria: data.criteria || '{}',
       },
     });
   }

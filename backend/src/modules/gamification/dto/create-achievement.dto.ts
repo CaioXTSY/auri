@@ -78,4 +78,13 @@ export class CreateAchievementDto {
   @IsString()
   @IsNotEmpty()
   condition: string;
+
+  @ApiProperty({
+    description: 'Critérios detalhados em JSON',
+    example: '{"type":"submission_count","value":1}',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  criteria?: string;
 }
