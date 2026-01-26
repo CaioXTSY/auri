@@ -149,6 +149,8 @@ model Activity {
   starterCode         String?      @db.Text @map("starter_code")
   allowLateSubmission Boolean      @default(true) @map("allow_late_submission")
   status              String       @default("ATIVA")
+  timeLimit           Int          @default(2) @map("time_limit") // tempo limite em segundos
+  memoryLimit         Int          @default(128000) @map("memory_limit") // memória limite em KB (128MB)
   createdById         String       @map("created_by_id")
   createdAt           DateTime     @default(now()) @map("created_at")
   updatedAt           DateTime     @updatedAt @map("updated_at")

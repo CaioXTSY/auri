@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -11,10 +12,16 @@ import {
   QuerySubmissionsDto,
 } from './dto';
 import { SubmissionStatus } from '@prisma/client';
+import { Judge0Service } from './judge0.service';
 
 @Injectable()
 export class SubmissionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(SubmissionsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly judge0Service: Judge0Service,
+  ) {}
 
   /**
    * Criar nova submissão
@@ -293,11 +300,10 @@ export class SubmissionsService {
   }
 
   /**
-   * Executar submissão (simular avaliação)
+   * Executar submissão usando Judge0
    * - Muda status para EXECUTANDO
-   * - Valida código contra casos de teste
-   * - Atualiza resultado e pontos
-   * - Em produção, integraria com Judge0
+   * - Executa código contra casos de teste reais
+   * - Atualiza resultado e pontos baseado nos testes
    */
   async execute(id: string) {
     const submission = await this.prisma.submission.findUnique({
@@ -321,6 +327,14 @@ export class SubmissionsService {
       );
     }
 
+    // Verificar se há casos de teste
+    const testCases = submission.activity.testCases;
+    if (testCases.length === 0) {
+      throw new BadRequestException(
+        'Activity has no test cases configured',
+      );
+    }
+
     // Atualizar status para EXECUTANDO
     await this.prisma.submission.update({
       where: { id },
@@ -328,30 +342,70 @@ export class SubmissionsService {
     });
 
     try {
-      // Simular execução
-      // Em produção, aqui chamaria Judge0 API
-      const testCases = submission.activity.testCases;
-      const totalTests = testCases.length;
+      this.logger.log(
+        `Executando submissão ${id} com ${testCases.length} casos de teste`,
+      );
 
-      // Simulação: 80% de chance de aprovação por teste
-      const passedTests = Math.floor(totalTests * 0.8);
+      // Preparar casos de teste para Judge0
+      const judge0TestCases = testCases.map((tc) => ({
+        input: tc.input,
+        expectedOutput: tc.expectedOutput,
+      }));
+
+      // Executar contra Judge0
+      const results = await this.judge0Service.executeAgainstTestCases(
+        submission.code,
+        submission.language,
+        judge0TestCases,
+        submission.activity.timeLimit || 2,
+        submission.activity.memoryLimit || 128000,
+      );
+
+      // Calcular resultados
+      const totalTests = results.length;
+      const passedTests = results.filter((r) => r.passed).length;
       const pointsPerTest =
         totalTests > 0 ? submission.activity.points / totalTests : 0;
       const pointsEarned = Math.round(passedTests * pointsPerTest);
 
+      // Calcular tempo e memória médios
+      const avgTime =
+        results.reduce((sum, r) => sum + (r.time || 0), 0) / totalTests;
+      const maxMemory = Math.max(...results.map((r) => r.memory || 0));
+
+      // Determinar status final
       let status: SubmissionStatus;
       let result: string;
 
       if (passedTests === totalTests) {
         status = SubmissionStatus.APROVADO;
-        result = `✅ All ${totalTests} test cases passed!`;
+        result = `✅ Todos os ${totalTests} casos de teste passaram!\n\n`;
       } else if (passedTests > 0) {
         status = SubmissionStatus.PARCIAL;
-        result = `⚠️ ${passedTests}/${totalTests} test cases passed`;
+        result = `⚠️ ${passedTests}/${totalTests} casos de teste passaram\n\n`;
       } else {
         status = SubmissionStatus.REPROVADO;
-        result = `❌ No test cases passed`;
+        result = `❌ Nenhum caso de teste passou\n\n`;
       }
+
+      // Adicionar detalhes de cada caso de teste
+      result += '📊 Detalhes dos Testes:\n\n';
+      results.forEach((r, index) => {
+        const icon = r.passed ? '✅' : '❌';
+        result += `${icon} Teste ${index + 1}: ${r.status}\n`;
+        if (!r.passed) {
+          result += `   Entrada: ${r.input}\n`;
+          result += `   Esperado: ${r.expectedOutput}\n`;
+          result += `   Obtido: ${r.actualOutput || 'N/A'}\n`;
+          if (r.error) {
+            result += `   Erro: ${r.error}\n`;
+          }
+        }
+        if (r.time) {
+          result += `   Tempo: ${r.time.toFixed(0)}ms\n`;
+        }
+        result += '\n';
+      });
 
       // Atualizar submissão com resultado
       const updated = await this.prisma.submission.update({
@@ -360,8 +414,8 @@ export class SubmissionsService {
           status,
           result,
           pointsEarned,
-          executionTime: Math.floor(Math.random() * 1000) + 100, // 100-1100ms
-          memoryUsed: Math.floor(Math.random() * 50000) + 10000, // 10-60MB
+          executionTime: Math.round(avgTime),
+          memoryUsed: Math.round(maxMemory),
         },
         include: {
           activity: {
@@ -381,18 +435,29 @@ export class SubmissionsService {
         },
       });
 
+      this.logger.log(
+        `Submissão ${id} executada: ${passedTests}/${totalTests} testes passaram`,
+      );
+
       return updated;
     } catch (error) {
+      this.logger.error(
+        `Erro ao executar submissão ${id}: ${error.message}`,
+        error.stack,
+      );
+
       // Em caso de erro, marcar como ERRO
       await this.prisma.submission.update({
         where: { id },
         data: {
           status: SubmissionStatus.ERRO,
-          result: `Error executing submission: ${error.message}`,
+          result: `❌ Erro na execução:\n\n${error.message}\n\nVerifique se:\n- O Judge0 está rodando\n- Seu código não tem erros de sintaxe\n- A linguagem é suportada`,
         },
       });
 
-      throw new BadRequestException('Execution failed');
+      throw new BadRequestException(
+        `Falha na execução: ${error.message}`,
+      );
     }
   }
 
