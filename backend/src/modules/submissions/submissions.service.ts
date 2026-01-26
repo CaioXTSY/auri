@@ -13,6 +13,7 @@ import {
 } from './dto';
 import { SubmissionStatus } from '@prisma/client';
 import { Judge0Service } from './judge0.service';
+import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class SubmissionsService {
@@ -21,6 +22,7 @@ export class SubmissionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly judge0Service: Judge0Service,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   /**
@@ -439,6 +441,27 @@ export class SubmissionsService {
         `Submissão ${id} executada: ${passedTests}/${totalTests} testes passaram`,
       );
 
+      // Adicionar pontos de gamificação se ganhou pontos
+      if (pointsEarned > 0) {
+        try {
+          await this.gamificationService.addPoints(
+            updated.userId,
+            pointsEarned,
+            'ATIVIDADE',
+            `Atividade: ${updated.activity.title} (${passedTests}/${totalTests} testes)`,
+            updated.activityId,
+          );
+
+          // Verificar conquistas especiais
+          await this.checkSubmissionAchievements(updated.userId, status);
+        } catch (gamificationError) {
+          this.logger.error(
+            `Erro ao adicionar pontos de gamificação: ${gamificationError.message}`,
+          );
+          // Não falha a submissão por erro na gamificação
+        }
+      }
+
       return updated;
     } catch (error) {
       this.logger.error(
@@ -544,5 +567,67 @@ export class SubmissionsService {
       submissions,
       stats,
     };
+  }
+
+  /**
+   * Verificar e desbloquear conquistas baseadas em submissões
+   */
+  private async checkSubmissionAchievements(
+    userId: string,
+    status: SubmissionStatus,
+  ) {
+    // Contar submissões aprovadas do usuário
+    const approvedCount = await this.prisma.submission.count({
+      where: {
+        userId,
+        status: SubmissionStatus.APROVADO,
+      },
+    });
+
+    // Primeira submissão aprovada
+    if (approvedCount === 1) {
+      const achievement = await this.prisma.achievement.findFirst({
+        where: { condition: 'FIRST_APPROVED' },
+      });
+      if (achievement) {
+        await this.gamificationService.unlockAchievement(userId, achievement.id);
+      }
+    }
+
+    // Marcos de submissões aprovadas
+    const milestones = [10, 25, 50, 100, 250, 500];
+    if (milestones.includes(approvedCount)) {
+      const achievement = await this.prisma.achievement.findFirst({
+        where: { condition: `APPROVED_${approvedCount}` },
+      });
+      if (achievement) {
+        await this.gamificationService.unlockAchievement(userId, achievement.id);
+      }
+    }
+
+    // Perfeito (100% nos testes) - verificar se esta submissão foi perfeita
+    if (status === SubmissionStatus.APROVADO) {
+      const perfectCount = await this.prisma.submission.count({
+        where: {
+          userId,
+          status: SubmissionStatus.APROVADO,
+          pointsEarned: {
+            gte: 100, // Assumindo que 100% = pontos máximos da atividade
+          },
+        },
+      });
+
+      if (perfectCount === 10) {
+        const achievement = await this.prisma.achievement.findFirst({
+          where: { condition: 'PERFECTIONIST_10' },
+        });
+        if (achievement) {
+          await this.gamificationService.unlockAchievement(
+            userId,
+            achievement.id,
+          );
+        }
+      }
+    }
   }
 }

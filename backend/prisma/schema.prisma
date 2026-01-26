@@ -116,8 +116,6 @@ model Class {
   discipline Discipline     @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
   students   ClassStudent[]
   activities Activity[]
-  points     UserPoint[]
-  rankings   Ranking[]
   missions   Mission[]
 
   @@map("classes")
@@ -204,18 +202,15 @@ model Submission {
 model UserPoint {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
-  classId     String   @map("class_id")
-  totalPoints Int      @default(0) @map("total_points")
-  level       Int      @default(1)
-  experience  Int      @default(0)
+  points      Int      // Pontos ganhos nesta transação
+  source      String   // ATIVIDADE, CONQUISTA, BONUS_PROFESSOR, MISSAO
+  description String   @db.Text
+  referenceId String?  @map("reference_id") // ID da atividade, conquista, etc
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relações
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, classId])
   @@map("user_points")
 }
 
@@ -223,9 +218,12 @@ model Achievement {
   id          String   @id @default(uuid())
   name        String
   description String   @db.Text
-  icon        String
-  criteria    String   @db.Text // JSON com critérios
+  icon        String?
+  category    String   // SUBMISSÕES, PONTOS, NÍVEIS, ESPECIAL, etc
   points      Int      @default(0)
+  rarity      String   @default("COMUM") // COMUM, INCOMUM, RARO, ÉPICO, LENDÁRIO
+  condition   String   @unique // Identificador único para verificação automática
+  criteria    String   @db.Text @default("{}") // JSON com critérios detalhados
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relações
@@ -238,6 +236,7 @@ model UserAchievement {
   id            String   @id @default(uuid())
   userId        String   @map("user_id")
   achievementId String   @map("achievement_id")
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
   earnedAt      DateTime @default(now()) @map("earned_at")
 
   // Relações
@@ -249,19 +248,20 @@ model UserAchievement {
 }
 
 model Ranking {
-  id        String   @id @default(uuid())
-  classId   String   @map("class_id")
-  userId    String   @map("user_id")
-  rank      Int
-  points    Int
-  period    String   // SEMANAL, MENSAL, GERAL
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  type        String   // GLOBAL, DISCIPLINA, TURMA
+  referenceId String?  @map("reference_id") // disciplineId ou classId
+  position    Int      // Posição no ranking
+  points      Int      // Pontos totais
+  period      String   @default("GERAL") // SEMANAL, MENSAL, GERAL
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relações
-  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([classId, userId, period])
+  @@unique([userId, type])
+  @@unique([userId, type, referenceId])
   @@map("rankings")
 }
 

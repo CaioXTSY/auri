@@ -168,8 +168,6 @@ export class ClassesService {
         _count: {
           select: {
             activities: true,
-            points: true,
-            rankings: true,
           },
         },
       },
