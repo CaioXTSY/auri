@@ -190,35 +190,6 @@
 
 ---
 
-## 📝 6. Módulo de Atividades (Activities)
-- [ ] ClassesService criado
-- [ ] DTOs criados
-
-### 5.2 Funcionalidades
-- [ ] **POST /classes** - Criar turma
-- [ ] **GET /classes** - Listar turmas
-- [ ] **GET /classes/:id** - Buscar por ID
-- [ ] **PATCH /classes/:id** - Atualizar turma
-- [ ] **DELETE /classes/:id** - Deletar turma
-- [ ] **POST /classes/:id/students** - Adicionar aluno
-- [ ] **DELETE /classes/:id/students/:userId** - Remover aluno
-- [ ] **GET /classes/:id/students** - Listar alunos da turma
-- [ ] Validação de semestre/ano
-- [ ] Verificar duplicação de matrícula
-
-### 5.3 Regras de Negócio
-- [ ] Apenas professor da disciplina pode criar turma
-- [ ] Aluno não pode estar matriculado 2x na mesma turma
-- [ ] Turma encerrada não aceita novos alunos
-- [ ] Notificar aluno ao ser adicionado
-
-### 5.4 Testes
-- [ ] Testes unitários
-- [ ] Testes E2E
-- [ ] Testes de matrícula
-
----
-
 ## 🧩 6. Módulo de Atividades (Activities)
 
 ### 6.1 Estrutura
