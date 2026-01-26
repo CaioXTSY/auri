@@ -22,7 +22,7 @@
 | **Notificações** | 5 | 0 | 0 | 5 | 0% |
 | **Dashboard** | 6 | 0 | 0 | 6 | 0% |
 | **Testes** | 8 | 0 | 0 | 8 | 0% |
-| **TOTAL** | **97** | **44** | **0** | **53** | **45%** |
+| **TOTAL** | **97** | **46** | **0** | **51** | **47%** |
 
 ---
 
@@ -51,8 +51,8 @@
 - [x] Swagger instalado
 - [x] Swagger rodando em /api/v1/docs
 - [x] Tags configuradas
-- [ ] Exemplos de requests/responses
-- [ ] Schemas documentados
+- [x] Exemplos de requests/responses
+- [x] Schemas documentados
 
 ---
 

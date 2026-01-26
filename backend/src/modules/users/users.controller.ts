@@ -13,7 +13,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiQuery, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -35,7 +35,42 @@ export class UsersController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Criar novo usuário (apenas Admin)' })
+  @ApiOperation({ 
+    summary: 'Criar novo usuário (apenas Admin)',
+    description: 'Cria um novo usuário no sistema. Apenas administradores podem usar este endpoint.'
+  })
+  @ApiBody({
+    type: CreateUserDto,
+    examples: {
+      aluno: {
+        summary: 'Criar aluno',
+        value: {
+          name: 'Pedro Oliveira',
+          email: 'pedro@example.com',
+          password: 'Senha@123',
+          role: 'ALUNO'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Usuário criado com sucesso',
+    schema: {
+      example: {
+        id: 'uuid-here',
+        name: 'Pedro Oliveira',
+        email: 'pedro@example.com',
+        role: 'ALUNO',
+        avatar: null,
+        createdAt: '2024-01-26T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin)' })
+  @ApiResponse({ status: 409, description: 'Email já cadastrado' })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
@@ -43,35 +78,133 @@ export class UsersController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ summary: 'Listar todos os usuários (Admin e Professor)' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'role', required: false, enum: Role })
-  @ApiQuery({ name: 'name', required: false, type: String })
-  @ApiQuery({ name: 'email', required: false, type: String })
-  @ApiQuery({ name: 'sortBy', required: false, type: String })
-  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
+  @ApiOperation({ 
+    summary: 'Listar todos os usuários (Admin e Professor)',
+    description: 'Retorna lista paginada de usuários com filtros opcionais'
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({ name: 'role', required: false, enum: Role, example: 'ALUNO' })
+  @ApiQuery({ name: 'name', required: false, type: String, example: 'João' })
+  @ApiQuery({ name: 'email', required: false, type: String, example: 'joao@example.com' })
+  @ApiQuery({ name: 'sortBy', required: false, type: String, example: 'createdAt' })
+  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'], example: 'desc' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Lista de usuários',
+    schema: {
+      example: {
+        data: [
+          {
+            id: 'uuid-here',
+            name: 'João Silva',
+            email: 'joao@example.com',
+            role: 'ALUNO',
+            avatar: '/uploads/avatars/avatar.jpg',
+            createdAt: '2024-01-26T00:00:00.000Z'
+          }
+        ],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 50,
+          totalPages: 5
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
   findAll(@Query() query: QueryUsersDto) {
     return this.usersService.findAll(query);
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Obter perfil do usuário logado' })
+  @ApiOperation({ 
+    summary: 'Obter perfil do usuário logado',
+    description: 'Retorna informações do usuário autenticado'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Perfil do usuário',
+    schema: {
+      example: {
+        id: 'uuid-here',
+        name: 'João Silva',
+        email: 'joao@example.com',
+        role: 'ALUNO',
+        avatar: '/uploads/avatars/avatar.jpg',
+        createdAt: '2024-01-26T00:00:00.000Z',
+        updatedAt: '2024-01-26T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
   getProfile(@Request() req) {
     return this.usersService.findOne(req.user.id);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Buscar usuário por ID' })
+  @ApiOperation({ 
+    summary: 'Buscar usuário por ID',
+    description: 'Retorna informações de um usuário específico'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Usuário encontrado',
+    schema: {
+      example: {
+        id: 'uuid-here',
+        name: 'João Silva',
+        email: 'joao@example.com',
+        role: 'ALUNO',
+        avatar: '/uploads/avatars/avatar.jpg',
+        createdAt: '2024-01-26T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Atualizar próprio perfil' })
+  @ApiOperation({ 
+    summary: 'Atualizar próprio perfil',
+    description: 'Permite ao usuário atualizar seus próprios dados'
+  })
+  @ApiBody({
+    type: UpdateUserDto,
+    examples: {
+      update: {
+        summary: 'Atualizar perfil',
+        value: {
+          name: 'João Silva Santos',
+          email: 'joao.novo@example.com'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Perfil atualizado',
+    schema: {
+      example: {
+        id: 'uuid-here',
+        name: 'João Silva Santos',
+        email: 'joao.novo@example.com',
+        role: 'ALUNO',
+        avatar: '/uploads/avatars/avatar.jpg',
+        updatedAt: '2024-01-26T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
   updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(req.user.id, updateUserDto);
   }
@@ -101,8 +234,36 @@ export class UsersController {
       },
     }),
   )
-  @ApiOperation({ summary: 'Upload de avatar do usuário logado' })
+  @ApiOperation({ 
+    summary: 'Upload de avatar do usuário logado',
+    description: 'Faz upload da foto de perfil do usuário. Tamanho máximo: 5MB. Formatos: jpg, jpeg, png, gif'
+  })
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+          description: 'Arquivo de imagem (jpg, jpeg, png, gif)'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Avatar atualizado',
+    schema: {
+      example: {
+        id: 'uuid-here',
+        avatar: '/uploads/avatars/abc123.jpg',
+        updatedAt: '2024-01-26T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Arquivo inválido ou não enviado' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
   async uploadAvatar(@Request() req, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo foi enviado');
@@ -138,8 +299,38 @@ export class UsersController {
       },
     }),
   )
-  @ApiOperation({ summary: 'Upload de avatar para outro usuário (Admin apenas)' })
+  @ApiOperation({ 
+    summary: 'Upload de avatar para outro usuário (Admin apenas)',
+    description: 'Administrador pode fazer upload de avatar para qualquer usuário'
+  })
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+          description: 'Arquivo de imagem (jpg, jpeg, png, gif)'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Avatar atualizado',
+    schema: {
+      example: {
+        id: 'uuid-here',
+        avatar: '/uploads/avatars/abc123.jpg',
+        updatedAt: '2024-01-26T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Arquivo inválido ou não enviado' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin)' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async uploadAvatarForUser(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
@@ -155,7 +346,40 @@ export class UsersController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Atualizar usuário (apenas Admin)' })
+  @ApiOperation({ 
+    summary: 'Atualizar usuário (apenas Admin)',
+    description: 'Administrador pode atualizar qualquer usuário, incluindo role'
+  })
+  @ApiBody({
+    type: UpdateUserDto,
+    examples: {
+      update: {
+        summary: 'Atualizar usuário',
+        value: {
+          name: 'João Silva Santos',
+          role: 'PROFESSOR'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Usuário atualizado',
+    schema: {
+      example: {
+        id: 'uuid-here',
+        name: 'João Silva Santos',
+        email: 'joao@example.com',
+        role: 'PROFESSOR',
+        avatar: '/uploads/avatars/avatar.jpg',
+        updatedAt: '2024-01-26T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin)' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
@@ -163,7 +387,22 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Deletar usuário (apenas Admin)' })
+  @ApiOperation({ 
+    summary: 'Deletar usuário (apenas Admin)',
+    description: 'Remove permanentemente um usuário do sistema'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Usuário deletado',
+    schema: {
+      example: {
+        message: 'User successfully deleted'
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin)' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
