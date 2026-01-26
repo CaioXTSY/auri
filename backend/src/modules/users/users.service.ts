@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { User, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UserWithoutPassword } from './types/user.types';
+import { QueryUsersDto } from './dto/query-users.dto';
+import { PaginatedUsersDto } from './dto/paginated-users.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,23 +20,42 @@ export class UsersService {
     });
   }
 
-  async findAll(): Promise<UserWithoutPassword[]> {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true,
-        password: false,
-      },
-    });
+  async findAll(query?: QueryUsersDto): Promise<PaginatedUsersDto<UserWithoutPassword>> {
+    const { page = 1, limit = 10, role, name, email, sortBy = 'createdAt', sortOrder = 'desc' } = query || {};
+    
+    const skip = (page - 1) * limit;
+    
+    const where: Prisma.UserWhereInput = {
+      ...(role && { role }),
+      ...(name && { name: { contains: name } }),
+      ...(email && { email: { contains: email } }),
+    };
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true,
+          password: false,
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return new PaginatedUsersDto(users, total, page, limit);
   }
 
   async findOne(id: string): Promise<UserWithoutPassword | null> {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -47,6 +68,12 @@ export class UsersService {
         password: false,
       },
     });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -65,7 +92,8 @@ export class UsersService {
     if (data.password) {
       data.password = await bcrypt.hash(data.password as string, 10);
     }
-    return this.prisma.user.update({
+    
+    const user = await this.prisma.user.update({
       where: { id },
       data,
       select: {
@@ -79,6 +107,12 @@ export class UsersService {
         password: false,
       },
     });
+
+    return user;
+  }
+
+  async updateAvatar(userId: string, avatarPath: string): Promise<UserWithoutPassword> {
+    return this.update(userId, { avatar: avatarPath });
   }
 
   async remove(id: string): Promise<User> {

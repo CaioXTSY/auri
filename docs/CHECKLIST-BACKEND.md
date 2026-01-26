@@ -11,7 +11,7 @@
 |-----------|-------|-----------|--------------|----------|---|
 | **Infraestrutura** | 8 | 8 | 0 | 0 | 100% |
 | **Autenticação** | 7 | 7 | 0 | 0 | 100% |
-| **Usuários** | 5 | 5 | 0 | 0 | 100% |
+| **Usuários** | 13 | 13 | 0 | 0 | 100% |
 | **Disciplinas** | 6 | 0 | 0 | 6 | 0% |
 | **Turmas** | 6 | 0 | 0 | 6 | 0% |
 | **Atividades** | 8 | 0 | 0 | 8 | 0% |
@@ -22,7 +22,7 @@
 | **Notificações** | 5 | 0 | 0 | 5 | 0% |
 | **Dashboard** | 6 | 0 | 0 | 6 | 0% |
 | **Testes** | 8 | 0 | 0 | 8 | 0% |
-| **TOTAL** | **89** | **24** | **0** | **65** | **27%** |
+| **TOTAL** | **97** | **32** | **0** | **65** | **33%** |
 
 ---
 
@@ -99,24 +99,25 @@
 - [x] Type UserWithoutPassword criado
 
 ### 3.2 Funcionalidades
-- [x] **POST /users** - Criar usuário
-- [x] **GET /users** - Listar usuários
+- [x] **POST /users** - Criar usuário (Admin apenas)
+- [x] **GET /users** - Listar usuários (Admin e Professor)
 - [x] **GET /users/:id** - Buscar por ID
-- [x] **PATCH /users/:id** - Atualizar usuário
-- [x] **DELETE /users/:id** - Deletar usuário
+- [x] **PATCH /users/:id** - Atualizar usuário (Admin apenas)
+- [x] **DELETE /users/:id** - Deletar usuário (Admin apenas)
 - [x] Password nunca retornado nas respostas
-- [ ] **GET /users/me** - Perfil do usuário logado
-- [ ] **PATCH /users/me** - Atualizar próprio perfil
-- [ ] **POST /users/:id/avatar** - Upload de avatar
-- [ ] Validação de roles
-- [ ] Paginação na listagem
-- [ ] Filtros (role, nome, email)
-- [ ] Ordenação
+- [x] **GET /users/me** - Perfil do usuário logado
+- [x] **PATCH /users/me** - Atualizar próprio perfil
+- [x] Validação de roles (RolesGuard implementado)
+- [x] **POST /users/me/avatar** - Upload de avatar próprio
+- [x] **POST /users/:id/avatar** - Upload de avatar (Admin)
+- [x] Paginação na listagem (QueryUsersDto)
+- [x] Filtros (role, nome, email)
+- [x] Ordenação (sortBy, sortOrder)
 
 ### 3.3 Testes
-- [ ] Testes unitários UsersService
-- [ ] Testes E2E CRUD completo
-- [ ] Testes de upload de avatar
+- [x] Testes unitários UsersService (16 testes)
+- [x] Testes E2E CRUD completo
+- [x] Testes de upload de avatar
 
 ---
 
@@ -527,10 +528,10 @@
 
 ### 14.1 Autenticação e Autorização
 - [x] JWT implementado
-- [ ] Refresh tokens
-- [ ] Guards de role funcionando
-- [ ] Rate limiting global
-- [ ] Rate limiting em rotas sensíveis
+- [x] Refresh tokens
+- [x] Guards de role funcionando (RolesGuard)
+- [x] Rate limiting global (ThrottlerModule)
+- [ ] Rate limiting em rotas sensíveis específicas
 - [ ] CORS configurado corretamente
 
 ### 14.2 Validação
