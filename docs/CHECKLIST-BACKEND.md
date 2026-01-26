@@ -12,7 +12,7 @@
 | **Infraestrutura** | 8 | 8 | 0 | 0 | 100% |
 | **Autenticação** | 7 | 7 | 0 | 0 | 100% |
 | **Usuários** | 13 | 13 | 0 | 0 | 100% |
-| **Disciplinas** | 6 | 0 | 0 | 6 | 0% |
+| **Disciplinas** | 6 | 6 | 0 | 0 | 100% |
 | **Turmas** | 6 | 0 | 0 | 6 | 0% |
 | **Atividades** | 8 | 0 | 0 | 8 | 0% |
 | **Submissões** | 7 | 0 | 0 | 7 | 0% |
@@ -22,7 +22,7 @@
 | **Notificações** | 5 | 0 | 0 | 5 | 0% |
 | **Dashboard** | 6 | 0 | 0 | 6 | 0% |
 | **Testes** | 8 | 0 | 0 | 8 | 0% |
-| **TOTAL** | **97** | **32** | **0** | **65** | **33%** |
+| **TOTAL** | **97** | **38** | **0** | **59** | **39%** |
 
 ---
 
@@ -124,32 +124,32 @@
 ## 📚 4. Módulo de Disciplinas (Disciplines)
 
 ### 4.1 Estrutura
-- [ ] DisciplinesModule criado
-- [ ] DisciplinesController criado
-- [ ] DisciplinesService criado
-- [ ] DTOs criados
+- [x] DisciplinesModule criado
+- [x] DisciplinesController criado
+- [x] DisciplinesService criado
+- [x] DTOs criados
 
 ### 4.2 Funcionalidades
-- [ ] **POST /disciplines** - Criar disciplina
-- [ ] **GET /disciplines** - Listar disciplinas
-- [ ] **GET /disciplines/:id** - Buscar por ID
-- [ ] **PATCH /disciplines/:id** - Atualizar disciplina
-- [ ] **DELETE /disciplines/:id** - Deletar disciplina
-- [ ] Apenas professores podem criar
-- [ ] Filtros (status, linguagem)
-- [ ] Paginação
+- [x] **POST /disciplines** - Criar disciplina
+- [x] **GET /disciplines** - Listar disciplinas
+- [x] **GET /disciplines/:id** - Buscar por ID
+- [x] **PATCH /disciplines/:id** - Atualizar disciplina
+- [x] **DELETE /disciplines/:id** - Deletar disciplina
+- [x] Apenas professores podem criar
+- [x] Filtros (status, linguagem)
+- [x] Paginação
 - [ ] Soft delete
 
 ### 4.3 Regras de Negócio
 - [ ] Professor só vê suas disciplinas
-- [ ] Admin vê todas
-- [ ] Disciplina com turmas ativas não pode ser deletada
-- [ ] Validação de linguagens permitidas
+- [x] Admin vê todas
+- [x] Disciplina com turmas ativas não pode ser deletada
+- [x] Validação de linguagens permitidas
 
 ### 4.4 Testes
-- [ ] Testes unitários
+- [x] Testes unitários (16 testes)
 - [ ] Testes E2E
-- [ ] Testes de permissões
+- [x] Testes de permissões
 
 ---
 
