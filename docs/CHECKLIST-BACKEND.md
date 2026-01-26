@@ -13,7 +13,7 @@
 | **Autenticação** | 7 | 7 | 0 | 0 | 100% |
 | **Usuários** | 13 | 13 | 0 | 0 | 100% |
 | **Disciplinas** | 6 | 6 | 0 | 0 | 100% |
-| **Turmas** | 6 | 0 | 0 | 6 | 0% |
+| **Turmas** | 6 | 6 | 0 | 0 | 100% |
 | **Atividades** | 8 | 0 | 0 | 8 | 0% |
 | **Submissões** | 7 | 0 | 0 | 7 | 0% |
 | **Gamificação** | 10 | 0 | 0 | 10 | 0% |
@@ -22,7 +22,7 @@
 | **Notificações** | 5 | 0 | 0 | 5 | 0% |
 | **Dashboard** | 6 | 0 | 0 | 6 | 0% |
 | **Testes** | 8 | 0 | 0 | 8 | 0% |
-| **TOTAL** | **97** | **38** | **0** | **59** | **39%** |
+| **TOTAL** | **97** | **44** | **0** | **53** | **45%** |
 
 ---
 
@@ -156,8 +156,41 @@
 ## 🎓 5. Módulo de Turmas (Classes)
 
 ### 5.1 Estrutura
-- [ ] ClassesModule criado
-- [ ] ClassesController criado
+- [x] ClassesModule criado
+- [x] ClassesController criado
+- [x] ClassesService criado
+- [x] DTOs criados (5 DTOs)
+
+### 5.2 Funcionalidades
+- [x] **POST /classes** - Criar turma
+- [x] **GET /classes** - Listar turmas com paginação
+- [x] **GET /classes/my-classes** - Minhas turmas (aluno)
+- [x] **GET /classes/:id** - Buscar turma por ID
+- [x] **GET /classes/:id/students** - Listar alunos da turma
+- [x] **POST /classes/:id/enroll** - Matricular aluno
+- [x] **DELETE /classes/:id/students/:userId** - Remover aluno
+- [x] **PATCH /classes/:id** - Atualizar turma
+- [x] **DELETE /classes/:id** - Remover turma
+- [x] Paginação na listagem
+- [x] Filtros (disciplineId, name, semester, year, status)
+- [x] Ordenação (sortBy, sortOrder)
+- [x] Sistema de matrículas completo
+
+### 5.3 Regras de Negócio
+- [x] Validação de disciplina existente
+- [x] Apenas ALUNO pode ser matriculado
+- [x] Não permite matrícula duplicada
+- [x] Não permite matrícula em turma encerrada
+- [x] Proteção contra remoção com atividades
+
+### 5.4 Testes
+- [x] Testes unitários (21 testes)
+- [ ] Testes E2E
+- [x] Testes de permissões e validações
+
+---
+
+## 📝 6. Módulo de Atividades (Activities)
 - [ ] ClassesService criado
 - [ ] DTOs criados
 
