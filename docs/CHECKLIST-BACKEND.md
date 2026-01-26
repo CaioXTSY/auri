@@ -10,7 +10,7 @@
 | Categoria | Total | Concluído | Em Progresso | Pendente | % |
 |-----------|-------|-----------|--------------|----------|---|
 | **Infraestrutura** | 8 | 8 | 0 | 0 | 100% |
-| **Autenticação** | 7 | 4 | 1 | 2 | 57% |
+| **Autenticação** | 7 | 7 | 0 | 0 | 100% |
 | **Usuários** | 5 | 5 | 0 | 0 | 100% |
 | **Disciplinas** | 6 | 0 | 0 | 6 | 0% |
 | **Turmas** | 6 | 0 | 0 | 6 | 0% |
@@ -22,7 +22,7 @@
 | **Notificações** | 5 | 0 | 0 | 5 | 0% |
 | **Dashboard** | 6 | 0 | 0 | 6 | 0% |
 | **Testes** | 8 | 0 | 0 | 8 | 0% |
-| **TOTAL** | **89** | **17** | **1** | **71** | **19%** |
+| **TOTAL** | **89** | **24** | **0** | **65** | **27%** |
 
 ---
 
@@ -71,18 +71,21 @@
 - [x] **POST /auth/login** - Login com email/senha
 - [x] JWT geração funcionando
 - [x] Password hashing com bcrypt
-- [ ] **POST /auth/refresh** - Refresh token
-- [ ] **POST /auth/forgot-password** - Recuperação de senha
-- [ ] **POST /auth/reset-password** - Reset de senha
-- [ ] Rate limiting nas rotas de auth
-- [ ] Validação de email único
-- [ ] Guard de roles (Admin, Professor, Aluno)
+- [x] **POST /auth/refresh** - Refresh token
+- [x] **POST /auth/forgot-password** - Recuperação de senha
+- [x] **POST /auth/reset-password** - Reset de senha
+- [x] **POST /auth/logout** - Logout de usuário
+- [x] Rate limiting global configurado
+- [x] Validação de email único (Prisma)
+- [x] Guard de roles (Admin, Professor, Aluno)
 
 ### 2.3 Testes
-- [ ] Testes unitários AuthService
-- [ ] Testes E2E de login
-- [ ] Testes E2E de registro
-- [ ] Testes de refresh token
+- [x] Testes unitários AuthService (14 testes)
+- [x] Testes E2E de login
+- [x] Testes E2E de registro
+- [x] Testes E2E de refresh token
+- [x] Testes E2E de forgot/reset password
+- [x] Testes E2E de logout
 
 ---
 

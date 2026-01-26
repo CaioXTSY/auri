@@ -1,0 +1,271 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
+
+describe('AuthController (e2e)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
+
+    await app.init();
+    prisma = app.get<PrismaService>(PrismaService);
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('/auth/register (POST)', () => {
+    it('should register a new user', async () => {
+      const registerDto = {
+        email: `test-${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Test User',
+        role: 'ALUNO',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerDto)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('access_token');
+      expect(response.body).toHaveProperty('refresh_token');
+      expect(response.body).toHaveProperty('user');
+      expect(response.body.user.email).toBe(registerDto.email);
+      expect(response.body.user.password).toBeUndefined();
+
+      // Cleanup
+      await prisma.user.delete({ where: { email: registerDto.email } });
+    });
+
+    it('should fail with invalid email', async () => {
+      const registerDto = {
+        email: 'invalid-email',
+        password: 'password123',
+        name: 'Test User',
+        role: 'ALUNO',
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerDto)
+        .expect(400);
+    });
+
+    it('should fail with short password', async () => {
+      const registerDto = {
+        email: 'test@example.com',
+        password: '123',
+        name: 'Test User',
+        role: 'ALUNO',
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerDto)
+        .expect(400);
+    });
+  });
+
+  describe('/auth/login (POST)', () => {
+    let testUser;
+
+    beforeAll(async () => {
+      const registerDto = {
+        email: `login-test-${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Login Test User',
+        role: 'ALUNO',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerDto);
+
+      testUser = response.body.user;
+    });
+
+    afterAll(async () => {
+      await prisma.user.delete({ where: { email: testUser.email } });
+    });
+
+    it('should login successfully', async () => {
+      const loginDto = {
+        email: testUser.email,
+        password: 'password123',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send(loginDto)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('access_token');
+      expect(response.body).toHaveProperty('refresh_token');
+      expect(response.body).toHaveProperty('user');
+    });
+
+    it('should fail with wrong password', async () => {
+      const loginDto = {
+        email: testUser.email,
+        password: 'wrongpassword',
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send(loginDto)
+        .expect(401);
+    });
+
+    it('should fail with non-existent email', async () => {
+      const loginDto = {
+        email: 'nonexistent@example.com',
+        password: 'password123',
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send(loginDto)
+        .expect(401);
+    });
+  });
+
+  describe('/auth/refresh (POST)', () => {
+    let refreshToken: string;
+    let testUser;
+
+    beforeAll(async () => {
+      const registerDto = {
+        email: `refresh-test-${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Refresh Test User',
+        role: 'ALUNO',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerDto);
+
+      refreshToken = response.body.refresh_token;
+      testUser = response.body.user;
+    });
+
+    afterAll(async () => {
+      await prisma.user.delete({ where: { email: testUser.email } });
+    });
+
+    it('should refresh token successfully', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('access_token');
+      expect(response.body).toHaveProperty('refresh_token');
+    });
+
+    it('should fail with invalid refresh token', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: 'invalid-token' })
+        .expect(401);
+    });
+  });
+
+  describe('/auth/forgot-password (POST)', () => {
+    let testUser;
+
+    beforeAll(async () => {
+      const registerDto = {
+        email: `forgot-test-${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Forgot Test User',
+        role: 'ALUNO',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerDto);
+
+      testUser = response.body.user;
+    });
+
+    afterAll(async () => {
+      await prisma.user.delete({ where: { email: testUser.email } });
+    });
+
+    it('should send reset password email', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/forgot-password')
+        .send({ email: testUser.email })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('message');
+    });
+
+    it('should return success even for non-existent email', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/forgot-password')
+        .send({ email: 'nonexistent@example.com' })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('message');
+    });
+  });
+
+  describe('/auth/logout (POST)', () => {
+    let accessToken: string;
+    let testUser;
+
+    beforeAll(async () => {
+      const registerDto = {
+        email: `logout-test-${Date.now()}@example.com`,
+        password: 'password123',
+        name: 'Logout Test User',
+        role: 'ALUNO',
+      };
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/register')
+        .send(registerDto);
+
+      accessToken = response.body.access_token;
+      testUser = response.body.user;
+    });
+
+    afterAll(async () => {
+      await prisma.user.delete({ where: { email: testUser.email } });
+    });
+
+    it('should logout successfully', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('message');
+    });
+
+    it('should fail without token', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .expect(401);
+    });
+  });
+});
