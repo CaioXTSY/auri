@@ -163,10 +163,9 @@ export class ActivitiesService {
   async findUpcomingForStudent(userId: string, limit = 3): Promise<UpcomingActivityDto[]> {
     const now = new Date();
 
-    const enrollments = await this.prisma.classEnrollment.findMany({
+    const enrollments = await this.prisma.classStudent.findMany({
       where: {
-        studentId: userId,
-        status: 'ATIVO',
+        userId: userId,
       },
       select: {
         classId: true,
