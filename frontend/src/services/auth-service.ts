@@ -1,7 +1,6 @@
 import api from '@/lib/api';
-import { LoginResponse, RegisterResponse } from '@/types/api';
-import { LoginDto } from '@/types/auth'; // Vou criar este arquivo a seguir
-import { RegisterDto } from '@/types/auth'; // Vou criar este arquivo a seguir
+import type { LoginResponse, RegisterResponse } from '@/types/api';
+import type { LoginDto, RegisterDto } from '@/types/auth';
 
 export const authService = {
   login: async (data: LoginDto): Promise<LoginResponse> => {

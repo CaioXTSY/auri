@@ -1,4 +1,4 @@
-import { User } from '@/stores/auth-store';
+import type { User } from '@/types/auth';
 
 export interface LoginResponse {
   user: User;

@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores/auth-store';
 import { authService } from '@/services/auth-service';
-import { loginSchema, LoginFormValues } from '@/schemas/auth.schema';
+import { loginSchema } from '@/schemas/auth.schema';
+import type { LoginFormValues } from '@/schemas/auth.schema';
 
 export const Login = () => {
   const navigate = useNavigate();

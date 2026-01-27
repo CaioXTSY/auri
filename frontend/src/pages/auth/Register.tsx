@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
 import { authService } from '@/services/auth-service';
-import { registerSchema, RegisterFormValues } from '@/schemas/auth.schema';
+import { registerSchema } from '@/schemas/auth.schema';
+import type { RegisterFormValues } from '@/schemas/auth.schema';
 
 export const Register = () => {
   const navigate = useNavigate();
