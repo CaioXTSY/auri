@@ -1,23 +1,43 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
+import { authService } from '@/services/auth-service';
+import { loginSchema, LoginFormValues } from '@/schemas/auth.schema';
 
 export const Login = () => {
+  const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    // Simular delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    // TODO: Implementar integração com API
-    console.log('Login submit');
+    setError(null);
+    try {
+      const response = await authService.login(data);
+      login(response.user, response.token);
+      navigate('/dashboard'); // Redirecionar para dashboard após login
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Erro ao realizar login. Verifique suas credenciais.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -25,7 +45,13 @@ export const Login = () => {
       title="Bem-vindo de volta" 
       subtitle="Entre com suas credenciais para acessar sua jornada."
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {error && (
+          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+            {error}
+          </div>
+        )}
+
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email Acadêmico</Label>
@@ -33,9 +59,12 @@ export const Login = () => {
               id="email" 
               type="email" 
               placeholder="aluno@universidade.edu" 
-              required 
-              className="h-11"
+              className={`h-11 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              {...register('email')}
             />
+            {errors.email && (
+              <span className="text-xs text-red-500">{errors.email.message}</span>
+            )}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -51,9 +80,12 @@ export const Login = () => {
               id="password" 
               type="password" 
               placeholder="••••••••" 
-              required 
-              className="h-11"
+              className={`h-11 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              {...register('password')}
             />
+             {errors.password && (
+              <span className="text-xs text-red-500">{errors.password.message}</span>
+            )}
           </div>
         </div>
 

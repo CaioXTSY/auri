@@ -1,24 +1,51 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2, User, GraduationCap } from 'lucide-react';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, User, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
+import { authService } from '@/services/auth-service';
+import { registerSchema, RegisterFormValues } from '@/schemas/auth.schema';
 
 export const Register = () => {
+  const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
   const [isLoading, setIsLoading] = useState(false);
-  const [role, setRole] = useState<'ALUNO' | 'PROFESSOR'>('ALUNO');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      role: 'ALUNO',
+    },
+  });
+
+  const role = watch('role');
+
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-    // Simular delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    // TODO: Implementar integração com API
-    console.log('Register submit', { role });
+    setError(null);
+    try {
+      const response = await authService.register(data);
+      login(response.user, response.token);
+      navigate('/dashboard'); // Redirecionar para dashboard após registro
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Erro ao criar conta. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -26,11 +53,17 @@ export const Register = () => {
       title="Inicie sua Jornada" 
       subtitle="Crie sua conta para começar a evoluir suas habilidades."
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {error && (
+          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+            {error}
+          </div>
+        )}
+
         {/* Role Selector */}
         <div className="grid grid-cols-2 gap-4">
           <div 
-            onClick={() => setRole('ALUNO')}
+            onClick={() => setValue('role', 'ALUNO')}
             className={cn(
               "cursor-pointer border-2 rounded-lg p-4 flex flex-col items-center justify-center gap-2 transition-all duration-200",
               role === 'ALUNO' 
@@ -42,7 +75,7 @@ export const Register = () => {
             <span className="text-sm font-bold uppercase tracking-wide">Sou Aluno</span>
           </div>
           <div 
-            onClick={() => setRole('PROFESSOR')}
+            onClick={() => setValue('role', 'PROFESSOR')}
             className={cn(
               "cursor-pointer border-2 rounded-lg p-4 flex flex-col items-center justify-center gap-2 transition-all duration-200",
               role === 'PROFESSOR' 
@@ -54,6 +87,9 @@ export const Register = () => {
             <span className="text-sm font-bold uppercase tracking-wide">Sou Professor</span>
           </div>
         </div>
+        {errors.role && (
+          <span className="text-xs text-red-500 block text-center">{errors.role.message}</span>
+        )}
 
         <div className="space-y-4">
           <div className="space-y-2">
@@ -61,9 +97,12 @@ export const Register = () => {
             <Input 
               id="name" 
               placeholder="Ex: João da Silva" 
-              required 
-              className="h-11"
+              className={`h-11 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              {...register('name')}
             />
+            {errors.name && (
+              <span className="text-xs text-red-500">{errors.name.message}</span>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -72,9 +111,12 @@ export const Register = () => {
               id="email" 
               type="email" 
               placeholder="aluno@universidade.edu" 
-              required 
-              className="h-11"
+              className={`h-11 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              {...register('email')}
             />
+            {errors.email && (
+              <span className="text-xs text-red-500">{errors.email.message}</span>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -83,10 +125,12 @@ export const Register = () => {
               id="password" 
               type="password" 
               placeholder="Mínimo 6 caracteres" 
-              required 
-              minLength={6}
-              className="h-11"
+              className={`h-11 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              {...register('password')}
             />
+            {errors.password && (
+              <span className="text-xs text-red-500">{errors.password.message}</span>
+            )}
           </div>
         </div>
 
