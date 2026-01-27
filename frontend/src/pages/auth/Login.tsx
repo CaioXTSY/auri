@@ -12,6 +12,37 @@ import { authService } from '@/services/auth-service';
 import { loginSchema } from '@/schemas/auth.schema';
 import type { LoginFormValues } from '@/schemas/auth.schema';
 
+type ApiErrorResponse = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getLoginErrorMessage = (error: unknown): string => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error
+  ) {
+    const typedError = error as ApiErrorResponse;
+    const apiMessage = typedError.response?.data?.message;
+
+    if (typeof apiMessage === 'string') {
+      return apiMessage;
+    }
+
+    if (Array.isArray(apiMessage)) {
+      const firstMessage = apiMessage.find((item) => typeof item === 'string');
+      if (firstMessage) {
+        return firstMessage;
+      }
+    }
+  }
+  return 'Erro ao realizar login. Verifique suas credenciais.';
+};
+
 export const Login = () => {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
@@ -31,11 +62,11 @@ export const Login = () => {
     setError(null);
     try {
       const response = await authService.login(data);
-      login(response.user, response.token);
-      navigate('/dashboard'); // Redirecionar para dashboard após login
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || 'Erro ao realizar login. Verifique suas credenciais.');
+      login(response.user, response.access_token);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error(error);
+      setError(getLoginErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

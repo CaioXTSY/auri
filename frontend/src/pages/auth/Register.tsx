@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +12,37 @@ import { useAuthStore } from '@/stores/auth-store';
 import { authService } from '@/services/auth-service';
 import { registerSchema } from '@/schemas/auth.schema';
 import type { RegisterFormValues } from '@/schemas/auth.schema';
+
+type ApiErrorResponse = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getRegisterErrorMessage = (error: unknown): string => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error
+  ) {
+    const typedError = error as ApiErrorResponse;
+    const apiMessage = typedError.response?.data?.message;
+
+    if (typeof apiMessage === 'string') {
+      return apiMessage;
+    }
+
+    if (Array.isArray(apiMessage)) {
+      const firstMessage = apiMessage.find((item) => typeof item === 'string');
+      if (firstMessage) {
+        return firstMessage;
+      }
+    }
+  }
+  return 'Erro ao criar conta. Tente novamente.';
+};
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -39,11 +70,11 @@ export const Register = () => {
     setError(null);
     try {
       const response = await authService.register(data);
-      login(response.user, response.token);
-      navigate('/dashboard'); // Redirecionar para dashboard após registro
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || 'Erro ao criar conta. Tente novamente.');
+      login(response.user, response.access_token);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error(error);
+      setError(getRegisterErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

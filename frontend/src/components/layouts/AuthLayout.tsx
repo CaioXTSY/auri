@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 
 interface AuthLayoutProps {

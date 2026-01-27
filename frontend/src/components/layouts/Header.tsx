@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Menu, X, Search, Globe, ChevronDown, BookOpen } from 'lucide-react';
+import { Menu, X, Search, Globe, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const Header = () => {

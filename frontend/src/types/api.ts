@@ -1,17 +1,20 @@
 import type { User } from '@/types/auth';
 
-export interface LoginResponse {
-  user: User;
-  token: string;
+export interface AuthTokens {
+  access_token: string;
+  refresh_token: string;
 }
 
-export interface RegisterResponse {
+export interface LoginResponse extends AuthTokens {
   user: User;
-  token: string;
+}
+
+export interface RegisterResponse extends AuthTokens {
+  user: User;
 }
 
 export interface ApiError {
-  message: string;
+  message: string | string[];
   statusCode: number;
   error?: string;
 }

@@ -17,9 +17,11 @@ async function bootstrap() {
   const apiPrefix = process.env.API_PREFIX || 'api/v1';
   app.setGlobalPrefix(apiPrefix);
 
-  // CORS
+  // CORS - liberar para qualquer origem em desenvolvimento
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
     credentials: true,
   });
 
