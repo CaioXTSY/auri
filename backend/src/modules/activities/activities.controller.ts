@@ -24,6 +24,7 @@ import {
   UpdateActivityDto,
   CreateTestCaseDto,
   QueryActivitiesDto,
+  UpcomingActivityDto,
 } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -210,6 +211,26 @@ export class ActivitiesController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   findAll(@Query() query: QueryActivitiesDto) {
     return this.activitiesService.findAll(query);
+  }
+
+  @Get('upcoming')
+  @Roles(Role.ALUNO)
+  @ApiOperation({
+    summary: 'Listar próximas atividades do aluno',
+    description: 'Retorna até N atividades com deadline futuro, ordenadas pela data mais próxima',
+  })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 3 })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de próximas atividades',
+    type: UpcomingActivityDto,
+    isArray: true,
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
+  getUpcoming(@Request() req, @Query('limit') limit?: number) {
+    const parsedLimit = limit ? Number(limit) : 3;
+    return this.activitiesService.findUpcomingForStudent(req.user.id, parsedLimit);
   }
 
   @Get(':id')

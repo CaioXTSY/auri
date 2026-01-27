@@ -1,54 +1,109 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useAuthStore } from '@/stores/auth-store';
+import { dashboardService, type LevelInfo, type UpcomingActivity } from '@/services/dashboard-service';
+
+type NormalizedActivityStatus = 'em_andamento' | 'pendente';
 
 interface Activity {
   id: string;
   title: string;
   discipline: string;
   dueDate: string;
-  status: 'pendente' | 'em_andamento';
+  status: NormalizedActivityStatus;
 }
 
 export const DashboardHome = () => {
   const user = useAuthStore((state) => state.user);
 
+  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
 
-  const level = 3;
-  const currentXp = 1250;
-  const nextLevelXp = 1500;
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [levelResponse, activitiesResponse] = await Promise.all([
+          dashboardService.getMyLevel(),
+          dashboardService.getUpcomingActivities(3),
+        ]);
+
+        if (!isMounted) return;
+
+        setLevelInfo(levelResponse);
+
+        const normalizedActivities: Activity[] = activitiesResponse.map(
+          (activity: UpcomingActivity) => {
+            const deadlineDate = new Date(activity.deadline);
+            const now = new Date();
+            const isToday =
+              deadlineDate.toDateString() === now.toDateString();
+
+            const dueLabel = isToday
+              ? `Hoje • ${deadlineDate.toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}`
+              : deadlineDate.toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                });
+
+            const normalizedStatus: NormalizedActivityStatus =
+              activity.status === 'EM_ANDAMENTO'
+                ? 'em_andamento'
+                : 'pendente';
+
+            return {
+              id: activity.id,
+              title: activity.title,
+              discipline: activity.disciplineName,
+              dueDate: dueLabel,
+              status: normalizedStatus,
+            };
+          },
+        );
+
+        setActivities(normalizedActivities);
+      } catch (loadError) {
+        if (!isMounted) return;
+        setError('Não foi possível carregar os dados do dashboard.');
+        console.error(loadError);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const level = levelInfo?.currentLevel ?? 0;
+  const currentXp = levelInfo?.totalPoints ?? 0;
+  const nextLevelXp =
+    levelInfo && levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel > 0
+      ? levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel
+      : 0;
 
   const progress = useMemo(() => {
-    if (!nextLevelXp) return 0;
-    const ratio = currentXp / nextLevelXp;
-    if (!Number.isFinite(ratio)) return 0;
-    return Math.min(100, Math.max(0, Math.round(ratio * 100)));
-  }, [currentXp, nextLevelXp]);
-
-  const upcomingActivities: Activity[] = [
-    {
-      id: '1',
-      title: 'Lista 2: Estruturas de Repetição',
-      discipline: 'Algoritmos I',
-      dueDate: 'Hoje • 23:59',
-      status: 'em_andamento',
-    },
-    {
-      id: '2',
-      title: 'Projeto: Jogo de Adivinhação',
-      discipline: 'Lógica de Programação',
-      dueDate: 'Em 2 dias',
-      status: 'pendente',
-    },
-    {
-      id: '3',
-      title: 'Quiz: Conceitos de Variáveis',
-      discipline: 'Introdução à Programação',
-      dueDate: 'Em 5 dias',
-      status: 'pendente',
-    },
-  ];
+    if (!levelInfo) return 0;
+    if (levelInfo.progressToNextLevel == null) return 0;
+    if (!Number.isFinite(levelInfo.progressToNextLevel)) return 0;
+    return Math.min(100, Math.max(0, Math.round(levelInfo.progressToNextLevel)));
+  }, [levelInfo]);
 
   return (
     <DashboardLayout>
@@ -72,17 +127,23 @@ export const DashboardHome = () => {
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em]">
                   Nível Atual
                 </p>
-                <p className="mt-1 text-4xl font-display font-bold text-accent-600">Nível {level}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {currentXp} XP de {nextLevelXp} XP para o próximo nível
+                <p className="mt-1 text-4xl font-display font-bold text-accent-600">
+                  Nível {level}
                 </p>
+                {levelInfo && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {currentXp} XP de {nextLevelXp} XP para o próximo nível
+                  </p>
+                )}
               </div>
               <div className="flex-1 max-w-xs">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs font-medium text-slate-500 uppercase tracking-[0.16em]">
                     Progresso
                   </span>
-                  <span className="text-xs font-semibold text-brand-900">{progress}%</span>
+                  <span className="text-xs font-semibold text-brand-900">
+                    {progress}%
+                  </span>
                 </div>
                 <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div
@@ -126,7 +187,22 @@ export const DashboardHome = () => {
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
-            {upcomingActivities.map((activity) => (
+            {isLoading && (
+              <div className="px-5 py-6 text-sm text-slate-500">
+                Carregando próximas atividades...
+              </div>
+            )}
+            {!isLoading && error && (
+              <div className="px-5 py-6 text-sm text-red-500">
+                {error}
+              </div>
+            )}
+            {!isLoading && !error && activities.length === 0 && (
+              <div className="px-5 py-6 text-sm text-slate-500">
+                Nenhuma atividade próxima encontrada.
+              </div>
+            )}
+            {!isLoading && !error && activities.map((activity) => (
               <div
                 key={activity.id}
                 className="px-5 py-4 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
@@ -135,14 +211,18 @@ export const DashboardHome = () => {
                   <span className="text-sm font-semibold text-slate-800">
                     {activity.title}
                   </span>
-                  <span className="text-xs text-slate-500">{activity.discipline}</span>
+                  <span className="text-xs text-slate-500">
+                    {activity.discipline}
+                  </span>
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
                     <p className="text-xs font-semibold text-slate-600 uppercase tracking-[0.16em]">
                       Prazo
                     </p>
-                    <p className="text-xs text-slate-800">{activity.dueDate}</p>
+                    <p className="text-xs text-slate-800">
+                      {activity.dueDate}
+                    </p>
                   </div>
                   <span
                     className={
@@ -151,7 +231,9 @@ export const DashboardHome = () => {
                         : 'inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-100'
                     }
                   >
-                    {activity.status === 'em_andamento' ? 'Em andamento' : 'Pendente'}
+                    {activity.status === 'em_andamento'
+                      ? 'Em andamento'
+                      : 'Pendente'}
                   </span>
                 </div>
               </div>

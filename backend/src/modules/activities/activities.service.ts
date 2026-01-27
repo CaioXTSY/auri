@@ -10,6 +10,7 @@ import {
   UpdateActivityDto,
   CreateTestCaseDto,
   QueryActivitiesDto,
+  UpcomingActivityDto,
 } from './dto';
 
 @Injectable()
@@ -157,6 +158,58 @@ export class ActivitiesService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async findUpcomingForStudent(userId: string, limit = 3): Promise<UpcomingActivityDto[]> {
+    const now = new Date();
+
+    const enrollments = await this.prisma.classEnrollment.findMany({
+      where: {
+        studentId: userId,
+        status: 'ATIVO',
+      },
+      select: {
+        classId: true,
+      },
+    });
+
+    const classIds = enrollments.map((e) => e.classId);
+
+    if (classIds.length === 0) {
+      return [];
+    }
+
+    const activities = await this.prisma.activity.findMany({
+      where: {
+        classId: { in: classIds },
+        status: 'ATIVA',
+        deadline: {
+          gt: now,
+        },
+      },
+      orderBy: {
+        deadline: 'asc',
+      },
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        deadline: true,
+        discipline: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return activities.map((activity) => ({
+      id: activity.id,
+      title: activity.title,
+      deadline: activity.deadline!,
+      disciplineName: activity.discipline?.name || 'Disciplina',
+      status: 'PENDENTE',
+    }));
   }
 
   async findOne(id: string) {
