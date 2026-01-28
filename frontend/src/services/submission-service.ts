@@ -7,29 +7,52 @@ export interface Submission {
   code: string;
   language: string;
   status: 'PENDENTE' | 'EXECUTANDO' | 'APROVADO' | 'PARCIAL' | 'REPROVADO' | 'ERRO';
-  result: string | null;
-  executionTime: number | null;
-  memoryUsed: number | null;
+  result?: string;
+  executionTime?: number;
+  memoryUsed?: number;
   pointsEarned: number;
   submittedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  activity: {
+    id: string;
+    title: string;
+    points: number;
+  };
 }
 
-export interface CreateSubmissionDto {
-  activityId: string;
-  code: string;
-  language: string;
+export interface GetSubmissionsParams {
+  page?: number;
+  limit?: number;
+  activityId?: string;
+  userId?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginatedSubmissions {
+  data: Submission[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export const submissionService = {
-  createSubmission: async (data: CreateSubmissionDto): Promise<Submission> => {
-    const response = await api.post<Submission>('/submissions', data);
+  getSubmissions: async (params?: GetSubmissionsParams): Promise<PaginatedSubmissions> => {
+    const response = await api.get<PaginatedSubmissions>('/submissions', { params });
     return response.data;
   },
 
-  getMySubmissions: async (activityId: string): Promise<Submission[]> => {
-    const response = await api.get<{ data: Submission[] }>('/submissions', {
-      params: { activityId },
-    });
-    return response.data.data;
+  getSubmissionById: async (id: string): Promise<Submission> => {
+    const response = await api.get<Submission>(`/submissions/${id}`);
+    return response.data;
   },
 };

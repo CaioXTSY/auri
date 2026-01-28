@@ -198,7 +198,17 @@ export const TeacherClassDetails = () => {
                         {new Date(activity.deadline).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="sm">Editar</Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`/dashboard/teacher/activities/${activity.id}/submissions`)}
+                          className="mr-2"
+                        >
+                          Ver Submissões
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          Editar
+                        </Button>
                       </td>
                     </tr>
                   ))}

@@ -12,6 +12,8 @@ import { TeacherClassDetails } from '@/pages/teacher/TeacherClassDetails';
 import { CreateActivity } from '@/pages/teacher/CreateActivity';
 import { TeacherDisciplines } from '@/pages/teacher/TeacherDisciplines';
 import { CreateDiscipline } from '@/pages/teacher/CreateDiscipline';
+import { ActivitySubmissions } from '@/pages/teacher/ActivitySubmissions';
+import { SubmissionDetails } from '@/pages/teacher/SubmissionDetails';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
 import { JoinClass } from '@/pages/dashboard/JoinClass';
@@ -108,10 +110,26 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/teacher/classes/:classId/activities/new"
+          path="/dashboard/teacher/classes/:id/activities/new"
           element={
             <ProtectedRoute>
               <CreateActivity />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/teacher/activities/:activityId/submissions"
+          element={
+            <ProtectedRoute>
+              <ActivitySubmissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/teacher/submissions/:id"
+          element={
+            <ProtectedRoute>
+              <SubmissionDetails />
             </ProtectedRoute>
           }
         />
