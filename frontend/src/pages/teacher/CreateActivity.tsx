@@ -85,7 +85,7 @@ export const CreateActivity = () => {
         type: data.type,
         difficulty: data.difficulty,
         points: data.points,
-        starterCode: data.starterCode,
+        // starterCode: data.starterCode, // TODO: Uncomment when backend supports starterCode
         disciplineId: classData.disciplineId,
         classId: classData.id,
         deadline: new Date(data.deadline).toISOString(),

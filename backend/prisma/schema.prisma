@@ -143,9 +143,9 @@ model Activity {
   description         String       @db.Text
   type                ActivityType
   difficulty          Difficulty
-  points              Int
-  deadline            DateTime?
-  starterCode         String?      @db.Text @map("starter_code")
+  points            Int
+  starterCode       String?      @db.Text @map("starter_code")
+  deadline          DateTime?
   allowLateSubmission Boolean      @default(true) @map("allow_late_submission")
   status              String       @default("ATIVA")
   timeLimit           Int          @default(2) @map("time_limit") // tempo limite em segundos

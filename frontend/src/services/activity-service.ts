@@ -8,6 +8,7 @@ export interface Activity {
   difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
   points: number;
   deadline: string;
+  starterCode?: string;
   status: 'ATIVA' | 'INATIVA';
   discipline?: {
     id: string;
@@ -22,6 +23,17 @@ export interface Activity {
     testCases: number;
     submissions: number;
   };
+  createdAt: string;
+  testCases?: TestCase[];
+}
+
+export interface TestCase {
+  id: string;
+  input: string;
+  expectedOutput: string;
+  points: number;
+  isVisible: boolean;
+  description?: string;
   createdAt: string;
 }
 
