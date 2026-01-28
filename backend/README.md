@@ -79,11 +79,16 @@ docker run -p 3001:3001 --env-file .env auri-backend
 ```
 src/
 ├── modules/           # Módulos da aplicação
-│   ├── auth/         # Autenticação
-│   └── users/        # Usuários
-├── prisma/           # Prisma service
-├── app.module.ts     # Módulo principal
-└── main.ts           # Entry point
+│   ├── activities/    # Atividades e Casos de Teste
+│   ├── auth/          # Autenticação e Guards
+│   ├── classes/       # Turmas e Matrículas
+│   ├── disciplines/   # Disciplinas
+│   ├── gamification/  # Sistema de Pontos e Níveis
+│   ├── submissions/   # Execução de Código e Feedback
+│   └── users/         # Gerenciamento de Usuários
+├── prisma/            # Prisma service e Schema
+├── app.module.ts      # Módulo principal
+└── main.ts            # Entry point
 ```
 
 ## 🔐 Variáveis de Ambiente

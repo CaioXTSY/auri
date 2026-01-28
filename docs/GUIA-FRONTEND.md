@@ -98,9 +98,55 @@ npm install date-fns react-hot-toast
 
 # Editor de Código
 npm install @monaco-editor/react
-# OU
-npm install @uiw/react-codemirror @codemirror/lang-python @codemirror/lang-javascript
 ```
+
+---
+
+## 🧭 Rotas e Fluxos
+
+### Rotas Públicas
+- `/` - Landing Page
+- `/login` - Autenticação
+- `/register` - Cadastro
+
+### Área do Aluno (`/dashboard`)
+- `/dashboard` - Visão geral, gamificação, próximas atividades
+- `/dashboard/classes` - Minhas turmas
+- `/dashboard/classes/join` - Entrar em nova turma
+- `/dashboard/classes/:id` - Detalhes da turma e atividades
+- `/dashboard/activities/:id` - Workspace de resolução (Editor + Testes)
+
+### Área do Professor (`/dashboard/teacher`)
+- `/dashboard/teacher/disciplines` - Gestão de disciplinas
+- `/dashboard/teacher/classes` - Gestão de turmas
+- `/dashboard/teacher/classes/:id/activities/new` - Criação de atividade (Wizard de 2 passos)
+- `/dashboard/teacher/activities/:activityId/submissions` - Monitoramento de submissões
+- `/dashboard/teacher/submissions/:id` - Revisão de código e feedback
+
+---
+
+## 🧩 Componentes Chave
+
+### ActivityWorkspace
+Ambiente integrado para o aluno resolver exercícios.
+- **Editor**: Monaco Editor com syntax highlighting
+- **Console**: Saída de execução em tempo real
+- **Test Cases**: Validação visual de casos de teste (Pass/Fail)
+
+### CreateActivity (Professor)
+Fluxo de criação de atividades em duas etapas:
+1. **Dados Básicos**: Título, descrição, deadline, configurações.
+2. **Casos de Teste**: Adição dinâmica de inputs/outputs esperados e pontuação.
+
+### SubmissionDetails (Professor)
+Visualizador de código submetido pelo aluno.
+- Comparação de código (Read-only)
+- Status dos testes executados
+- Métricas de execução (tempo, memória)
+
+---
+
+## 🚀 Setup Inicial
 
 ### 3. Instalar Componentes shadcn
 

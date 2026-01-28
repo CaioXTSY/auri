@@ -48,10 +48,22 @@ export interface CreateActivityDto {
   allowLateSubmission?: boolean;
 }
 
+export interface CreateTestCaseDto {
+  input: string;
+  expectedOutput: string;
+  points: number;
+  isVisible: boolean;
+  description?: string;
+}
+
 export const activityService = {
   createActivity: async (data: CreateActivityDto): Promise<Activity> => {
     const response = await api.post<Activity>('/activities', data);
     return response.data;
+  },
+
+  createTestCase: async (activityId: string, data: CreateTestCaseDto): Promise<void> => {
+    await api.post(`/activities/${activityId}/test-cases`, data);
   },
 
   getActivitiesByClass: async (classId: string): Promise<ActivityListResponse> => {

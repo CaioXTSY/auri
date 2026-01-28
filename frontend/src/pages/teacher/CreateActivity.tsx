@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -9,7 +9,8 @@ import { activityService } from '@/services/activity-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ChevronLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 
 const createActivitySchema = z.object({
   title: z.string().min(3, 'O título deve ter pelo menos 3 caracteres'),
@@ -19,26 +20,39 @@ const createActivitySchema = z.object({
   points: z.coerce.number().min(1, 'Pontuação mínima é 1'),
   deadline: z.string().min(1, 'Defina um prazo'),
   starterCode: z.string().optional(),
+  testCases: z.array(z.object({
+    input: z.string().min(1, 'Defina a entrada'),
+    expectedOutput: z.string().min(1, 'Defina a saída esperada'),
+    points: z.coerce.number().min(1, 'Pontos > 0'),
+    isVisible: z.boolean().default(true),
+    description: z.string().optional(),
+  })).min(1, 'Adicione pelo menos um caso de teste'),
 });
 
 type CreateActivityForm = z.infer<typeof createActivitySchema>;
 
 export const CreateActivity = () => {
-  const { classId } = useParams<{ classId: string }>();
+  const { id: classId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [classData, setClassData] = useState<Class | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateActivityForm>({
+  const { register, control, handleSubmit, formState: { errors } } = useForm<CreateActivityForm>({
     resolver: zodResolver(createActivitySchema),
     defaultValues: {
       type: 'EXERCICIO',
       difficulty: 'FACIL',
       points: 100,
       starterCode: '// Digite o código inicial aqui...',
+      testCases: [{ input: '', expectedOutput: '', points: 10, isVisible: true }]
     }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "testCases"
   });
 
   useEffect(() => {
@@ -64,13 +78,31 @@ export const CreateActivity = () => {
     setError(null);
 
     try {
-      await activityService.createActivity({
-        ...data,
+      // 1. Criar a atividade
+      const activity = await activityService.createActivity({
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        difficulty: data.difficulty,
+        points: data.points,
+        starterCode: data.starterCode,
         disciplineId: classData.disciplineId,
         classId: classData.id,
         deadline: new Date(data.deadline).toISOString(),
         allowLateSubmission: true,
       });
+
+      // 2. Criar os casos de teste
+      await Promise.all(data.testCases.map(tc => 
+        activityService.createTestCase(activity.id, {
+          input: tc.input,
+          expectedOutput: tc.expectedOutput,
+          points: tc.points,
+          isVisible: tc.isVisible,
+          description: tc.description,
+        })
+      ));
+
       navigate(`/dashboard/teacher/classes/${classData.id}`);
     } catch (err: unknown) {
       console.error(err);
@@ -207,6 +239,89 @@ export const CreateActivity = () => {
                   {...register('starterCode')}
                   className="flex min-h-[150px] w-full rounded-md border border-slate-200 bg-slate-900 text-slate-50 px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900"
                 />
+              </div>
+
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Casos de Teste (Input / Output)</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => append({ input: '', expectedOutput: '', points: 10, isVisible: true })}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar Caso de Teste
+                  </Button>
+                </div>
+                
+                {errors.testCases && <p className="text-xs text-red-500">{errors.testCases.message}</p>}
+
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
+                      <div className="absolute right-2 top-2">
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-slate-400 hover:text-red-500"
+                          onClick={() => remove(index)}
+                          disabled={fields.length === 1}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2">
+                          <Label htmlFor={`testCases.${index}.input`} className="text-xs text-slate-500">Entrada (Input)</Label>
+                          <textarea
+                            {...register(`testCases.${index}.input`)}
+                            className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900"
+                            placeholder="Ex: 5"
+                          />
+                          {errors.testCases?.[index]?.input && (
+                            <p className="text-xs text-red-500">{errors.testCases[index]?.input?.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`testCases.${index}.expectedOutput`} className="text-xs text-slate-500">Saída Esperada (Output)</Label>
+                          <textarea
+                            {...register(`testCases.${index}.expectedOutput`)}
+                            className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900"
+                            placeholder="Ex: 120"
+                          />
+                          {errors.testCases?.[index]?.expectedOutput && (
+                            <p className="text-xs text-red-500">{errors.testCases[index]?.expectedOutput?.message}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-end gap-4">
+                        <div className="w-32 space-y-2">
+                          <Label htmlFor={`testCases.${index}.points`} className="text-xs text-slate-500">Pontos</Label>
+                          <Input
+                            type="number"
+                            {...register(`testCases.${index}.points`)}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2 pb-3">
+                          <Checkbox 
+                            id={`testCases.${index}.isVisible`}
+                            {...register(`testCases.${index}.isVisible`)}
+                            defaultChecked={field.isVisible}
+                          />
+                          <Label htmlFor={`testCases.${index}.isVisible`} className="text-sm cursor-pointer">
+                            Visível para o aluno
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
