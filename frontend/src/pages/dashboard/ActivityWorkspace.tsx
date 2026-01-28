@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { activityService, type Activity } from '@/services/activity-service';
-import { submissionService, type Submission } from '@/services/submission-service';
+import { submissionService } from '@/services/submission-service';
 import { Play, Send, ChevronLeft, Clock, Trophy, Loader2 } from 'lucide-react';
 
 export const ActivityWorkspace = () => {
@@ -14,7 +14,7 @@ export const ActivityWorkspace = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [output, setOutput] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastSubmission, setLastSubmission] = useState<Submission | null>(null);
+  // const [lastSubmission, setLastSubmission] = useState<Submission | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -73,7 +73,7 @@ export const ActivityWorkspace = () => {
         language: activity.discipline?.language.toLowerCase() || 'javascript', // Fallback language
       });
 
-      setLastSubmission(submission);
+      // setLastSubmission(submission);
       
       // Feedback imediato
       if (submission.status === 'PENDENTE' || submission.status === 'EXECUTANDO') {
@@ -87,9 +87,12 @@ export const ActivityWorkspace = () => {
          setOutput(`Status: ${submission.status}\nResultado: ${submission.result || 'Sem detalhes'}`);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.response?.data?.message || 'Erro ao submeter solução. Tente novamente.');
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      // @ts-expect-error - axios error structure
+      const serverMessage = err.response?.data?.message;
+      setError(serverMessage || errorMessage || 'Erro ao submeter solução. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }

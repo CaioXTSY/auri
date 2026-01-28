@@ -27,6 +27,12 @@ export const DashboardHome = () => {
     let isMounted = true;
 
     const loadDashboardData = async () => {
+      // Professores não têm dashboard de aluno (gamificação/atividades) por enquanto
+      if (user?.role === 'PROFESSOR') {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
@@ -89,7 +95,7 @@ export const DashboardHome = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.role]);
 
   const level = levelInfo?.currentLevel ?? 0;
   const currentXp = levelInfo?.totalPoints ?? 0;
@@ -104,6 +110,23 @@ export const DashboardHome = () => {
     if (!Number.isFinite(levelInfo.progressToNextLevel)) return 0;
     return Math.min(100, Math.max(0, Math.round(levelInfo.progressToNextLevel)));
   }, [levelInfo]);
+
+  if (user?.role === 'PROFESSOR') {
+    return (
+      <DashboardLayout>
+        <div className="space-y-8">
+          <section className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-8">
+            <h2 className="text-2xl font-display font-bold text-brand-900">
+              Bem-vindo, Professor {firstName}.
+            </h2>
+            <p className="mt-2 text-slate-600">
+              Gerencie suas turmas e atividades através do menu lateral.
+            </p>
+          </section>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

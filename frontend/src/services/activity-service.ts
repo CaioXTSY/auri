@@ -35,7 +35,25 @@ export interface ActivityListResponse {
   };
 }
 
+export interface CreateActivityDto {
+  disciplineId: string;
+  classId?: string;
+  title: string;
+  description: string;
+  type: 'EXERCISE' | 'CHALLENGE' | 'PROJECT' | 'QUIZ';
+  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
+  points: number;
+  deadline?: string;
+  starterCode?: string;
+  allowLateSubmission?: boolean;
+}
+
 export const activityService = {
+  createActivity: async (data: CreateActivityDto): Promise<Activity> => {
+    const response = await api.post<Activity>('/activities', data);
+    return response.data;
+  },
+
   getActivitiesByClass: async (classId: string): Promise<ActivityListResponse> => {
     const response = await api.get<ActivityListResponse>('/activities', {
       params: { classId },

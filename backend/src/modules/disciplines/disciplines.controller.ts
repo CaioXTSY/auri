@@ -143,6 +143,20 @@ export class DisciplinesController {
     return this.disciplinesService.findAll(query);
   }
 
+  @Get('my-disciplines')
+  @Roles(Role.ADMIN, Role.PROFESSOR)
+  @ApiOperation({ 
+    summary: 'Listar minhas disciplinas',
+    description: 'Retorna lista de disciplinas criadas pelo professor logado'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de disciplinas retornada com sucesso',
+  })
+  getMyDisciplines(@Request() req) {
+    return this.disciplinesService.findAll({ createdById: req.user.id, limit: 100 });
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({ 

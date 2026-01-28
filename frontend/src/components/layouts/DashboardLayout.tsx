@@ -46,21 +46,48 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
 
         <nav className="flex-1 px-3 py-6 space-y-1 text-sm font-medium">
-          <Link
-            to="/dashboard"
-            className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`}
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            <span>Visão Geral</span>
-          </Link>
-
-          <Link
-            to="/dashboard/classes"
-            className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/classes')}`}
-          >
-            <BookOpen className="h-4 w-4" />
-            <span>Minhas Turmas</span>
-          </Link>
+          {user?.role === 'PROFESSOR' ? (
+            <>
+              <Link
+                to="/dashboard"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`}
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Visão Geral</span>
+              </Link>
+              <Link
+                to="/dashboard/teacher/classes"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/teacher/classes')}`}
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Gerenciar Turmas</span>
+              </Link>
+              <Link
+                to="/dashboard/teacher/disciplines"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/teacher/disciplines')}`}
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Disciplinas</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/dashboard"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`}
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Visão Geral</span>
+              </Link>
+              <Link
+                to="/dashboard/classes"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/classes')}`}
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Minhas Turmas</span>
+              </Link>
+            </>
+          )}
 
           <button
             type="button"
@@ -118,7 +145,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <header className="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between bg-white border-b border-slate-200">
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
-              Painel do Aluno
+              {user?.role === 'PROFESSOR' ? 'Painel do Professor' : 'Painel do Aluno'}
             </span>
             <span className="text-lg md:text-xl font-display font-bold text-brand-900">
               Olá, {firstName}
