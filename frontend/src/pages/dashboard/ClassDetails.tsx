@@ -3,12 +3,17 @@ import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { activityService, type Activity } from '@/services/activity-service';
+import { gamificationService, type RankingEntry } from '@/services/gamification-service';
+import { Leaderboard } from '@/components/gamification/Leaderboard';
+import { useAuthStore } from '@/stores/auth-store';
 import { Calendar, Trophy, Clock, ChevronRight, BookOpen } from 'lucide-react';
 
 export const ClassDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const user = useAuthStore((state) => state.user);
   const [classroom, setClassroom] = useState<Class | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,14 +27,16 @@ export const ClassDetails = () => {
         setIsLoading(true);
         setError(null);
 
-        const [classData, activitiesData] = await Promise.all([
+        const [classData, activitiesData, rankingData] = await Promise.all([
           classService.getClassDetails(id),
           activityService.getActivitiesByClass(id),
+          gamificationService.getRanking('TURMA', id, 10),
         ]);
 
         if (isMounted) {
           setClassroom(classData);
           setActivities(activitiesData.data);
+          setRanking(rankingData);
         }
       } catch (err) {
         if (isMounted) {
@@ -155,60 +162,72 @@ export const ClassDetails = () => {
           </div>
         </div>
 
-        {/* Activities List */}
-        <div>
-          <h2 className="text-xl font-display font-bold text-brand-900 mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-accent-600" />
-            Atividades
-          </h2>
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Activities List */}
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-display font-bold text-brand-900 mb-4 flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-accent-600" />
+              Atividades
+            </h2>
 
-          {activities.length === 0 ? (
-            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-              <p className="text-slate-500">
-                Nenhuma atividade disponível para esta turma no momento.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {activities.map((activity) => (
-                <Link
-                  key={activity.id}
-                  to={`/dashboard/activities/${activity.id}`}
-                  className="block group"
-                >
-                  <div className="bg-white rounded-xl border border-slate-200 p-5 transition-all hover:shadow-md hover:border-accent-200 group-hover:translate-x-1">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getDifficultyColor(activity.difficulty)}`}>
-                            {activity.difficulty}
-                          </span>
-                          <span className="text-xs text-slate-500 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Entrega: {formatDate(activity.deadline)}
-                          </span>
+            {activities.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
+                <p className="text-slate-500">
+                  Nenhuma atividade disponível para esta turma no momento.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {activities.map((activity) => (
+                  <Link
+                    key={activity.id}
+                    to={`/dashboard/activities/${activity.id}`}
+                    className="block group"
+                  >
+                    <div className="bg-white rounded-xl border border-slate-200 p-5 transition-all hover:shadow-md hover:border-accent-200 group-hover:translate-x-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getDifficultyColor(activity.difficulty)}`}>
+                              {activity.difficulty}
+                            </span>
+                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Entrega: {formatDate(activity.deadline)}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-bold text-slate-800 group-hover:text-brand-700 transition-colors">
+                            {activity.title}
+                          </h3>
+                          <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                            {activity.description}
+                          </p>
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800 group-hover:text-brand-700 transition-colors">
-                          {activity.title}
-                        </h3>
-                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
-                          {activity.description}
-                        </p>
-                      </div>
 
-                      <div className="flex flex-col items-end gap-3">
-                        <div className="flex items-center gap-1 text-accent-600 font-bold bg-accent-50 px-3 py-1 rounded-full border border-accent-100">
-                          <Trophy className="w-3 h-3" />
-                          <span>{activity.points} XP</span>
+                        <div className="flex flex-col items-end gap-3">
+                          <div className="flex items-center gap-1 text-accent-600 font-bold bg-accent-50 px-3 py-1 rounded-full border border-accent-100">
+                            <Trophy className="w-3 h-3" />
+                            <span>{activity.points} XP</span>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-brand-600 transition-colors" />
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-brand-600 transition-colors" />
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <Leaderboard 
+              entries={ranking} 
+              currentUserId={user?.id}
+              title="Ranking da Turma"
+            />
+          </div>
         </div>
       </div>
     </DashboardLayout>

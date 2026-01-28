@@ -94,13 +94,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           >
             
           </button>
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors"
+          <Link
+            to="/dashboard/achievements"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/achievements')}`}
           >
             <Trophy className="h-4 w-4" />
             <span>Gamificação</span>
-          </button>
+          </Link>
 
           <button
             type="button"
