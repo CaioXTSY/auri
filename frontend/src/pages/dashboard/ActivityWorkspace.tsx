@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { activityService, type Activity } from '@/services/activity-service';
-import { Play, Send, ChevronLeft, Clock, Trophy } from 'lucide-react';
+import { submissionService, type Submission } from '@/services/submission-service';
+import { Play, Send, ChevronLeft, Clock, Trophy, Loader2 } from 'lucide-react';
 
 export const ActivityWorkspace = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,7 @@ export const ActivityWorkspace = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [output, setOutput] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastSubmission, setLastSubmission] = useState<Submission | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -27,8 +29,9 @@ export const ActivityWorkspace = () => {
         
         if (isMounted) {
           setActivity(data);
-          // Set starter code if available, otherwise default template
-          // Since starterCode isn't in the interface yet (but was in controller), I'll add a fallback
+          // Set starter code if available, otherwise default template based on discipline language
+          // Note: starterCode will be added to Activity interface in backend later if not present
+          // For now, simple fallback
           setCode('// Escreva sua solução aqui\n\nfunction solution() {\n  \n}'); 
         }
       } catch (err) {
@@ -51,23 +54,55 @@ export const ActivityWorkspace = () => {
   }, [id]);
 
   const handleRun = () => {
-    setOutput('Executando testes...\n\nTeste 1: Passou ✅\nTeste 2: Passou ✅\nTeste 3: Falhou ❌\n\nEsperado: 15\nRecebido: 10');
+    // Em um cenário real, isso poderia chamar um endpoint de "dry-run" ou execução de testes
+    // Por enquanto, apenas simula uma execução local ou feedback visual
+    setOutput('Executando testes locais...\n(Funcionalidade de execução em tempo real será implementada em breve)');
   };
 
   const handleSubmit = async () => {
+    if (!activity || !id) return;
+
     setIsSubmitting(true);
-    // Mock submission
-    setTimeout(() => {
+    setError(null);
+    setOutput(null);
+
+    try {
+      const submission = await submissionService.createSubmission({
+        activityId: id,
+        code: code,
+        language: activity.discipline?.language.toLowerCase() || 'javascript', // Fallback language
+      });
+
+      setLastSubmission(submission);
+      
+      // Feedback imediato
+      if (submission.status === 'PENDENTE' || submission.status === 'EXECUTANDO') {
+        setOutput('Solução enviada! Processando...');
+        
+        // Polling simples para verificar resultado (simulado por enquanto, ideal seria websocket ou polling real)
+        setTimeout(() => {
+           navigate('/dashboard/classes/' + activity?.class?.id);
+        }, 2000);
+      } else {
+         setOutput(`Status: ${submission.status}\nResultado: ${submission.result || 'Sem detalhes'}`);
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Erro ao submeter solução. Tente novamente.');
+    } finally {
       setIsSubmitting(false);
-      navigate('/dashboard/classes/' + activity?.class?.id);
-    }, 1500);
+    }
   };
 
   if (isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-screen">
-          <div className="text-slate-500">Carregando ambiente...</div>
+          <div className="flex flex-col items-center gap-4 text-slate-500">
+            <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+            <p>Carregando ambiente...</p>
+          </div>
         </div>
       </DashboardLayout>
     );
