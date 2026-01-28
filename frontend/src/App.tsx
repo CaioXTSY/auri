@@ -4,6 +4,8 @@ import { Login } from '@/pages/auth/Login';
 import { Register } from '@/pages/auth/Register';
 import { DashboardHome } from '@/pages/dashboard/DashboardHome';
 import { MyClasses } from '@/pages/dashboard/MyClasses';
+import { ClassDetails } from '@/pages/dashboard/ClassDetails';
+import { ActivityWorkspace } from '@/pages/dashboard/ActivityWorkspace';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
 function App() {
@@ -26,6 +28,22 @@ function App() {
           element={
             <ProtectedRoute>
               <MyClasses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/classes/:id"
+          element={
+            <ProtectedRoute>
+              <ClassDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/activities/:id"
+          element={
+            <ProtectedRoute>
+              <ActivityWorkspace />
             </ProtectedRoute>
           }
         />
