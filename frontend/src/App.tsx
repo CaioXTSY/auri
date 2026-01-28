@@ -3,6 +3,7 @@ import { Home } from '@/pages/Home';
 import { Login } from '@/pages/auth/Login';
 import { Register } from '@/pages/auth/Register';
 import { DashboardHome } from '@/pages/dashboard/DashboardHome';
+import { MyClasses } from '@/pages/dashboard/MyClasses';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
 function App() {
@@ -17,6 +18,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/classes"
+          element={
+            <ProtectedRoute>
+              <MyClasses />
             </ProtectedRoute>
           }
         />

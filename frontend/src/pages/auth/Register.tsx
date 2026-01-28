@@ -35,7 +35,7 @@ const getRegisterErrorMessage = (error: unknown): string => {
     }
 
     if (Array.isArray(apiMessage)) {
-      const firstMessage = apiMessage.find((item) => typeof item === 'string');
+      const firstMessage = (apiMessage as unknown[]).find((item: unknown) => typeof item === 'string');
       if (firstMessage) {
         return firstMessage;
       }

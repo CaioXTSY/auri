@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -10,6 +10,7 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const location = useLocation();
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
   const initials = user?.name
@@ -20,6 +21,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         .map((part) => part[0]?.toUpperCase())
         .join('')
     : 'AU';
+
+  const isActive = (path: string) => {
+    return location.pathname === path
+      ? 'bg-brand-900 text-accent-400'
+      : 'text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors';
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-100 text-slate-900">
@@ -41,20 +48,25 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <nav className="flex-1 px-3 py-6 space-y-1 text-sm font-medium">
           <Link
             to="/dashboard"
-            className="flex items-center gap-3 px-3 py-2 rounded-md bg-brand-900 text-accent-400"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`}
           >
             <LayoutDashboard className="h-4 w-4" />
             <span>Visão Geral</span>
           </Link>
 
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors"
+          <Link
+            to="/dashboard/classes"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/classes')}`}
           >
             <BookOpen className="h-4 w-4" />
-            <span>Disciplinas</span>
-          </button>
+            <span>Minhas Turmas</span>
+          </Link>
 
+          <button
+            type="button"
+          >
+            
+          </button>
           <button
             type="button"
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors"

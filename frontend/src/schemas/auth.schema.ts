@@ -9,8 +9,8 @@ export const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  role: z.enum(['ALUNO', 'PROFESSOR'], {
-    required_error: 'Selecione um perfil',
+  role: z.enum(['ALUNO', 'PROFESSOR']).refine(val => val !== undefined, {
+    message: 'Selecione um perfil',
   }),
 });
 

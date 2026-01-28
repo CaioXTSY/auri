@@ -34,7 +34,7 @@ const getLoginErrorMessage = (error: unknown): string => {
     }
 
     if (Array.isArray(apiMessage)) {
-      const firstMessage = apiMessage.find((item) => typeof item === 'string');
+      const firstMessage = (apiMessage as string[]).find((item) => typeof item === 'string');
       if (firstMessage) {
         return firstMessage;
       }
