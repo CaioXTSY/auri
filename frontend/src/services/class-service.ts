@@ -14,6 +14,7 @@ export interface Class {
   name: string;
   semester: string;
   year: number;
+  code: string;
   status: 'ATIVA' | 'ENCERRADA';
   discipline: Discipline;
   enrolledAt?: string;
@@ -49,5 +50,9 @@ export const classService = {
   getClassDetails: async (id: string): Promise<Class> => {
     const response = await api.get<Class>(`/classes/${id}`);
     return response.data;
+  },
+
+  joinClass: async (code: string): Promise<void> => {
+    await api.post('/classes/join', { code });
   },
 };

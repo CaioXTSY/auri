@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 export const MyClasses = () => {
+  const navigate = useNavigate();
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +46,19 @@ export const MyClasses = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-brand-900">
-            Minhas Turmas
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Acesse suas disciplinas e atividades matriculadas.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-brand-900">
+              Minhas Turmas
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Acesse suas disciplinas e atividades matriculadas.
+            </p>
+          </div>
+          <Button onClick={() => navigate('/dashboard/classes/join')} className="w-full md:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            Entrar em nova turma
+          </Button>
         </div>
 
         {isLoading && (

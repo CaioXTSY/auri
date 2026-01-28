@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { activityService, type Activity } from '@/services/activity-service';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronLeft, Calendar, Users, Trophy, Code, Loader2 } from 'lucide-react';
+import { Plus, ChevronLeft, Calendar, Users, Trophy, Code, Loader2, Copy, Check } from 'lucide-react';
 
 export const TeacherClassDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +13,15 @@ export const TeacherClassDetails = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const copyToClipboard = () => {
+    if (classData?.code) {
+      navigator.clipboard.writeText(classData.code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -97,6 +106,17 @@ export const TeacherClassDetails = () => {
                   <Calendar className="w-4 h-4" />
                   {classData.semester}
                 </span>
+                <div className="flex items-center gap-2 bg-brand-50 px-3 py-1 rounded-full border border-brand-100">
+                  <span className="text-xs font-semibold text-brand-700 uppercase tracking-wide">Código:</span>
+                  <code className="font-mono font-bold text-brand-900">{classData.code}</code>
+                  <button 
+                    onClick={copyToClipboard}
+                    className="ml-1 text-brand-500 hover:text-brand-700 transition-colors"
+                    title="Copiar código"
+                  >
+                    {copiedCode ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  </button>
+                </div>
                 <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
                   classData.status === 'ATIVA' 
                     ? 'bg-emerald-100 text-emerald-700' 

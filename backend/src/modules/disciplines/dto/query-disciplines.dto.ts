@@ -12,7 +12,7 @@ export class QueryDisciplinesDto {
   @IsInt()
   @Min(1)
   @IsOptional()
-  page: number = 1;
+  page?: number = 1;
 
   @ApiPropertyOptional({
     description: 'Quantidade de itens por página',
@@ -23,7 +23,7 @@ export class QueryDisciplinesDto {
   @IsInt()
   @Min(1)
   @IsOptional()
-  limit: number = 10;
+  limit?: number = 10;
 
   @ApiPropertyOptional({
     description: 'Filtrar por ID do criador',

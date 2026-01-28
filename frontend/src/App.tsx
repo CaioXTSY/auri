@@ -14,6 +14,8 @@ import { TeacherDisciplines } from '@/pages/teacher/TeacherDisciplines';
 import { CreateDiscipline } from '@/pages/teacher/CreateDiscipline';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
+import { JoinClass } from '@/pages/dashboard/JoinClass';
+
 function App() {
   return (
     <Router>
@@ -36,6 +38,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MyClasses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/classes/join"
+          element={
+            <ProtectedRoute>
+              <JoinClass />
             </ProtectedRoute>
           }
         />

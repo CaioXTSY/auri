@@ -108,6 +108,7 @@ model Class {
   name         String
   semester     String
   year         Int
+  code         String   @unique @default(cuid()) // Código único para entrar na turma
   status       String   @default("ATIVA") // ATIVA, ENCERRADA
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")

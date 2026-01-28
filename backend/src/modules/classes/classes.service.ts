@@ -18,6 +18,74 @@ import { Class } from '@prisma/client';
 export class ClassesService {
   constructor(private prisma: PrismaService) {}
 
+  async findByCode(code: string): Promise<Class> {
+    const classEntity = await this.prisma.class.findUnique({
+      where: { code },
+      include: {
+        discipline: {
+          select: {
+            id: true,
+            name: true,
+            language: true,
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            students: true,
+            activities: true,
+          },
+        },
+      },
+    });
+
+    if (!classEntity) {
+      throw new NotFoundException('Turma não encontrada');
+    }
+
+    return classEntity;
+  }
+
+  async joinClass(code: string, userId: string): Promise<any> {
+    const classEntity = await this.findByCode(code);
+
+    if (classEntity.status !== 'ATIVA') {
+      throw new BadRequestException('Não é possível entrar em uma turma encerrada');
+    }
+
+    const existingEnrollment = await this.prisma.classStudent.findUnique({
+      where: {
+        classId_userId: {
+          classId: classEntity.id,
+          userId,
+        },
+      },
+    });
+
+    if (existingEnrollment) {
+      throw new ConflictException('Você já está matriculado nesta turma');
+    }
+
+    return this.prisma.classStudent.create({
+      data: {
+        classId: classEntity.id,
+        userId,
+      },
+      include: {
+        class: {
+          include: {
+            discipline: true,
+          },
+        },
+      },
+    });
+  }
+
   async create(createClassDto: CreateClassDto): Promise<Class> {
     // Verificar se a disciplina existe
     const discipline = await this.prisma.discipline.findUnique({

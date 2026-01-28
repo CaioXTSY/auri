@@ -14,7 +14,7 @@ import { ChevronLeft, Loader2 } from 'lucide-react';
 const createActivitySchema = z.object({
   title: z.string().min(3, 'O título deve ter pelo menos 3 caracteres'),
   description: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres'),
-  type: z.enum(['EXERCISE', 'CHALLENGE', 'PROJECT', 'QUIZ']),
+  type: z.enum(['EXERCICIO', 'DESAFIO', 'PROJETO', 'QUIZ']),
   difficulty: z.enum(['FACIL', 'MEDIO', 'DIFICIL']),
   points: z.coerce.number().min(1, 'Pontuação mínima é 1'),
   deadline: z.string().min(1, 'Defina um prazo'),
@@ -34,7 +34,7 @@ export const CreateActivity = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<CreateActivityForm>({
     resolver: zodResolver(createActivitySchema),
     defaultValues: {
-      type: 'EXERCISE',
+      type: 'EXERCICIO',
       difficulty: 'FACIL',
       points: 100,
       starterCode: '// Digite o código inicial aqui...',
@@ -146,9 +146,9 @@ export const CreateActivity = () => {
                     {...register('type')}
                     className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900"
                   >
-                    <option value="EXERCISE">Exercício</option>
-                    <option value="CHALLENGE">Desafio</option>
-                    <option value="PROJECT">Projeto</option>
+                    <option value="EXERCICIO">Exercício</option>
+                    <option value="DESAFIO">Desafio</option>
+                    <option value="PROJETO">Projeto</option>
                     <option value="QUIZ">Quiz</option>
                   </select>
                 </div>

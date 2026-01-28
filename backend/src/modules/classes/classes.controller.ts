@@ -37,6 +37,40 @@ import { Role } from '@prisma/client';
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
 
+  @Post('join')
+  @Roles(Role.ALUNO)
+  @ApiOperation({ 
+    summary: 'Entrar em uma turma pelo código',
+    description: 'Permite que um aluno entre em uma turma usando o código de acesso.'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          example: 'ckz123456'
+        }
+      },
+      required: ['code']
+    }
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Aluno matriculado com sucesso',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Turma não encontrada',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Aluno já matriculado',
+  })
+  joinClass(@Body('code') code: string, @Request() req) {
+    return this.classesService.joinClass(code, req.user.id);
+  }
+
   @Post()
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ 
