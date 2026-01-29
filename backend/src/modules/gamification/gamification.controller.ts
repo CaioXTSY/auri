@@ -49,6 +49,14 @@ export class GamificationController {
     return { userId: req.user.id, totalPoints };
   }
 
+  @Get('stats/me')
+  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Obter estatísticas do usuário' })
+  @ApiResponse({ status: 200, description: 'Estatísticas do usuário' })
+  async getMyStats(@Request() req) {
+    return this.gamificationService.getUserStats(req.user.id);
+  }
+
   @Get('points/history')
   @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Obter histórico de pontos' })

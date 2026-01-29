@@ -2,22 +2,25 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { AchievementCard } from '@/components/gamification/AchievementCard';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
-import { gamificationService, type AchievementProgress, type RankingEntry } from '@/services/gamification-service';
+import { gamificationService, type AchievementProgress, type RankingEntry, type UserStats } from '@/services/gamification-service';
 import { Loader2, Trophy, Star, Medal } from 'lucide-react';
 
 export const AchievementsPage = () => {
   const [achievements, setAchievements] = useState<AchievementProgress | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
   const [globalRanking, setGlobalRanking] = useState<RankingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [achievementsData, rankingData] = await Promise.all([
+        const [achievementsData, statsData, rankingData] = await Promise.all([
           gamificationService.getMyAchievements(),
+          gamificationService.getMyStats(),
           gamificationService.getRanking('GLOBAL', undefined, 10)
         ]);
         setAchievements(achievementsData);
+        setStats(statsData);
         setGlobalRanking(rankingData);
       } catch (error) {
         console.error('Failed to load gamification data', error);
@@ -63,7 +66,7 @@ export const AchievementsPage = () => {
             <div>
               <p className="text-sm text-slate-500 font-medium">Pontuação Total</p>
               <p className="text-2xl font-bold text-slate-900">
-                {globalRanking.find(r => r.user.id === 'me')?.points || '---'} XP
+                {stats?.currentXp || 0} XP
               </p>
             </div>
           </div>
@@ -73,8 +76,18 @@ export const AchievementsPage = () => {
               <Medal className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Ranking Global</p>
-              <p className="text-2xl font-bold text-slate-900">Top 10</p>
+              <p className="text-sm text-slate-500 font-medium">Nível Atual</p>
+              <div className="flex flex-col">
+                <p className="text-lg font-bold text-slate-900">{stats?.levelName || 'Iniciante'}</p>
+                {stats && (
+                  <div className="w-full bg-slate-100 h-1.5 mt-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-purple-600 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${stats.progress}%` }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

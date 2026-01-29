@@ -32,6 +32,17 @@ export interface RankingEntry {
   user: RankingUser;
 }
 
+export interface UserStats {
+  userId: string;
+  level: number;
+  levelName: string;
+  currentXp: number;
+  nextLevelXp: number;
+  progress: number;
+  achievementsCount: number;
+  totalAchievements: number;
+}
+
 export const gamificationService = {
   getMyAchievements: async (): Promise<AchievementProgress> => {
     const response = await api.get<AchievementProgress>('/gamification/achievements/me');
@@ -45,8 +56,8 @@ export const gamificationService = {
     return response.data;
   },
 
-  getMyStats: async () => {
-    const response = await api.get('/gamification/stats/me');
+  getMyStats: async (): Promise<UserStats> => {
+    const response = await api.get<UserStats>('/gamification/stats/me');
     return response.data;
   }
 };
