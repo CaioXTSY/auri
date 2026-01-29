@@ -2,24 +2,28 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { AchievementCard } from '@/components/gamification/AchievementCard';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
-import { gamificationService, type AchievementProgress, type RankingEntry, type UserStats } from '@/services/gamification-service';
-import { Loader2, Trophy, Star, Medal } from 'lucide-react';
+import { gamificationService, type PaginatedAchievements, type RankingEntry, type UserStats } from '@/services/gamification-service';
+import { Loader2, Trophy, Star, Medal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export const AchievementsPage = () => {
-  const [achievements, setAchievements] = useState<AchievementProgress | null>(null);
+  const [achievements, setAchievements] = useState<PaginatedAchievements | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [globalRanking, setGlobalRanking] = useState<RankingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAchievementsLoading, setIsAchievementsLoading] = useState(true);
+
+  // Pagination & Filter
+  const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<'ALL' | 'UNLOCKED' | 'LOCKED'>('ALL');
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitialData = async () => {
       try {
-        const [achievementsData, statsData, rankingData] = await Promise.all([
-          gamificationService.getMyAchievements(),
+        const [statsData, rankingData] = await Promise.all([
           gamificationService.getMyStats(),
           gamificationService.getRanking('GLOBAL', undefined, 10)
         ]);
-        setAchievements(achievementsData);
         setStats(statsData);
         setGlobalRanking(rankingData);
       } catch (error) {
@@ -29,8 +33,24 @@ export const AchievementsPage = () => {
       }
     };
 
-    loadData();
+    loadInitialData();
   }, []);
+
+  useEffect(() => {
+    const loadAchievements = async () => {
+      setIsAchievementsLoading(true);
+      try {
+        const data = await gamificationService.getMyAchievements(page, 6, filter);
+        setAchievements(data);
+      } catch (error) {
+        console.error('Failed to load achievements', error);
+      } finally {
+        setIsAchievementsLoading(false);
+      }
+    };
+
+    loadAchievements();
+  }, [page, filter]);
 
   if (isLoading) {
     return (
@@ -54,7 +74,7 @@ export const AchievementsPage = () => {
             <div>
               <p className="text-sm text-slate-500 font-medium">Conquistas Desbloqueadas</p>
               <p className="text-2xl font-bold text-slate-900">
-                {achievements?.unlockedCount} <span className="text-sm text-slate-400 font-normal">/ {achievements?.total}</span>
+                {stats?.achievementsCount} <span className="text-sm text-slate-400 font-normal">/ {stats?.totalAchievements}</span>
               </p>
             </div>
           </div>
@@ -95,21 +115,78 @@ export const AchievementsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Achievements List */}
           <div className="lg:col-span-2 space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-brand-600" />
                 Minhas Conquistas
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {achievements?.unlocked.map((achievement) => (
-                  <AchievementCard key={achievement.id} achievement={achievement} />
-                ))}
-                {achievements?.locked.map((achievement) => (
-                  <AchievementCard key={achievement.id} achievement={achievement} locked />
+              <div className="flex p-1 bg-slate-100 rounded-lg">
+                {(['ALL', 'UNLOCKED', 'LOCKED'] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => { setFilter(f); setPage(1); }}
+                    className={cn(
+                      "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                      filter === f 
+                        ? "bg-white text-brand-600 shadow-sm" 
+                        : "text-slate-500 hover:text-slate-700"
+                    )}
+                  >
+                    {f === 'ALL' ? 'Todas' : f === 'UNLOCKED' ? 'Desbloqueadas' : 'Bloqueadas'}
+                  </button>
                 ))}
               </div>
             </div>
+            
+            {isAchievementsLoading ? (
+              <div className="h-64 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {achievements?.data.map((achievement) => (
+                    <AchievementCard 
+                      key={achievement.id} 
+                      achievement={achievement} 
+                      locked={!achievement.isUnlocked} 
+                    />
+                  ))}
+                  
+                  {achievements?.data.length === 0 && (
+                    <div className="col-span-2 text-center py-12 text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      Nenhuma conquista encontrada nesta categoria.
+                    </div>
+                  )}
+                </div>
+
+                {/* Pagination */}
+                {achievements && achievements.meta.totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                    <p className="text-sm text-slate-500">
+                      Mostrando {((achievements.meta.page - 1) * achievements.meta.limit) + 1} até {Math.min(achievements.meta.page * achievements.meta.limit, achievements.meta.total)} de {achievements.meta.total}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={!achievements.meta.page || achievements.meta.page <= 1}
+                        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setPage(p => p + 1)}
+                        disabled={!achievements.meta.hasNextPage}
+                        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Sidebar Ranking */}

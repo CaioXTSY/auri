@@ -9,14 +9,20 @@ export interface Achievement {
   points: number;
   rarity: 'COMUM' | 'RARO' | 'EPICO' | 'LENDARIO';
   unlockedAt?: string | null;
+  isUnlocked?: boolean;
 }
 
-export interface AchievementProgress {
-  unlocked: Achievement[];
-  locked: Achievement[];
-  total: number;
-  unlockedCount: number;
-  progress: number;
+export interface PaginatedAchievements {
+  data: Achievement[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    totalUnlocked: number;
+    totalAchievements: number;
+  };
 }
 
 export interface RankingUser {
@@ -44,8 +50,10 @@ export interface UserStats {
 }
 
 export const gamificationService = {
-  getMyAchievements: async (): Promise<AchievementProgress> => {
-    const response = await api.get<AchievementProgress>('/gamification/achievements/me');
+  getMyAchievements: async (page = 1, limit = 10, filter: 'ALL' | 'UNLOCKED' | 'LOCKED' = 'ALL'): Promise<PaginatedAchievements> => {
+    const response = await api.get<PaginatedAchievements>('/gamification/achievements/me', {
+      params: { page, limit, filter }
+    });
     return response.data;
   },
 

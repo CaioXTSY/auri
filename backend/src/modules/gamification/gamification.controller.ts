@@ -135,13 +135,20 @@ export class GamificationController {
 
   @Get('achievements/me')
   @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Obter minhas conquistas' })
+  @ApiOperation({ summary: 'Obter minhas conquistas (paginado)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'filter',
+    required: false,
+    enum: ['ALL', 'UNLOCKED', 'LOCKED'],
+  })
   @ApiResponse({
     status: 200,
-    description: 'Conquistas do usuário',
+    description: 'Conquistas do usuário paginadas',
     schema: {
       example: {
-        unlocked: [
+        data: [
           {
             id: 'uuid',
             name: 'Primeira Submissão',
@@ -151,28 +158,33 @@ export class GamificationController {
             points: 10,
             rarity: 'COMUM',
             unlockedAt: '2024-01-26T00:00:00.000Z',
+            isUnlocked: true,
           },
         ],
-        locked: [
-          {
-            id: 'uuid',
-            name: 'Mestre do Código',
-            description: 'Complete 100 atividades',
-            icon: '👑',
-            category: 'SUBMISSÕES',
-            points: 500,
-            rarity: 'LENDÁRIO',
-            unlockedAt: null,
-          },
-        ],
-        total: 50,
-        unlockedCount: 5,
-        progress: 10,
+        meta: {
+          total: 50,
+          page: 1,
+          limit: 10,
+          totalPages: 5,
+          hasNextPage: true,
+          totalUnlocked: 5,
+          totalAchievements: 50,
+        },
       },
     },
   })
-  async getMyAchievements(@Request() req) {
-    return this.gamificationService.getUserAchievements(req.user.id);
+  async getMyAchievements(
+    @Request() req,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('filter') filter?: 'ALL' | 'UNLOCKED' | 'LOCKED',
+  ) {
+    return this.gamificationService.getUserAchievements(
+      req.user.id,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 10,
+      filter || 'ALL',
+    );
   }
 
   @Post('achievements')

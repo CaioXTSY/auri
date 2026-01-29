@@ -67,7 +67,7 @@ export class GamificationService {
   async getUserStats(userId: string) {
     const [levelInfo, achievements] = await Promise.all([
       this.getUserLevel(userId),
-      this.getUserAchievements(userId),
+      this.getUserAchievements(userId, 1, 1), // Fetch just 1 to get meta stats
     ]);
 
     return {
@@ -77,8 +77,8 @@ export class GamificationService {
       currentXp: levelInfo.totalPoints,
       nextLevelXp: levelInfo.pointsNeededForNextLevel + levelInfo.totalPoints,
       progress: levelInfo.progressToNextLevel,
-      achievementsCount: achievements.unlockedCount,
-      totalAchievements: achievements.total,
+      achievementsCount: achievements.meta.totalUnlocked,
+      totalAchievements: achievements.meta.totalAchievements,
     };
   }
 
@@ -263,35 +263,100 @@ export class GamificationService {
   }
 
   /**
-   * Obter conquistas do usuário
+   * Obter conquistas do usuário (Paginado)
    */
-  async getUserAchievements(userId: string) {
-    const unlocked = await this.prisma.userAchievement.findMany({
+  async getUserAchievements(
+    userId: string,
+    page = 1,
+    limit = 10,
+    filter: 'ALL' | 'UNLOCKED' | 'LOCKED' = 'ALL',
+  ) {
+    const skip = (page - 1) * limit;
+
+    // Totais globais (para estatísticas rápidas)
+    const totalAchievementsCount = await this.prisma.achievement.count();
+    const totalUnlockedCount = await this.prisma.userAchievement.count({
       where: { userId },
-      include: {
-        achievement: true,
-      },
-      orderBy: { unlockedAt: 'desc' },
     });
 
-    const all = await this.getAllAchievements();
+    let data = [];
+    let total = 0;
 
-    const unlockedIds = new Set(unlocked.map((ua) => ua.achievementId));
+    if (filter === 'UNLOCKED') {
+      total = totalUnlockedCount;
+      const userAchievements = await this.prisma.userAchievement.findMany({
+        where: { userId },
+        include: { achievement: true },
+        skip,
+        take: limit,
+        orderBy: { unlockedAt: 'desc' },
+      });
 
-    return {
-      unlocked: unlocked.map((ua) => ({
+      data = userAchievements.map((ua) => ({
         ...ua.achievement,
         unlockedAt: ua.unlockedAt,
-      })),
-      locked: all
-        .filter((a) => !unlockedIds.has(a.id))
-        .map((a) => ({
-          ...a,
-          unlockedAt: null,
-        })),
-      total: all.length,
-      unlockedCount: unlocked.length,
-      progress: (unlocked.length / all.length) * 100,
+        isUnlocked: true,
+      }));
+    } else if (filter === 'LOCKED') {
+      const unlocked = await this.prisma.userAchievement.findMany({
+        where: { userId },
+        select: { achievementId: true },
+      });
+      const unlockedIds = unlocked.map((u) => u.achievementId);
+
+      total = await this.prisma.achievement.count({
+        where: { id: { notIn: unlockedIds } },
+      });
+
+      const locked = await this.prisma.achievement.findMany({
+        where: { id: { notIn: unlockedIds } },
+        skip,
+        take: limit,
+        orderBy: [{ category: 'asc' }, { points: 'desc' }],
+      });
+
+      data = locked.map((a) => ({
+        ...a,
+        unlockedAt: null,
+        isUnlocked: false,
+      }));
+    } else {
+      // ALL
+      total = totalAchievementsCount;
+      const achievements = await this.prisma.achievement.findMany({
+        skip,
+        take: limit,
+        orderBy: [{ category: 'asc' }, { points: 'desc' }],
+      });
+
+      const pageIds = achievements.map((a) => a.id);
+      const unlockedInPage = await this.prisma.userAchievement.findMany({
+        where: { userId, achievementId: { in: pageIds } },
+        select: { achievementId: true, unlockedAt: true },
+      });
+
+      const unlockedMap = new Map(
+        unlockedInPage.map((u) => [u.achievementId, u.unlockedAt]),
+      );
+
+      data = achievements.map((a) => ({
+        ...a,
+        unlockedAt: unlockedMap.get(a.id) || null,
+        isUnlocked: unlockedMap.has(a.id),
+      }));
+    }
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        totalUnlocked: totalUnlockedCount,
+        totalAchievements: totalAchievementsCount,
+      },
     };
   }
 
@@ -716,7 +781,7 @@ export class GamificationService {
       await Promise.all([
         this.getUserTotalPoints(userId),
         this.getUserLevel(userId),
-        this.getUserAchievements(userId),
+        this.getUserAchievements(userId, 1, 1),
         this.getUserRankingPosition(userId, 'GLOBAL'),
       ]);
 
@@ -726,9 +791,14 @@ export class GamificationService {
       },
       level: levelInfo,
       achievements: {
-        unlocked: achievements.unlockedCount,
-        total: achievements.total,
-        progress: achievements.progress,
+        unlocked: achievements.meta.totalUnlocked,
+        total: achievements.meta.totalAchievements,
+        progress:
+          achievements.meta.totalAchievements > 0
+            ? (achievements.meta.totalUnlocked /
+                achievements.meta.totalAchievements) *
+              100
+            : 0,
       },
       ranking: {
         global: globalRanking?.position || null,
