@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { GamificationService } from '../gamification/gamification.service';
 import {
   CreateClassDto,
   UpdateClassDto,
@@ -16,7 +17,10 @@ import { Class } from '@prisma/client';
 
 @Injectable()
 export class ClassesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private gamificationService: GamificationService,
+  ) {}
 
   async findByCode(code: string): Promise<Class> {
     const classEntity = await this.prisma.class.findUnique({
@@ -71,7 +75,7 @@ export class ClassesService {
       throw new ConflictException('Você já está matriculado nesta turma');
     }
 
-    return this.prisma.classStudent.create({
+    const enrollment = await this.prisma.classStudent.create({
       data: {
         classId: classEntity.id,
         userId,
@@ -84,6 +88,11 @@ export class ClassesService {
         },
       },
     });
+
+    // Verificar conquistas de entrar na turma
+    await this.gamificationService.checkClassJoinAchievements(userId);
+
+    return enrollment;
   }
 
   async create(createClassDto: CreateClassDto): Promise<Class> {

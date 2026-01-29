@@ -453,7 +453,10 @@ export class SubmissionsService {
           );
 
           // Verificar conquistas especiais
-          await this.checkSubmissionAchievements(updated.userId, status);
+          await this.gamificationService.checkSubmissionDetailAchievements(
+            updated.userId,
+            updated,
+          );
         } catch (gamificationError) {
           this.logger.error(
             `Erro ao adicionar pontos de gamificação: ${gamificationError.message}`,
@@ -569,65 +572,5 @@ export class SubmissionsService {
     };
   }
 
-  /**
-   * Verificar e desbloquear conquistas baseadas em submissões
-   */
-  private async checkSubmissionAchievements(
-    userId: string,
-    status: SubmissionStatus,
-  ) {
-    // Contar submissões aprovadas do usuário
-    const approvedCount = await this.prisma.submission.count({
-      where: {
-        userId,
-        status: SubmissionStatus.APROVADO,
-      },
-    });
 
-    // Primeira submissão aprovada
-    if (approvedCount === 1) {
-      const achievement = await this.prisma.achievement.findFirst({
-        where: { condition: 'FIRST_APPROVED' },
-      });
-      if (achievement) {
-        await this.gamificationService.unlockAchievement(userId, achievement.id);
-      }
-    }
-
-    // Marcos de submissões aprovadas
-    const milestones = [10, 25, 50, 100, 250, 500];
-    if (milestones.includes(approvedCount)) {
-      const achievement = await this.prisma.achievement.findFirst({
-        where: { condition: `APPROVED_${approvedCount}` },
-      });
-      if (achievement) {
-        await this.gamificationService.unlockAchievement(userId, achievement.id);
-      }
-    }
-
-    // Perfeito (100% nos testes) - verificar se esta submissão foi perfeita
-    if (status === SubmissionStatus.APROVADO) {
-      const perfectCount = await this.prisma.submission.count({
-        where: {
-          userId,
-          status: SubmissionStatus.APROVADO,
-          pointsEarned: {
-            gte: 100, // Assumindo que 100% = pontos máximos da atividade
-          },
-        },
-      });
-
-      if (perfectCount === 10) {
-        const achievement = await this.prisma.achievement.findFirst({
-          where: { condition: 'PERFECTIONIST_10' },
-        });
-        if (achievement) {
-          await this.gamificationService.unlockAchievement(
-            userId,
-            achievement.id,
-          );
-        }
-      }
-    }
-  }
 }

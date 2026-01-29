@@ -4,10 +4,14 @@ import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
 import { UpdateProgressDto } from './dto/update-progress.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class MissionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private gamificationService: GamificationService,
+  ) {}
 
   /**
    * Criar nova missão (Admin/Professor)
@@ -329,6 +333,9 @@ export class MissionsService {
           referenceId: missionId,
         },
       });
+
+      // Verificar conquistas de missão
+      await this.gamificationService.checkMissionAchievements(userId);
     } else if (updateProgressDto.status) {
       data.status = updateProgressDto.status;
     }

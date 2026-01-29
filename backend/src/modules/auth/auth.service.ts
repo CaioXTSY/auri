@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
+import { GamificationService } from '../gamification/gamification.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
@@ -16,6 +17,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private gamificationService: GamificationService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -35,6 +37,9 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user);
     await this.updateRefreshToken(user.id, tokens.refresh_token);
+
+    // Verificar conquistas de login
+    await this.gamificationService.checkLoginAchievements(user.id);
 
     return {
       ...tokens,
