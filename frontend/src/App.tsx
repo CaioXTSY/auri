@@ -6,6 +6,7 @@ import { DashboardHome } from '@/pages/dashboard/DashboardHome';
 import { MyClasses } from '@/pages/dashboard/MyClasses';
 import { ClassDetails } from '@/pages/dashboard/ClassDetails';
 import { ActivityWorkspace } from '@/pages/dashboard/ActivityWorkspace';
+import { MissionsPage } from '@/pages/dashboard/MissionsPage';
 import { TeacherClasses } from '@/pages/teacher/TeacherClasses';
 import { CreateClass } from '@/pages/teacher/CreateClass';
 import { TeacherClassDetails } from '@/pages/teacher/TeacherClassDetails';
@@ -65,6 +66,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ClassDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/missions"
+          element={
+            <ProtectedRoute>
+              <MissionsPage />
             </ProtectedRoute>
           }
         />
