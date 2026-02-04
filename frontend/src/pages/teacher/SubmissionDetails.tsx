@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { submissionService, type Submission } from '@/services/submission-service';
-import { Button } from '@/components/ui/button';
 import { ChevronLeft, Loader2, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 export const SubmissionDetails = () => {

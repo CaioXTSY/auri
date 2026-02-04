@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag, Sparkles } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
@@ -26,8 +26,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   useEffect(() => {
     if (!dailyQuizKey) return;
     if (localStorage.getItem(dailyQuizKey)) return;
-    setShowDailyQuiz(true);
+    const timeoutId = window.setTimeout(() => setShowDailyQuiz(true), 0);
     localStorage.setItem(dailyQuizKey, 'seen');
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [dailyQuizKey]);
 
   useEffect(() => {
@@ -48,7 +51,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         const stats = await gamificationService.getMyStats();
         if (!isMounted) return;
         setUserStats(stats);
-      } catch (error) {
+      } catch {
         if (!isMounted) return;
         setUserStats(null);
       }

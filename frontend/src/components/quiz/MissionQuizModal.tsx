@@ -33,7 +33,7 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
         const response = await missionsService.getMissionQuiz(missionId);
         if (!isMounted) return;
         setQuiz(response);
-      } catch (loadError) {
+      } catch {
         if (!isMounted) return;
         setError('Não foi possível carregar o quiz desta missão.');
         setQuiz(null);
@@ -78,8 +78,11 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
       setResult(response);
       onAnswered?.();
     } catch (submitError) {
-      const status = (submitError as any)?.response?.status;
-      const message = (submitError as any)?.response?.data?.message;
+      const errorResponse = submitError as {
+        response?: { status?: number; data?: { message?: string } };
+      };
+      const status = errorResponse.response?.status;
+      const message = errorResponse.response?.data?.message;
       if (status === 401 || status === 403) {
         setError('Sessão expirada. Faça login novamente.');
         return;

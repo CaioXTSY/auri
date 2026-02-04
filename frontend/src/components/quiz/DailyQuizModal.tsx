@@ -45,7 +45,7 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
             pointsAwarded: response.pointsAwarded ?? 0,
           });
         }
-      } catch (loadError) {
+      } catch {
         if (!isMounted) return;
         setError('Não foi possível carregar o quiz diário.');
         setQuiz(null);
@@ -90,8 +90,11 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
       setResult(response);
       onAnswered();
     } catch (submitError) {
-      const status = (submitError as any)?.response?.status;
-      const message = (submitError as any)?.response?.data?.message;
+      const errorResponse = submitError as {
+        response?: { status?: number; data?: { message?: string } };
+      };
+      const status = errorResponse.response?.status;
+      const message = errorResponse.response?.data?.message;
       if (status === 401 || status === 403) {
         setError('Sessão expirada. Faça login novamente.');
         return;

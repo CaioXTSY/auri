@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { missionsService, type Mission, type MissionStatus, type MissionStats, type UserMission } from '@/services/missions-service';
 
@@ -43,8 +45,9 @@ export const MissionsPage = () => {
   const [availablePage, setAvailablePage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
   const pageSize = 6;
+  const { notify } = useToast();
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -65,11 +68,12 @@ export const MissionsPage = () => {
       setProgressMap(initialProgress);
     } catch (err) {
       setError('Não foi possível carregar as missões.');
+      notify({ title: 'Falha ao carregar missões', variant: 'error' });
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [notify]);
 
   useEffect(() => {
     let isMounted = true;
@@ -81,7 +85,7 @@ export const MissionsPage = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadData]);
 
   useEffect(() => {
     setAvailablePage(1);
@@ -97,8 +101,10 @@ export const MissionsPage = () => {
     try {
       await missionsService.updateProgress(missionId, progress);
       await loadData();
+      notify({ title: 'Progresso atualizado', variant: 'success' });
     } catch (err) {
       setError('Não foi possível atualizar o progresso.');
+      notify({ title: 'Falha ao atualizar progresso', variant: 'error' });
       console.error(err);
     }
   };
@@ -107,8 +113,10 @@ export const MissionsPage = () => {
     try {
       await missionsService.completeMission(missionId);
       await loadData();
+      notify({ title: 'Missão concluída', variant: 'success' });
     } catch (err) {
       setError('Não foi possível concluir a missão.');
+      notify({ title: 'Falha ao concluir missão', variant: 'error' });
       console.error(err);
     }
   };
@@ -277,9 +285,30 @@ export const MissionsPage = () => {
         </div>
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Carregando missões...
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Carregando missões...
+            </div>
+            <div className="grid gap-6 md:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={`skeleton-${index}`} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-9 w-28 rounded-md" />
+                    <Skeleton className="h-9 w-28 rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
