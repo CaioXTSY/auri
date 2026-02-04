@@ -293,6 +293,7 @@ model MissionQuiz {
   missionId      String   @unique @map("mission_id")
   title          String   @db.VarChar(200)
   question       String   @db.Text
+  difficulty     Difficulty
   options        Json
   explanations   Json
   correctIndex   Int      @map("correct_index")

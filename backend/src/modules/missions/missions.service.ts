@@ -405,6 +405,8 @@ export class MissionsService {
       missionId: mission.id,
       title: mission.quiz.title,
       question: mission.quiz.question,
+      difficulty: mission.quiz.difficulty,
+      points: mission.points,
       options: mission.quiz.options,
       answered: false,
       attempt: null,
@@ -510,6 +512,7 @@ export class MissionsService {
       correctIndex: mission.quiz.correctIndex,
       explanations: mission.quiz.explanations,
       selectedIndex: answerQuizDto.selectedIndex,
+      difficulty: mission.quiz.difficulty,
       pointsAwarded: isCorrect ? mission.points : 0,
     };
   }
@@ -566,6 +569,8 @@ export class MissionsService {
       missionId: mission.id,
       title: mission.quiz.title,
       question: mission.quiz.question,
+      difficulty: mission.quiz.difficulty,
+      points: mission.points,
       options: mission.quiz.options,
       answered: false,
       attempt: null,
@@ -735,6 +740,7 @@ export class MissionsService {
       '{',
       '"title": "string",',
       '"question": "string",',
+      '"difficulty": "FACIL" | "MEDIO" | "DIFICIL",',
       '"options": ["A","B","C","D"],',
       '"correctIndex": 0,',
       '"explanations": ["exp A","exp B","exp C","exp D"]',
@@ -777,6 +783,17 @@ export class MissionsService {
     const options = Array.isArray(parsed?.options) ? parsed.options : [];
     const explanations = Array.isArray(parsed?.explanations) ? parsed.explanations : [];
     const correctIndex = Number(parsed?.correctIndex);
+    const difficultyRaw = String(parsed?.difficulty || '').trim().toUpperCase();
+    const difficulty =
+      difficultyRaw === 'FACIL' || difficultyRaw === 'MEDIO' || difficultyRaw === 'DIFICIL'
+        ? difficultyRaw
+        : 'MEDIO';
+    const pointsByDifficulty = {
+      FACIL: 30,
+      MEDIO: 60,
+      DIFICIL: 100,
+    };
+    const points = pointsByDifficulty[difficulty];
 
     if (!title || !question || options.length < 2 || explanations.length !== options.length) {
       throw new BadRequestException('Quiz gerado inválido');
@@ -800,7 +817,7 @@ export class MissionsService {
         title,
         description: question,
         type: 'DIARIA',
-        points: 50,
+        points,
         startDate: startOfDay,
         endDate: endOfDay,
       },
@@ -811,6 +828,7 @@ export class MissionsService {
         missionId: mission.id,
         title,
         question,
+        difficulty,
         options,
         explanations,
         correctIndex,
@@ -822,6 +840,8 @@ export class MissionsService {
       missionId: mission.id,
       title,
       question,
+      difficulty,
+      points,
       options,
       answered: false,
       attempt: null,
