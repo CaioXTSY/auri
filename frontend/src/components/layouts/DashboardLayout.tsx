@@ -25,6 +25,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (!dailyQuizKey) return;
     if (localStorage.getItem(dailyQuizKey)) return;
     setShowDailyQuiz(true);
+    localStorage.setItem(dailyQuizKey, 'seen');
   }, [dailyQuizKey]);
 
   useEffect(() => {

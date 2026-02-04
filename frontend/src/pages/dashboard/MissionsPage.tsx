@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { missionsService, type Mission, type MissionStatus, type MissionStats, type UserMission } from '@/services/missions-service';
@@ -35,6 +36,7 @@ export const MissionsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -75,8 +77,8 @@ export const MissionsPage = () => {
     };
   }, []);
 
-  const openDailyQuiz = () => {
-    window.dispatchEvent(new Event('open-daily-quiz'));
+  const openMissionQuiz = (missionId: string) => {
+    setActiveMissionId(missionId);
   };
 
   const handleStartMission = async (missionId: string) => {
@@ -118,6 +120,12 @@ export const MissionsPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <MissionQuizModal
+          open={Boolean(activeMissionId)}
+          missionId={activeMissionId}
+          onClose={() => setActiveMissionId(null)}
+          onAnswered={loadData}
+        />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-brand-900">Missões</h1>
@@ -217,7 +225,6 @@ export const MissionsPage = () => {
             {available.map((mission) => {
               const status = mission.userStatus?.status ?? 'NAO_INICIADA';
               const progress = mission.userStatus?.progress ?? 0;
-              const isDaily = mission.type === 'DIARIA';
               return (
                 <div
                   key={mission.id}
@@ -306,16 +313,14 @@ export const MissionsPage = () => {
                         </Button>
                       </>
                     )}
-                    {isDaily && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="border-slate-200 text-slate-600"
-                        onClick={openDailyQuiz}
-                      >
-                        Abrir quiz diário
-                      </Button>
-                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-slate-200 text-slate-600"
+                      onClick={() => openMissionQuiz(mission.id)}
+                    >
+                      Abrir quiz
+                    </Button>
                   </div>
                 </div>
               );

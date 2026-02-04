@@ -45,6 +45,24 @@ export interface MissionStats {
   completionRate: number;
 }
 
+export interface MissionQuiz {
+  missionId: string;
+  title: string;
+  question: string;
+  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
+  points: number;
+  options: string[];
+}
+
+export interface MissionQuizAnswerResponse {
+  isCorrect: boolean;
+  correctIndex: number;
+  explanations: string[];
+  selectedIndex: number;
+  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
+  pointsAwarded: number;
+}
+
 export const missionsService = {
   getAvailable: async (classId?: string): Promise<Mission[]> => {
     const response = await api.get<Mission[]>('/missions/available', {
@@ -75,5 +93,21 @@ export const missionsService = {
 
   completeMission: async (missionId: string): Promise<void> => {
     await api.post(`/missions/${missionId}/complete`);
+  },
+
+  getMissionQuiz: async (missionId: string): Promise<MissionQuiz> => {
+    const response = await api.get<MissionQuiz>(`/missions/${missionId}/quiz`);
+    return response.data;
+  },
+
+  answerMissionQuiz: async (
+    missionId: string,
+    selectedIndex: number,
+  ): Promise<MissionQuizAnswerResponse> => {
+    const response = await api.post<MissionQuizAnswerResponse>(
+      `/missions/${missionId}/quiz/answer`,
+      { selectedIndex },
+    );
+    return response.data;
   },
 };
