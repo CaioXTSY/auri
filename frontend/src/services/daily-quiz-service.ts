@@ -9,6 +9,15 @@ export interface DailyQuiz {
   difficulty: DailyQuizDifficulty;
   points: number;
   options: string[];
+  answered: boolean;
+  attempt: {
+    selectedIndex: number;
+    isCorrect: boolean;
+    answeredAt: string;
+  } | null;
+  correctIndex?: number;
+  explanations?: string[];
+  pointsAwarded?: number;
 }
 
 export interface DailyQuizAnswerResponse {
@@ -23,6 +32,11 @@ export interface DailyQuizAnswerResponse {
 export const dailyQuizService = {
   getDailyQuiz: async (): Promise<DailyQuiz> => {
     const response = await api.get<DailyQuiz>('/missions/daily-quiz');
+    return response.data;
+  },
+
+  getDailyQuizForUser: async (): Promise<DailyQuiz> => {
+    const response = await api.get<DailyQuiz>('/missions/daily-quiz/me');
     return response.data;
   },
 

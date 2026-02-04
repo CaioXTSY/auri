@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
@@ -414,6 +414,15 @@ export class MissionsService {
   }
 
   async answerMissionQuiz(missionId: string, userId: string, answerQuizDto: AnswerQuizDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Sessão inválida. Faça login novamente.');
+    }
+
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: {
@@ -574,6 +583,99 @@ export class MissionsService {
       options: mission.quiz.options,
       answered: false,
       attempt: null,
+    };
+  }
+
+  async getDailyQuizForUser(userId: string) {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    let mission = await this.prisma.mission.findFirst({
+      where: {
+        type: 'DIARIA',
+        classId: null,
+        startDate: { gte: startOfDay },
+        endDate: { lte: endOfDay },
+        quiz: { isNot: null },
+      },
+      include: {
+        quiz: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!mission || !mission.quiz) {
+      const generated = await this.generateDailyQuizMission();
+      if (generated) {
+        return {
+          ...generated,
+          answered: false,
+          attempt: null,
+        };
+      }
+
+      mission = await this.prisma.mission.findFirst({
+        where: {
+          type: 'DIARIA',
+          classId: null,
+          startDate: { gte: startOfDay },
+          endDate: { lte: endOfDay },
+          quiz: { isNot: null },
+        },
+        include: {
+          quiz: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
+
+    if (!mission || !mission.quiz) {
+      throw new NotFoundException('Quiz diário não encontrado');
+    }
+
+    const attempt = await this.prisma.missionQuizAttempt.findUnique({
+      where: {
+        userId_missionId: {
+          userId,
+          missionId: mission.id,
+        },
+      },
+    });
+
+    if (!attempt) {
+      return {
+        missionId: mission.id,
+        title: mission.quiz.title,
+        question: mission.quiz.question,
+        difficulty: mission.quiz.difficulty,
+        points: mission.points,
+        options: mission.quiz.options,
+        answered: false,
+        attempt: null,
+      };
+    }
+
+    return {
+      missionId: mission.id,
+      title: mission.quiz.title,
+      question: mission.quiz.question,
+      difficulty: mission.quiz.difficulty,
+      points: mission.points,
+      options: mission.quiz.options,
+      answered: true,
+      attempt: {
+        selectedIndex: attempt.selectedIndex,
+        isCorrect: attempt.isCorrect,
+        answeredAt: attempt.answeredAt,
+      },
+      correctIndex: mission.quiz.correctIndex,
+      explanations: mission.quiz.explanations,
+      pointsAwarded: attempt.isCorrect ? mission.points : 0,
     };
   }
 

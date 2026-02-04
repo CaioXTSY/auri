@@ -27,6 +27,16 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     setShowDailyQuiz(true);
   }, [dailyQuizKey]);
 
+  useEffect(() => {
+    const handleOpenDailyQuiz = () => {
+      setShowDailyQuiz(true);
+    };
+    window.addEventListener('open-daily-quiz', handleOpenDailyQuiz);
+    return () => {
+      window.removeEventListener('open-daily-quiz', handleOpenDailyQuiz);
+    };
+  }, []);
+
   const handleDailyQuizClose = () => {
     if (dailyQuizKey) {
       localStorage.setItem(dailyQuizKey, 'dismissed');

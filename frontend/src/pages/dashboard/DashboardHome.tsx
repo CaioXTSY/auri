@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth-store';
 import { dashboardService, type LevelInfo, type UpcomingActivity } from '@/services/dashboard-service';
 
@@ -111,6 +113,10 @@ export const DashboardHome = () => {
     return Math.min(100, Math.max(0, Math.round(levelInfo.progressToNextLevel)));
   }, [levelInfo]);
 
+  const openDailyQuiz = () => {
+    window.dispatchEvent(new Event('open-daily-quiz'));
+  };
+
   if (user?.role === 'PROFESSOR') {
     return (
       <DashboardLayout>
@@ -144,6 +150,14 @@ export const DashboardHome = () => {
                 Continue evoluindo sua trilha. Complete atividades, acumule pontos e avance de nível
                 na AURI.
               </p>
+              <Button
+                type="button"
+                className="mt-4 bg-brand-900 hover:bg-brand-800 text-white font-semibold w-fit"
+                onClick={openDailyQuiz}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Ver quiz diário
+              </Button>
             </div>
             <div className="flex items-end justify-between gap-4">
               <div>

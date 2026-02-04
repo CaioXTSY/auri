@@ -29,9 +29,22 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
       setResult(null);
       setSelectedIndex(null);
       try {
-        const response = await dailyQuizService.getDailyQuiz();
+        const response = user?.id
+          ? await dailyQuizService.getDailyQuizForUser()
+          : await dailyQuizService.getDailyQuiz();
         if (!isMounted) return;
         setQuiz(response);
+        if (response.answered && response.attempt) {
+          setSelectedIndex(response.attempt.selectedIndex);
+          setResult({
+            isCorrect: response.attempt.isCorrect,
+            correctIndex: response.correctIndex ?? 0,
+            explanations: response.explanations ?? [],
+            selectedIndex: response.attempt.selectedIndex,
+            difficulty: response.difficulty,
+            pointsAwarded: response.pointsAwarded ?? 0,
+          });
+        }
       } catch (loadError) {
         if (!isMounted) return;
         setError('Não foi possível carregar o quiz diário.');
@@ -48,7 +61,7 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
     return () => {
       isMounted = false;
     };
-  }, [open]);
+  }, [open, user?.id]);
 
   const difficultyLabel = useMemo(() => {
     if (!quiz) return null;
@@ -65,13 +78,28 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
   }, [quiz]);
 
   const handleAnswer = async () => {
-    if (!quiz || selectedIndex == null || isSubmitting) return;
+    if (!quiz || selectedIndex == null || isSubmitting || result) return;
+    if (!user?.id) {
+      setError('Sessão expirada. Faça login novamente.');
+      return;
+    }
     setIsSubmitting(true);
+    setError(null);
     try {
       const response = await dailyQuizService.answerQuiz(quiz.missionId, selectedIndex);
       setResult(response);
       onAnswered();
     } catch (submitError) {
+      const status = (submitError as any)?.response?.status;
+      const message = (submitError as any)?.response?.data?.message;
+      if (status === 401 || status === 403) {
+        setError('Sessão expirada. Faça login novamente.');
+        return;
+      }
+      if (typeof message === 'string') {
+        setError(message);
+        return;
+      }
       setError('Não foi possível enviar sua resposta.');
     } finally {
       setIsSubmitting(false);
@@ -221,7 +249,7 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
                         type="button"
                         className="bg-brand-900 hover:bg-brand-800 text-white font-semibold"
                         onClick={handleAnswer}
-                        disabled={selectedIndex == null || isSubmitting}
+                        disabled={selectedIndex == null || isSubmitting || Boolean(result)}
                       >
                         {isSubmitting ? (
                           <>

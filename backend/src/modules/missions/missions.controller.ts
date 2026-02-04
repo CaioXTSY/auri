@@ -58,6 +58,15 @@ export class MissionsController {
     return this.missionsService.getDailyQuiz();
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ALUNO', 'PROFESSOR', 'ADMIN')
+  @ApiBearerAuth()
+  @Get('daily-quiz/me')
+  @ApiOperation({ summary: 'Obter quiz diário com tentativa do usuário' })
+  getDailyQuizForUser(@Request() req) {
+    return this.missionsService.getDailyQuizForUser(req.user.id);
+  }
+
   @Get('available')
   @ApiOperation({ summary: 'Listar missões disponíveis para o aluno' })
   @ApiQuery({ name: 'classId', required: false, description: 'Filtrar por turma' })
