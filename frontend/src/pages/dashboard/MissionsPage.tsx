@@ -37,6 +37,12 @@ export const MissionsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | MissionStatus>('ALL');
+  const [availablePage, setAvailablePage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
+  const pageSize = 6;
 
   const loadData = async () => {
     setIsLoading(true);
@@ -77,6 +83,11 @@ export const MissionsPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    setAvailablePage(1);
+    setHistoryPage(1);
+  }, [searchTerm, typeFilter, statusFilter, tab]);
+
   const openMissionQuiz = (missionId: string) => {
     setActiveMissionId(missionId);
   };
@@ -112,10 +123,51 @@ export const MissionsPage = () => {
     }
   };
 
-  const availableEmpty = !isLoading && available.length === 0;
-  const historyEmpty = !isLoading && history.length === 0;
-
   const completionRate = useMemo(() => stats?.completionRate ?? 0, [stats]);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const filteredAvailable = useMemo(() => {
+    return available.filter((mission) => {
+      const status = mission.userStatus?.status ?? 'NAO_INICIADA';
+      const matchesStatus = statusFilter === 'ALL' || statusFilter === status;
+      const matchesType = typeFilter === 'ALL' || mission.type === typeFilter;
+      const matchesSearch =
+        !normalizedSearch ||
+        mission.title.toLowerCase().includes(normalizedSearch) ||
+        mission.description.toLowerCase().includes(normalizedSearch);
+      return matchesStatus && matchesType && matchesSearch;
+    });
+  }, [available, normalizedSearch, statusFilter, typeFilter]);
+
+  const filteredHistory = useMemo(() => {
+    return history.filter((entry) => {
+      const matchesStatus = statusFilter === 'ALL' || statusFilter === entry.status;
+      const matchesType = typeFilter === 'ALL' || entry.mission.type === typeFilter;
+      const matchesSearch =
+        !normalizedSearch ||
+        entry.mission.title.toLowerCase().includes(normalizedSearch) ||
+        entry.mission.description.toLowerCase().includes(normalizedSearch);
+      return matchesStatus && matchesType && matchesSearch;
+    });
+  }, [history, normalizedSearch, statusFilter, typeFilter]);
+
+  const availableEmpty = !isLoading && filteredAvailable.length === 0;
+  const historyEmpty = !isLoading && filteredHistory.length === 0;
+
+  const availableTotalPages = Math.max(1, Math.ceil(filteredAvailable.length / pageSize));
+  const historyTotalPages = Math.max(1, Math.ceil(filteredHistory.length / pageSize));
+  const availablePageSafe = Math.min(availablePage, availableTotalPages);
+  const historyPageSafe = Math.min(historyPage, historyTotalPages);
+
+  const paginatedAvailable = useMemo(() => {
+    const start = (availablePageSafe - 1) * pageSize;
+    return filteredAvailable.slice(start, start + pageSize);
+  }, [availablePageSafe, filteredAvailable]);
+
+  const paginatedHistory = useMemo(() => {
+    const start = (historyPageSafe - 1) * pageSize;
+    return filteredHistory.slice(start, start + pageSize);
+  }, [historyPageSafe, filteredHistory]);
 
   return (
     <DashboardLayout>
@@ -199,6 +251,41 @@ export const MissionsPage = () => {
           </button>
         </div>
 
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          <div className="flex-1">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar por título ou descrição"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-200"
+            />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA')}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 bg-white"
+            >
+              <option value="ALL">Todos os tipos</option>
+              <option value="DIARIA">Diárias</option>
+              <option value="SEMANAL">Semanais</option>
+              <option value="PERSONALIZADA">Personalizadas</option>
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as 'ALL' | MissionStatus)}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 bg-white"
+            >
+              <option value="ALL">Todos os status</option>
+              <option value="NAO_INICIADA">Não iniciada</option>
+              <option value="EM_PROGRESSO">Em progresso</option>
+              <option value="CONCLUIDA">Concluída</option>
+              <option value="EXPIRADA">Expirada</option>
+            </select>
+          </div>
+        </div>
+
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -222,7 +309,7 @@ export const MissionsPage = () => {
 
         {!isLoading && tab === 'available' && (
           <div className="grid gap-6 md:grid-cols-2">
-            {available.map((mission) => {
+            {paginatedAvailable.map((mission) => {
               const status = mission.userStatus?.status ?? 'NAO_INICIADA';
               const progress = mission.userStatus?.progress ?? 0;
               return (
@@ -328,9 +415,35 @@ export const MissionsPage = () => {
           </div>
         )}
 
+        {!isLoading && tab === 'available' && filteredAvailable.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-slate-500">
+            <span>
+              Mostrando {(availablePageSafe - 1) * pageSize + 1} a {Math.min(availablePageSafe * pageSize, filteredAvailable.length)} de {filteredAvailable.length}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAvailablePage((page) => Math.max(1, page - 1))}
+                disabled={availablePageSafe <= 1}
+                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                type="button"
+                onClick={() => setAvailablePage((page) => Math.min(availableTotalPages, page + 1))}
+                disabled={availablePageSafe >= availableTotalPages}
+                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
+        )}
+
         {!isLoading && tab === 'history' && (
           <div className="grid gap-6 md:grid-cols-2">
-            {history.map((entry) => (
+            {paginatedHistory.map((entry) => (
               <div
                 key={entry.id}
                 className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-3"
@@ -378,6 +491,32 @@ export const MissionsPage = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {!isLoading && tab === 'history' && filteredHistory.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-slate-500">
+            <span>
+              Mostrando {(historyPageSafe - 1) * pageSize + 1} a {Math.min(historyPageSafe * pageSize, filteredHistory.length)} de {filteredHistory.length}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}
+                disabled={historyPageSafe <= 1}
+                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                type="button"
+                onClick={() => setHistoryPage((page) => Math.min(historyTotalPages, page + 1))}
+                disabled={historyPageSafe >= historyTotalPages}
+                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Próxima
+              </button>
+            </div>
           </div>
         )}
       </div>
