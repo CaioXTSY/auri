@@ -78,6 +78,7 @@ model User {
   achievements       UserAchievement[]
   rankings           Ranking[]
   missions           UserMission[]
+  missionQuizAttempts MissionQuizAttempt[]
   notifications      Notification[]
   aiGenerations      AIGeneration[]
 
@@ -280,9 +281,46 @@ model Mission {
 
   // Relações
   class        Class?        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  quiz         MissionQuiz?
   userMissions UserMission[]
+  quizAttempts MissionQuizAttempt[]
 
   @@map("missions")
+}
+
+model MissionQuiz {
+  id             String   @id @default(uuid())
+  missionId      String   @unique @map("mission_id")
+  title          String   @db.VarChar(200)
+  question       String   @db.Text
+  options        Json
+  explanations   Json
+  correctIndex   Int      @map("correct_index")
+  aiGenerationId String?  @map("ai_generation_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  mission       Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  aiGeneration  AIGeneration? @relation(fields: [aiGenerationId], references: [id])
+  attempts      MissionQuizAttempt[]
+
+  @@map("mission_quizzes")
+}
+
+model MissionQuizAttempt {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  missionId     String   @map("mission_id")
+  missionQuizId String   @map("mission_quiz_id")
+  selectedIndex Int      @map("selected_index")
+  isCorrect     Boolean  @map("is_correct")
+  answeredAt    DateTime @default(now()) @map("answered_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission    Mission     @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  missionQuiz MissionQuiz @relation(fields: [missionQuizId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId])
+  @@map("mission_quiz_attempts")
 }
 
 model UserMission {
@@ -313,6 +351,7 @@ model AIGeneration {
 
   // Relações
   reviewer User? @relation(fields: [reviewedBy], references: [id])
+  missionQuizzes MissionQuiz[]
 
   @@map("ai_generations")
 }
