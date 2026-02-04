@@ -30,7 +30,7 @@ export class MissionsController {
   @Roles('ADMIN', 'PROFESSOR')
   @ApiOperation({ summary: 'Criar nova missão (Admin/Professor)' })
   create(@Body() createMissionDto: CreateMissionDto, @Request() req) {
-    return this.missionsService.create(createMissionDto, req.user.sub);
+    return this.missionsService.create(createMissionDto, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -62,7 +62,7 @@ export class MissionsController {
   @ApiOperation({ summary: 'Listar missões disponíveis para o aluno' })
   @ApiQuery({ name: 'classId', required: false, description: 'Filtrar por turma' })
   getAvailableMissions(@Request() req, @Query('classId') classId?: string) {
-    return this.missionsService.getAvailableMissions(req.user?.sub, classId);
+    return this.missionsService.getAvailableMissions(req.user?.id, classId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -76,7 +76,7 @@ export class MissionsController {
     @Query('status') status?: 'NAO_INICIADA' | 'EM_PROGRESSO' | 'CONCLUIDA' | 'EXPIRADA',
     @Query('classId') classId?: string,
   ) {
-    return this.missionsService.getUserMissionHistory(req.user.sub, { status, classId });
+    return this.missionsService.getUserMissionHistory(req.user.id, { status, classId });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -84,7 +84,7 @@ export class MissionsController {
   @Roles('ALUNO')
   @ApiOperation({ summary: 'Estatísticas de missões do aluno' })
   getMyStats(@Request() req) {
-    return this.missionsService.getUserMissionStats(req.user.sub);
+    return this.missionsService.getUserMissionStats(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -115,7 +115,7 @@ export class MissionsController {
   @Roles('ALUNO')
   @ApiOperation({ summary: 'Iniciar missão (Aluno)' })
   startMission(@Param('id') id: string, @Request() req) {
-    return this.missionsService.startMission(id, req.user.sub);
+    return this.missionsService.startMission(id, req.user.id);
   }
 
   @Get(':id/quiz')
@@ -133,7 +133,7 @@ export class MissionsController {
     @Request() req,
     @Body() answerQuizDto: AnswerQuizDto,
   ) {
-    return this.missionsService.answerMissionQuiz(id, req.user.sub, answerQuizDto);
+    return this.missionsService.answerMissionQuiz(id, req.user.id, answerQuizDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -145,7 +145,7 @@ export class MissionsController {
     @Request() req,
     @Body() updateProgressDto: UpdateProgressDto,
   ) {
-    return this.missionsService.updateProgress(id, req.user.sub, updateProgressDto);
+    return this.missionsService.updateProgress(id, req.user.id, updateProgressDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -153,7 +153,7 @@ export class MissionsController {
   @Roles('ALUNO')
   @ApiOperation({ summary: 'Completar missão (Aluno)' })
   completeMission(@Param('id') id: string, @Request() req) {
-    return this.missionsService.completeMission(id, req.user.sub);
+    return this.missionsService.completeMission(id, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

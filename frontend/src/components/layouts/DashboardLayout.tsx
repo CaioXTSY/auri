@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
+import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,6 +12,33 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const location = useLocation();
+  const [showDailyQuiz, setShowDailyQuiz] = useState(false);
+
+  const dailyQuizKey = useMemo(() => {
+    if (!user?.id) return null;
+    const today = new Date();
+    const dayKey = today.toISOString().slice(0, 10);
+    return `auri-daily-quiz-${user.id}-${dayKey}`;
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!dailyQuizKey) return;
+    if (localStorage.getItem(dailyQuizKey)) return;
+    setShowDailyQuiz(true);
+  }, [dailyQuizKey]);
+
+  const handleDailyQuizClose = () => {
+    if (dailyQuizKey) {
+      localStorage.setItem(dailyQuizKey, 'dismissed');
+    }
+    setShowDailyQuiz(false);
+  };
+
+  const handleDailyQuizAnswered = () => {
+    if (dailyQuizKey) {
+      localStorage.setItem(dailyQuizKey, 'answered');
+    }
+  };
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
   const initials = user?.name
@@ -30,6 +58,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen flex bg-slate-100 text-slate-900">
+      <DailyQuizModal
+        open={showDailyQuiz}
+        onClose={handleDailyQuizClose}
+        onAnswered={handleDailyQuizAnswered}
+      />
       <aside className="hidden md:flex md:flex-col w-64 bg-brand-950 text-slate-100 border-r border-brand-900">
         <div className="h-20 px-6 flex items-center border-b border-brand-900">
           <Link to="/" className="flex items-center gap-3">
