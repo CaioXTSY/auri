@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
+import { gamificationService, type UserStats } from '@/services/gamification-service';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const logout = useAuthStore((state) => state.logout);
   const location = useLocation();
   const [showDailyQuiz, setShowDailyQuiz] = useState(false);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
 
   const dailyQuizKey = useMemo(() => {
     if (!user?.id) return null;
@@ -37,6 +39,27 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       window.removeEventListener('open-daily-quiz', handleOpenDailyQuiz);
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadStats = async () => {
+      if (!user?.id || user.role !== 'ALUNO') return;
+      try {
+        const stats = await gamificationService.getMyStats();
+        if (!isMounted) return;
+        setUserStats(stats);
+      } catch (error) {
+        if (!isMounted) return;
+        setUserStats(null);
+      }
+    };
+
+    loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, user?.role]);
 
   const handleDailyQuizClose = () => {
     if (dailyQuizKey) {
@@ -209,6 +232,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <span className="uppercase tracking-widest">
                 {user?.role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
               </span>
+              {user?.role === 'ALUNO' && userStats && (
+                <span className="mt-1 text-[11px] text-slate-500">
+                  XP {userStats.currentXp} • Nível {userStats.level}
+                </span>
+              )}
             </div>
             <div className="h-10 w-10 rounded-full bg-brand-900 text-accent-400 flex items-center justify-center text-sm font-bold uppercase">
               {initials}
