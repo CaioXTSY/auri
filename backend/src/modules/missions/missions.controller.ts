@@ -67,11 +67,14 @@ export class MissionsController {
     return this.missionsService.getDailyQuizForUser(req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('available')
+  @Roles('ALUNO')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar missões disponíveis para o aluno' })
   @ApiQuery({ name: 'classId', required: false, description: 'Filtrar por turma' })
   getAvailableMissions(@Request() req, @Query('classId') classId?: string) {
-    return this.missionsService.getAvailableMissions(req.user?.id, classId);
+    return this.missionsService.getAvailableMissions(req.user.id, classId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

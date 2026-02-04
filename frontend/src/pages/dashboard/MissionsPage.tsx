@@ -92,16 +92,6 @@ export const MissionsPage = () => {
     setActiveMissionId(missionId);
   };
 
-  const handleStartMission = async (missionId: string) => {
-    try {
-      await missionsService.startMission(missionId);
-      await loadData();
-    } catch (err) {
-      setError('Não foi possível iniciar a missão.');
-      console.error(err);
-    }
-  };
-
   const handleUpdateProgress = async (missionId: string) => {
     const progress = progressMap[missionId] ?? 0;
     try {
@@ -372,15 +362,6 @@ export const MissionsPage = () => {
                   )}
 
                   <div className="flex flex-wrap gap-2">
-                    {status === 'NAO_INICIADA' && (
-                      <Button
-                        type="button"
-                        className="bg-brand-900 hover:bg-brand-800 text-white"
-                        onClick={() => handleStartMission(mission.id)}
-                      >
-                        Iniciar missão
-                      </Button>
-                    )}
                     {status === 'EM_PROGRESSO' && (
                       <>
                         <Button
