@@ -22,6 +22,8 @@ const rarityLabels = {
 };
 
 export const AchievementCard = ({ achievement, locked = false }: AchievementCardProps) => {
+  const progressValue = locked ? 0 : 100;
+
   return (
     <div 
       className={cn(
@@ -61,6 +63,22 @@ export const AchievementCard = ({ achievement, locked = false }: AchievementCard
           <p className="text-xs text-slate-500 leading-relaxed mb-3">
             {achievement.description}
           </p>
+
+          <div className="space-y-2 pb-2">
+            <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase tracking-widest">
+              <span>Progresso</span>
+              <span>{progressValue}%</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-all duration-500',
+                  locked ? 'bg-slate-300' : 'bg-emerald-500',
+                )}
+                style={{ width: `${progressValue}%` }}
+              />
+            </div>
+          </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
             <div className="flex items-center gap-1.5 text-xs font-medium text-amber-500">

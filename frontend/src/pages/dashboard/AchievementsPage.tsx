@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { AchievementCard } from '@/components/gamification/AchievementCard';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
-import { gamificationService, type PaginatedAchievements, type RankingEntry, type UserStats } from '@/services/gamification-service';
+import { gamificationService, type Achievement, type PaginatedAchievements, type RankingEntry, type UserStats } from '@/services/gamification-service';
 import { Loader2, Trophy, Star, Medal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/stores/auth-store';
 
 export const AchievementsPage = () => {
   const [achievements, setAchievements] = useState<PaginatedAchievements | null>(null);
@@ -12,6 +14,9 @@ export const AchievementsPage = () => {
   const [globalRanking, setGlobalRanking] = useState<RankingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAchievementsLoading, setIsAchievementsLoading] = useState(true);
+  const [unlockQueue, setUnlockQueue] = useState<Achievement[]>([]);
+  const [activeUnlock, setActiveUnlock] = useState<Achievement | null>(null);
+  const user = useAuthStore((state) => state.user);
 
   // Pagination & Filter
   const [page, setPage] = useState(1);
@@ -42,6 +47,34 @@ export const AchievementsPage = () => {
       try {
         const data = await gamificationService.getMyAchievements(page, 6, filter);
         setAchievements(data);
+        const userId = user?.id;
+        if (userId) {
+          const storageKey = `auri-achievements-seen-${userId}`;
+          const seenRaw = localStorage.getItem(storageKey);
+          let seenIds: string[] = [];
+          if (seenRaw) {
+            try {
+              seenIds = JSON.parse(seenRaw);
+            } catch {
+              seenIds = [];
+            }
+          }
+          const newlyUnlocked = data.data.filter(
+            (achievement) =>
+              achievement.isUnlocked &&
+              achievement.unlockedAt &&
+              !seenIds.includes(achievement.id),
+          );
+          if (newlyUnlocked.length > 0) {
+            const mergedSeen = Array.from(new Set([...seenIds, ...newlyUnlocked.map((item) => item.id)]));
+            localStorage.setItem(storageKey, JSON.stringify(mergedSeen));
+            setUnlockQueue((current) => {
+              const existingIds = new Set(current.map((item) => item.id));
+              const additions = newlyUnlocked.filter((item) => !existingIds.has(item.id));
+              return [...current, ...additions];
+            });
+          }
+        }
       } catch (error) {
         console.error('Failed to load achievements', error);
       } finally {
@@ -50,7 +83,23 @@ export const AchievementsPage = () => {
     };
 
     loadAchievements();
-  }, [page, filter]);
+  }, [page, filter, user?.id]);
+
+  useEffect(() => {
+    if (!activeUnlock && unlockQueue.length > 0) {
+      setActiveUnlock(unlockQueue[0]);
+    }
+  }, [activeUnlock, unlockQueue]);
+
+  const handleCloseUnlock = () => {
+    setUnlockQueue((current) => current.slice(1));
+    setActiveUnlock(null);
+  };
+
+  const achievementProgress = useMemo(() => {
+    if (!stats?.totalAchievements) return 0;
+    return Math.round((stats.achievementsCount / stats.totalAchievements) * 100);
+  }, [stats?.achievementsCount, stats?.totalAchievements]);
 
   if (isLoading) {
     return (
@@ -71,11 +120,17 @@ export const AchievementsPage = () => {
             <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
               <Trophy className="w-6 h-6" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-sm text-slate-500 font-medium">Conquistas Desbloqueadas</p>
               <p className="text-2xl font-bold text-slate-900">
                 {stats?.achievementsCount} <span className="text-sm text-slate-400 font-normal">/ {stats?.totalAchievements}</span>
               </p>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                  style={{ width: `${achievementProgress}%` }}
+                />
+              </div>
             </div>
           </div>
 
@@ -198,6 +253,36 @@ export const AchievementsPage = () => {
           </div>
         </div>
       </div>
+
+      {activeUnlock && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-slate-200 p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl">
+                {activeUnlock.icon || '🏆'}
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold">
+                  Conquista desbloqueada
+                </p>
+                <h3 className="text-lg font-bold text-slate-900">{activeUnlock.name}</h3>
+              </div>
+            </div>
+            <p className="text-sm text-slate-600">{activeUnlock.description}</p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-semibold text-amber-600">+{activeUnlock.points} XP</span>
+              <span className="text-xs uppercase tracking-widest text-slate-400">
+                {activeUnlock.rarity}
+              </span>
+            </div>
+            <div className="flex justify-end">
+              <Button type="button" className="bg-brand-900 hover:bg-brand-800 text-white" onClick={handleCloseUnlock}>
+                Continuar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
