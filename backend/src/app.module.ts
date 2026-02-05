@@ -12,6 +12,7 @@ import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { MissionsModule } from './modules/missions/missions.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     GamificationModule,
     MissionsModule,
     DashboardModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

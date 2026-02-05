@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag, Bell, X } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
+import { notificationsService, type NotificationItem } from '@/services/notifications-service';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -15,6 +17,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
   const [showDailyQuiz, setShowDailyQuiz] = useState(false);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+  const token = useAuthStore((state) => state.token);
 
   const dailyQuizKey = useMemo(() => {
     if (!user?.id) return null;
@@ -63,6 +70,70 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       isMounted = false;
     };
   }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    const loadUnread = async () => {
+      if (!user?.id) return;
+      try {
+        const total = await notificationsService.getUnreadCount();
+        setUnreadCount(total);
+      } catch {
+        setUnreadCount(0);
+      }
+    };
+    loadUnread();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const socket = io('http://localhost:3001', {
+      auth: { userId: user.id, token },
+    });
+    socket.on('notification', (payload: NotificationItem) => {
+      setNotifications((current) => [payload, ...current].slice(0, 5));
+      setUnreadCount((current) => current + 1);
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, [token, user?.id]);
+
+  const loadNotifications = async () => {
+    if (!user?.id) return;
+    setIsNotificationsLoading(true);
+    try {
+      const response = await notificationsService.getNotifications(1, 5);
+      setNotifications(response.data);
+    } catch {
+      setNotifications([]);
+    } finally {
+      setIsNotificationsLoading(false);
+    }
+  };
+
+  const toggleNotifications = async () => {
+    const nextState = !notificationsOpen;
+    setNotificationsOpen(nextState);
+    if (nextState) {
+      await loadNotifications();
+    }
+  };
+
+  const markAllAsRead = async () => {
+    await notificationsService.markAllAsRead();
+    setNotifications((current) =>
+      current.map((item) => ({ ...item, read: true })),
+    );
+    setUnreadCount(0);
+  };
+
+  const markAsRead = async (id: string) => {
+    const updated = await notificationsService.markAsRead(id);
+    setNotifications((current) =>
+      current.map((item) => (item.id === id ? updated : item)),
+    );
+    setUnreadCount((current) => Math.max(0, current - 1));
+  };
 
   const handleDailyQuizClose = () => {
     if (dailyQuizKey) {
@@ -234,6 +305,78 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <span className="mt-1 text-[11px] text-slate-500">
                   XP {userStats.currentXp} • Nível {userStats.level}
                 </span>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={toggleNotifications}
+                className="relative h-10 w-10 rounded-full border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-slate-100 transition-colors"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 min-w-[20px] rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-3 w-80 rounded-xl border border-slate-200 bg-white shadow-xl z-50">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <span className="text-sm font-semibold text-slate-700">Notificações</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={markAllAsRead}
+                        className="text-xs font-semibold text-brand-700 hover:text-brand-900"
+                      >
+                        Marcar tudo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNotificationsOpen(false)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {isNotificationsLoading && (
+                      <div className="px-4 py-6 text-sm text-slate-500">Carregando...</div>
+                    )}
+                    {!isNotificationsLoading && notifications.length === 0 && (
+                      <div className="px-4 py-6 text-sm text-slate-500">
+                        Nenhuma notificação por aqui.
+                      </div>
+                    )}
+                    {!isNotificationsLoading &&
+                      notifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          onClick={() => markAsRead(notification.id)}
+                          className={`w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 ${
+                            notification.read ? 'bg-white' : 'bg-slate-50/80'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-800">
+                                {notification.title}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {notification.message}
+                              </p>
+                            </div>
+                            <span className="text-[10px] text-slate-400">
+                              {new Date(notification.createdAt).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                </div>
               )}
             </div>
             <div className="h-10 w-10 rounded-full bg-brand-900 text-accent-400 flex items-center justify-center text-sm font-bold uppercase">
