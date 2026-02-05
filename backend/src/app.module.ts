@@ -11,6 +11,7 @@ import { ActivitiesModule } from './modules/activities/activities.module';
 import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { MissionsModule } from './modules/missions/missions.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MissionsModule } from './modules/missions/missions.module';
     SubmissionsModule,
     GamificationModule,
     MissionsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
