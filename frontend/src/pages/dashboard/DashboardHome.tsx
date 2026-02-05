@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Trophy, Medal, Target, CheckCircle2, Hourglass } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth-store';
-import { dashboardService, type LevelInfo, type UpcomingActivity } from '@/services/dashboard-service';
+import { dashboardService, type StudentDashboard, type UpcomingActivity } from '@/services/dashboard-service';
 
 type NormalizedActivityStatus = 'em_andamento' | 'pendente';
 
@@ -18,7 +18,7 @@ interface Activity {
 export const DashboardHome = () => {
   const user = useAuthStore((state) => state.user);
 
-  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
+  const [dashboardData, setDashboardData] = useState<StudentDashboard | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,16 +39,13 @@ export const DashboardHome = () => {
         setIsLoading(true);
         setError(null);
 
-        const [levelResponse, activitiesResponse] = await Promise.all([
-          dashboardService.getMyLevel(),
-          dashboardService.getUpcomingActivities(3),
-        ]);
+        const dashboardResponse = await dashboardService.getStudentDashboard();
 
         if (!isMounted) return;
 
-        setLevelInfo(levelResponse);
+        setDashboardData(dashboardResponse);
 
-        const normalizedActivities: Activity[] = activitiesResponse.map(
+        const normalizedActivities: Activity[] = dashboardResponse.upcomingActivities.map(
           (activity: UpcomingActivity) => {
             const deadlineDate = new Date(activity.deadline);
             const now = new Date();
@@ -99,8 +96,14 @@ export const DashboardHome = () => {
     };
   }, [user?.role]);
 
+  const levelInfo = dashboardData?.level ?? null;
   const level = levelInfo?.currentLevel ?? 0;
   const currentXp = levelInfo?.totalPoints ?? 0;
+  const recentAchievements = dashboardData?.achievements.recent ?? [];
+  const rankingGlobal = dashboardData?.ranking.global;
+  const rankingClass = dashboardData?.ranking.class;
+  const submissions = dashboardData?.submissions;
+  const missions = dashboardData?.missions;
   const nextLevelXp =
     levelInfo && levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel > 0
       ? levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel
@@ -275,6 +278,104 @@ export const DashboardHome = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-3">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              Conquistas Recentes
+            </h3>
+            <div className="mt-4 space-y-3">
+              {recentAchievements.length === 0 && (
+                <p className="text-sm text-slate-500">Nenhuma conquista recente.</p>
+              )}
+              {recentAchievements.map((achievement) => (
+                <div key={achievement.id} className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-lg">
+                    {achievement.icon || '🏆'}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800">{achievement.name}</p>
+                    <p className="text-xs text-slate-500">{achievement.description}</p>
+                  </div>
+                  <span className="text-xs font-semibold text-amber-600">+{achievement.points}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
+              <Medal className="h-4 w-4 text-slate-500" />
+              Ranking
+            </h3>
+            <div className="mt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 uppercase tracking-[0.16em] flex items-center gap-2">
+                  🌍 Global
+                </span>
+                <span className="text-lg font-bold text-slate-800">
+                  {rankingGlobal ? `#${rankingGlobal}` : '--'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 uppercase tracking-[0.16em] flex items-center gap-2">
+                  🧑‍🎓 Turma
+                </span>
+                <span className="text-lg font-bold text-slate-800">
+                  {rankingClass ? `#${rankingClass}` : '--'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
+                <Target className="h-4 w-4 text-emerald-500" />
+                Missões
+              </h3>
+              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em] flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                    Concluídas
+                  </p>
+                  <p className="text-lg font-bold text-slate-800">{missions?.completed ?? 0}</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em] flex items-center gap-1">
+                    <Hourglass className="h-3 w-3 text-amber-500" />
+                    Em andamento
+                  </p>
+                  <p className="text-lg font-bold text-slate-800">{missions?.inProgress ?? 0}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-slate-500">
+                Taxa de conclusão: {missions?.completionRate ?? 0}%
+              </p>
+            </div>
+
+            <div className="border-t border-slate-200 pt-4">
+              <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
+                📤 Submissões
+              </h4>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em]">Aprovadas</p>
+                  <p className="text-lg font-bold text-slate-800">{submissions?.approved ?? 0}</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em]">Pendentes</p>
+                  <p className="text-lg font-bold text-slate-800">{submissions?.pending ?? 0}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-slate-500">
+                Taxa de aprovação: {submissions?.approvalRate ?? 0}%
+              </p>
+            </div>
           </div>
         </section>
       </div>

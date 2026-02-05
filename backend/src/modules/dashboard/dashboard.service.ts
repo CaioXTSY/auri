@@ -16,44 +16,73 @@ export class DashboardService {
   ) {}
 
   async getStudentDashboard(userId: string) {
-    const [gamification, missions, submissions, upcomingActivities, recentAchievements, classEnrollment] =
-      await Promise.all([
-        this.gamificationService.getUserGamificationStats(userId),
-        this.missionsService.getUserMissionStats(userId),
-        this.submissionsService.getUserStats(userId),
-        this.activitiesService.findUpcomingForStudent(userId, 5),
-        this.prisma.userAchievement.findMany({
-          where: { userId },
-          orderBy: { unlockedAt: 'desc' },
-          take: 3,
-          include: {
-            achievement: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                icon: true,
-                points: true,
-                rarity: true,
-                category: true,
-              },
+    const [
+      gamification,
+      missions,
+      submissions,
+      upcomingActivities,
+      recentAchievements,
+      classEnrollment,
+    ] = await Promise.all([
+      this.gamificationService.getUserGamificationStats(userId),
+      this.missionsService.getUserMissionStats(userId),
+      this.submissionsService.getUserStats(userId),
+      this.activitiesService.findUpcomingForStudent(userId, 5),
+      this.prisma.userAchievement.findMany({
+        where: { userId },
+        orderBy: { unlockedAt: 'desc' },
+        take: 3,
+        include: {
+          achievement: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              icon: true,
+              points: true,
+              rarity: true,
+              category: true,
             },
           },
-        }),
-        this.prisma.classStudent.findFirst({
-          where: { userId },
-          orderBy: { enrolledAt: 'desc' },
-          select: { classId: true },
-        }),
-      ]);
+        },
+      }),
+      this.prisma.classStudent.findFirst({
+        where: { userId },
+        orderBy: { enrolledAt: 'desc' },
+        select: { classId: true },
+      }),
+    ]);
 
-    const classRanking = classEnrollment?.classId
-      ? await this.gamificationService.getUserRankingPosition(
+    let globalRanking = await this.gamificationService.getUserRankingPosition(
+      userId,
+      'GLOBAL',
+    );
+
+    if (!globalRanking) {
+      await this.gamificationService.updateGlobalRanking();
+      globalRanking = await this.gamificationService.getUserRankingPosition(
+        userId,
+        'GLOBAL',
+      );
+    }
+
+    let classRanking = null;
+    if (classEnrollment?.classId) {
+      classRanking = await this.gamificationService.getUserRankingPosition(
+        userId,
+        'TURMA',
+        classEnrollment.classId,
+      );
+
+      if (!classRanking) {
+        await this.gamificationService.updateClassRanking(classEnrollment.classId);
+        classRanking = await this.gamificationService.getUserRankingPosition(
           userId,
           'TURMA',
           classEnrollment.classId,
-        )
-      : null;
+        );
+      }
+    }
 
     return {
       points: gamification.points,
@@ -66,7 +95,7 @@ export class DashboardService {
         })),
       },
       ranking: {
-        global: gamification.ranking.global,
+        global: globalRanking?.position || null,
         class: classRanking?.position || null,
         classId: classEnrollment?.classId || null,
       },
