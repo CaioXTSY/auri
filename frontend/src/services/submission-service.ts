@@ -45,7 +45,18 @@ export interface PaginatedSubmissions {
   };
 }
 
+export interface CreateSubmissionDto {
+  activityId: string;
+  code: string;
+  language: string;
+}
+
 export const submissionService = {
+  createSubmission: async (data: CreateSubmissionDto): Promise<Submission> => {
+    const response = await api.post<Submission>('/submissions', data);
+    return response.data;
+  },
+
   getSubmissions: async (params?: GetSubmissionsParams): Promise<PaginatedSubmissions> => {
     const response = await api.get<PaginatedSubmissions>('/submissions', { params });
     return response.data;

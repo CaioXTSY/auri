@@ -33,7 +33,7 @@ export const ActivityWorkspace = () => {
         if (isMounted) {
           setActivity(data);
           // Set starter code or template
-          const lang = data.discipline?.language.toLowerCase() || 'javascript';
+          const lang = data.class?.language?.toLowerCase() || 'javascript';
           const templates: Record<string, string> = {
             python: '# Escreva sua solução aqui\n\ndef solution(input):\n    pass',
             javascript: '// Escreva sua solução aqui\n\nfunction solution(input) {\n  \n}',
@@ -78,7 +78,7 @@ export const ActivityWorkspace = () => {
       const submission = await submissionService.createSubmission({
         activityId: id,
         code: code,
-        language: activity.discipline?.language.toLowerCase() || 'javascript',
+        language: activity.class?.language?.toLowerCase() || 'javascript',
       });
 
       // Feedback imediato
@@ -154,7 +154,7 @@ export const ActivityWorkspace = () => {
           </button>
           <div className="flex flex-col">
             <h1 className="font-display font-bold text-lg text-slate-100 leading-tight tracking-wide">{activity.title}</h1>
-            <span className="text-xs text-brand-400 font-medium tracking-wider uppercase">{activity.discipline?.name}</span>
+            <span className="text-xs text-brand-400 font-medium tracking-wider uppercase">{activity.class?.name || 'Turma'}</span>
           </div>
         </div>
 
@@ -286,8 +286,8 @@ export const ActivityWorkspace = () => {
           <div className="flex-1 relative min-h-0">
             <Editor
               height="100%"
-              defaultLanguage={activity.discipline?.language.toLowerCase() || 'javascript'}
-              language={activity.discipline?.language.toLowerCase() || 'javascript'}
+              defaultLanguage={activity.class?.language?.toLowerCase() || 'javascript'}
+              language={activity.class?.language?.toLowerCase() || 'javascript'}
               value={code}
               theme="vs-dark"
               onChange={(value) => setCode(value || '')}

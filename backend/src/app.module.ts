@@ -5,7 +5,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { DisciplinesModule } from './modules/disciplines/disciplines.module';
 import { ClassesModule } from './modules/classes/classes.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { SubmissionsModule } from './modules/submissions/submissions.module';
@@ -27,7 +26,6 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     PrismaModule,
     AuthModule,
     UsersModule,
-    DisciplinesModule,
     ClassesModule,
     ActivitiesModule,
     SubmissionsModule,

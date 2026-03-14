@@ -40,7 +40,7 @@ export const CreateActivity = () => {
   const [error, setError] = useState<string | null>(null);
 
   const { register, control, handleSubmit, formState: { errors } } = useForm<CreateActivityForm>({
-    resolver: zodResolver(createActivitySchema),
+    resolver: zodResolver(createActivitySchema) as never,
     defaultValues: {
       type: 'EXERCICIO',
       difficulty: 'FACIL',
@@ -86,7 +86,6 @@ export const CreateActivity = () => {
         difficulty: data.difficulty,
         points: data.points,
         // starterCode: data.starterCode, // TODO: Uncomment when backend supports starterCode
-        disciplineId: classData.disciplineId,
         classId: classData.id,
         deadline: new Date(data.deadline).toISOString(),
         allowLateSubmission: true,
@@ -159,7 +158,7 @@ export const CreateActivity = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">Título</Label>
                 <Input 

@@ -54,7 +54,6 @@ export class MissionsService {
    */
   async findAll(filters?: {
     classId?: string;
-    disciplineId?: string;
     type?: 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA';
     active?: boolean;
   }) {
@@ -82,7 +81,6 @@ export class MissionsService {
           select: {
             id: true,
             name: true,
-            disciplineId: true,
           },
         },
         userMissions: {
@@ -111,7 +109,6 @@ export class MissionsService {
           select: {
             id: true,
             name: true,
-            disciplineId: true,
           },
         },
         userMissions: {

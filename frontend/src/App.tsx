@@ -13,8 +13,6 @@ import { TeacherClasses } from '@/pages/teacher/TeacherClasses';
 import { CreateClass } from '@/pages/teacher/CreateClass';
 import { TeacherClassDetails } from '@/pages/teacher/TeacherClassDetails';
 import { CreateActivity } from '@/pages/teacher/CreateActivity';
-import { TeacherDisciplines } from '@/pages/teacher/TeacherDisciplines';
-import { CreateDiscipline } from '@/pages/teacher/CreateDiscipline';
 import { ActivitySubmissions } from '@/pages/teacher/ActivitySubmissions';
 import { SubmissionDetails } from '@/pages/teacher/SubmissionDetails';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
@@ -98,22 +96,6 @@ function App() {
         />
 
         {/* Rotas do Professor */}
-        <Route
-          path="/dashboard/teacher/disciplines"
-          element={
-            <ProtectedRoute>
-              <TeacherDisciplines />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/teacher/disciplines/new"
-          element={
-            <ProtectedRoute>
-              <CreateDiscipline />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/dashboard/teacher/classes"
           element={

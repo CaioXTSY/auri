@@ -83,8 +83,8 @@ export class ClassesController {
       turma: {
         summary: 'Criar turma',
         value: {
-          disciplineId: 'uuid-disciplina',
           name: 'Turma A - Manhã',
+          language: 'Python',
           semester: '2024.1',
           year: 2024
         }
@@ -97,8 +97,8 @@ export class ClassesController {
     schema: {
       example: {
         id: 'uuid-here',
-        disciplineId: 'uuid-disciplina',
         name: 'Turma A - Manhã',
+        language: 'Python',
         semester: '2024.1',
         year: 2024,
         status: 'ATIVA',
@@ -106,10 +106,6 @@ export class ClassesController {
         updatedAt: '2024-01-26T00:00:00.000Z'
       }
     }
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Disciplina não encontrada',
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
@@ -126,8 +122,8 @@ export class ClassesController {
   })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'disciplineId', required: false, type: String, description: 'UUID da disciplina' })
   @ApiQuery({ name: 'name', required: false, type: String, example: 'Turma A' })
+  @ApiQuery({ name: 'language', required: false, type: String, example: 'Python' })
   @ApiQuery({ name: 'semester', required: false, type: String, example: '2024.1' })
   @ApiQuery({ name: 'year', required: false, type: Number, example: 2024 })
   @ApiQuery({ name: 'status', required: false, enum: ['ATIVA', 'ENCERRADA'], example: 'ATIVA' })
@@ -141,16 +137,11 @@ export class ClassesController {
         data: [
           {
             id: 'uuid-here',
-            disciplineId: 'uuid-disciplina',
             name: 'Turma A - Manhã',
+            language: 'Python',
             semester: '2024.1',
             year: 2024,
             status: 'ATIVA',
-            discipline: {
-              id: 'uuid-disciplina',
-              name: 'Lógica de Programação',
-              language: 'javascript'
-            },
             _count: {
               students: 25,
               activities: 12
@@ -186,14 +177,10 @@ export class ClassesController {
         {
           id: 'uuid-here',
           name: 'Turma A - Manhã',
+          language: 'Python',
           semester: '2024.1',
           year: 2024,
           status: 'ATIVA',
-          discipline: {
-            id: 'uuid-disciplina',
-            name: 'Lógica de Programação',
-            language: 'javascript'
-          },
           enrolledAt: '2024-01-26T00:00:00.000Z'
         }
       ]
@@ -209,7 +196,7 @@ export class ClassesController {
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({ 
     summary: 'Buscar turma por ID',
-    description: 'Retorna detalhes completos de uma turma, incluindo disciplina, alunos e contadores'
+    description: 'Retorna detalhes completos de uma turma, incluindo alunos e contadores'
   })
   @ApiResponse({
     status: 200,
@@ -217,17 +204,11 @@ export class ClassesController {
     schema: {
       example: {
         id: 'uuid-here',
-        disciplineId: 'uuid-disciplina',
         name: 'Turma A - Manhã',
+        language: 'Python',
         semester: '2024.1',
         year: 2024,
         status: 'ATIVA',
-        discipline: {
-          id: 'uuid-disciplina',
-          name: 'Lógica de Programação',
-          language: 'javascript',
-          description: 'Aprenda lógica de programação'
-        },
         students: [
           {
             userId: 'uuid-aluno',

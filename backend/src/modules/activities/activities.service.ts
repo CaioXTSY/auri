@@ -18,19 +18,10 @@ export class ActivitiesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createActivityDto: CreateActivityDto, userId: string) {
-    // Validar se disciplina existe
-    const discipline = await this.prisma.discipline.findUnique({
-      where: { id: createActivityDto.disciplineId },
-    });
-
-    if (!discipline) {
-      throw new NotFoundException('Discipline not found');
-    }
-
-    // Se classId fornecido, validar se turma existe
     if (createActivityDto.classId) {
       const classExists = await this.prisma.class.findUnique({
         where: { id: createActivityDto.classId },
+        select: { id: true },
       });
 
       if (!classExists) {
@@ -55,17 +46,11 @@ export class ActivitiesService {
         createdById: userId,
       },
       include: {
-        discipline: {
-          select: {
-            id: true,
-            name: true,
-            language: true,
-          },
-        },
         class: {
           select: {
             id: true,
             name: true,
+            language: true,
             semester: true,
             year: true,
           },
@@ -86,10 +71,6 @@ export class ActivitiesService {
     const skip = (page - 1) * limit;
 
     const where: any = {};
-
-    if (query.disciplineId) {
-      where.disciplineId = query.disciplineId;
-    }
 
     if (query.classId) {
       where.classId = query.classId;
@@ -123,17 +104,11 @@ export class ActivitiesService {
           [query.sortBy || 'createdAt']: query.sortOrder || 'desc',
         },
         include: {
-          discipline: {
-            select: {
-              id: true,
-              name: true,
-              language: true,
-            },
-          },
           class: {
             select: {
               id: true,
               name: true,
+              language: true,
               semester: true,
               year: true,
             },
@@ -194,7 +169,7 @@ export class ActivitiesService {
         id: true,
         title: true,
         deadline: true,
-        discipline: {
+        class: {
           select: {
             name: true,
           },
@@ -206,7 +181,7 @@ export class ActivitiesService {
       id: activity.id,
       title: activity.title,
       deadline: activity.deadline!,
-      disciplineName: activity.discipline?.name || 'Disciplina',
+      disciplineName: activity.class?.name || 'Turma',
       status: 'PENDENTE',
     }));
   }
@@ -215,18 +190,11 @@ export class ActivitiesService {
     const activity = await this.prisma.activity.findUnique({
       where: { id },
       include: {
-        discipline: {
-          select: {
-            id: true,
-            name: true,
-            language: true,
-            description: true,
-          },
-        },
         class: {
           select: {
             id: true,
             name: true,
+            language: true,
             semester: true,
             year: true,
             status: true,
@@ -275,20 +243,6 @@ export class ActivitiesService {
       throw new NotFoundException('Activity not found');
     }
 
-    // Se alterando disciplina, validar se existe
-    if (
-      updateActivityDto.disciplineId &&
-      updateActivityDto.disciplineId !== activity.disciplineId
-    ) {
-      const discipline = await this.prisma.discipline.findUnique({
-        where: { id: updateActivityDto.disciplineId },
-      });
-
-      if (!discipline) {
-        throw new NotFoundException('Discipline not found');
-      }
-    }
-
     // Se alterando turma, validar se existe
     if (updateActivityDto.classId && updateActivityDto.classId !== activity.classId) {
       const classExists = await this.prisma.class.findUnique({
@@ -317,7 +271,6 @@ export class ActivitiesService {
           : undefined,
       },
       include: {
-        discipline: true,
         class: true,
         _count: {
           select: {

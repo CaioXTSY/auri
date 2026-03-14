@@ -600,64 +600,6 @@ export class GamificationService {
   }
 
   /**
-   * Atualizar ranking de disciplina
-   */
-  async updateDisciplineRanking(disciplineId: string) {
-    this.logger.log(`Atualizando ranking da disciplina ${disciplineId}...`);
-
-    // Obter pontos por disciplina
-    const topUsers = await this.prisma.$queryRaw<
-      Array<{ userId: string; totalPoints: bigint }>
-    >`
-      SELECT 
-        up.user_id as userId,
-        SUM(up.points) as totalPoints
-      FROM user_points up
-      WHERE up.source = 'ATIVIDADE'
-        AND EXISTS (
-          SELECT 1 FROM activities a 
-          WHERE a.id = up.reference_id 
-          AND a.discipline_id = ${disciplineId}
-        )
-      GROUP BY up.user_id
-      ORDER BY totalPoints DESC
-      LIMIT 50
-    `;
-
-    for (let i = 0; i < topUsers.length; i++) {
-      const user = topUsers[i];
-      const position = i + 1;
-      const points = Number(user.totalPoints);
-
-      await this.prisma.ranking.upsert({
-        where: {
-          userId_type_referenceId: {
-            userId: user.userId,
-            type: 'DISCIPLINA',
-            referenceId: disciplineId,
-          },
-        },
-        update: {
-          position,
-          points,
-          updatedAt: new Date(),
-        },
-        create: {
-          userId: user.userId,
-          type: 'DISCIPLINA',
-          referenceId: disciplineId,
-          position,
-          points,
-        },
-      });
-    }
-
-    this.logger.log(
-      `✅ Ranking da disciplina atualizado (${topUsers.length} alunos)`,
-    );
-  }
-
-  /**
    * Atualizar ranking de turma
    */
   async updateClassRanking(classId: string) {

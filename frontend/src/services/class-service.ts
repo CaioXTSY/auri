@@ -1,22 +1,13 @@
 import api from '@/lib/api';
 
-export interface Discipline {
-  id: string;
-  name: string;
-  description?: string;
-  language: string;
-  status: string;
-}
-
 export interface Class {
   id: string;
-  disciplineId: string;
   name: string;
+  language: string;
   semester: string;
   year: number;
   code: string;
   status: 'ATIVA' | 'ENCERRADA';
-  discipline: Discipline;
   enrolledAt?: string;
   _count?: {
     students: number;
@@ -25,8 +16,8 @@ export interface Class {
 }
 
 export interface CreateClassDto {
-  disciplineId: string;
   name: string;
+  language: string;
   semester: string;
   year: number;
 }

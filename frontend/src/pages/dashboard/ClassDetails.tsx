@@ -5,12 +5,10 @@ import { classService, type Class } from '@/services/class-service';
 import { activityService, type Activity } from '@/services/activity-service';
 import { gamificationService, type RankingEntry } from '@/services/gamification-service';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
-import { useAuthStore } from '@/stores/auth-store';
 import { Calendar, Trophy, Clock, ChevronRight, BookOpen } from 'lucide-react';
 
 export const ClassDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const user = useAuthStore((state) => state.user);
   const [classroom, setClassroom] = useState<Class | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
@@ -120,15 +118,12 @@ export const ClassDetails = () => {
                 </span>
               </div>
               <h1 className="text-3xl font-display font-bold text-brand-900">
-                {classroom.discipline.name}
-              </h1>
-              <p className="text-lg text-slate-600 mt-1">
                 {classroom.name}
-              </p>
+              </h1>
               <div className="flex items-center gap-6 mt-6 text-sm text-slate-500">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
-                  <span>{classroom.discipline.language}</span>
+                  <span>{classroom.language}</span>
                 </div>
                 {classroom._count && (
                   <>
@@ -224,7 +219,6 @@ export const ClassDetails = () => {
           <div className="space-y-6">
             <Leaderboard 
               entries={ranking} 
-              currentUserId={user?.id}
               title="Ranking da Turma"
             />
           </div>

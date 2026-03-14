@@ -203,13 +203,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <BookOpen className="h-4 w-4" />
                 <span>Gerenciar Turmas</span>
               </Link>
-              <Link
-                to="/dashboard/teacher/disciplines"
-                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/teacher/disciplines')}`}
-              >
-                <BookOpen className="h-4 w-4" />
-                <span>Disciplinas</span>
-              </Link>
             </>
           ) : (
             <>

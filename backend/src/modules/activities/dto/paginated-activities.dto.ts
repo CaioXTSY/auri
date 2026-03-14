@@ -8,9 +8,6 @@ class ActivityResponse {
   classId: string | null;
 
   @ApiProperty()
-  disciplineId: string;
-
-  @ApiProperty()
   title: string;
 
   @ApiProperty()

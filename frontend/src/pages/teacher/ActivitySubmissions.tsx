@@ -76,7 +76,7 @@ export const ActivitySubmissions = () => {
       <div className="space-y-6">
         <div>
           <button 
-            onClick={() => navigate(`/dashboard/teacher/classes/${activity.classId}`)}
+            onClick={() => navigate(`/dashboard/teacher/classes/${activity.class?.id || ''}`)}
             className="flex items-center text-slate-500 hover:text-brand-900 mb-4 transition-colors"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />

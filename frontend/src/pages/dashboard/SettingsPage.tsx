@@ -36,7 +36,7 @@ export const SettingsPage = () => {
     reset,
     formState: { errors },
   } = useForm<UpdateProfileForm>({
-    resolver: zodResolver(updateProfileSchema),
+    resolver: zodResolver(updateProfileSchema) as never,
     defaultValues: {
       name: user?.name ?? '',
       email: user?.email ?? '',
@@ -156,7 +156,7 @@ export const SettingsPage = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-5">
             <div className="grid gap-5 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome completo</Label>

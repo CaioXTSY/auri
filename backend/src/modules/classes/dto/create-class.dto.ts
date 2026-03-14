@@ -1,15 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, IsInt, Min, Max, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, Min, Max, MaxLength } from 'class-validator';
 
 export class CreateClassDto {
-  @ApiProperty({
-    description: 'ID da disciplina',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  disciplineId: string;
-
   @ApiProperty({
     description: 'Nome da turma',
     example: 'Turma A - Manhã',
@@ -18,6 +10,15 @@ export class CreateClassDto {
   @IsNotEmpty()
   @MaxLength(200)
   name: string;
+
+  @ApiProperty({
+    description: 'Linguagem principal da turma',
+    example: 'Python',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  language: string;
 
   @ApiProperty({
     description: 'Semestre',

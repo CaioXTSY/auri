@@ -95,14 +95,11 @@ export const MyClasses = () => {
                 </div>
                 
                 <h3 className="text-lg font-bold text-slate-800 group-hover:text-brand-700 transition-colors">
-                  {classroom.discipline.name}
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
                   {classroom.name}
-                </p>
+                </h3>
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>{classroom.discipline.language}</span>
+                  <span>{classroom.language}</span>
                   <span className="group-hover:translate-x-1 transition-transform text-brand-600 font-medium">
                     Acessar &rarr;
                   </span>

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class QueryClassesDto {
   @ApiPropertyOptional({
@@ -26,14 +26,6 @@ export class QueryClassesDto {
   limit: number = 10;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por ID da disciplina',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsUUID()
-  @IsOptional()
-  disciplineId?: string;
-
-  @ApiPropertyOptional({
     description: 'Filtrar por nome (busca parcial)',
     example: 'Turma A',
   })
@@ -48,6 +40,14 @@ export class QueryClassesDto {
   @IsString()
   @IsOptional()
   semester?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por linguagem',
+    example: 'Python',
+  })
+  @IsString()
+  @IsOptional()
+  language?: string;
 
   @ApiPropertyOptional({
     description: 'Filtrar por ano',

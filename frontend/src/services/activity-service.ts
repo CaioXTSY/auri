@@ -2,22 +2,19 @@ import api from '@/lib/api';
 
 export interface Activity {
   id: string;
+  classId?: string | null;
   title: string;
   description: string;
-  type: 'EXERCISE' | 'CHALLENGE' | 'PROJECT' | 'QUIZ';
+  type: 'EXERCICIO' | 'DESAFIO' | 'PROJETO' | 'QUIZ';
   difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
   points: number;
   deadline: string;
   starterCode?: string;
   status: 'ATIVA' | 'INATIVA';
-  discipline?: {
-    id: string;
-    name: string;
-    language: string;
-  };
   class?: {
     id: string;
     name: string;
+    language?: string;
   };
   _count?: {
     testCases: number;
@@ -48,11 +45,10 @@ export interface ActivityListResponse {
 }
 
 export interface CreateActivityDto {
-  disciplineId: string;
   classId?: string;
   title: string;
   description: string;
-  type: 'EXERCISE' | 'CHALLENGE' | 'PROJECT' | 'QUIZ';
+  type: 'EXERCICIO' | 'DESAFIO' | 'PROJETO' | 'QUIZ';
   difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
   points: number;
   deadline?: string;

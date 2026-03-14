@@ -37,15 +37,6 @@ export class QueryActivitiesDto {
   limit?: number = 10;
 
   @ApiProperty({
-    description: 'Filtrar por ID da disciplina',
-    example: 'uuid-disciplina',
-    required: false,
-  })
-  @IsOptional()
-  @IsUUID()
-  disciplineId?: string;
-
-  @ApiProperty({
     description: 'Filtrar por ID da turma',
     example: 'uuid-turma',
     required: false,

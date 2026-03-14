@@ -165,13 +165,6 @@ export class SubmissionsService {
               id: true,
               title: true,
               points: true,
-              discipline: {
-                select: {
-                  id: true,
-                  name: true,
-                  language: true,
-                },
-              },
             },
           },
           user: {
@@ -209,7 +202,6 @@ export class SubmissionsService {
       include: {
         activity: {
           include: {
-            discipline: true,
             class: true,
             testCases: true,
           },

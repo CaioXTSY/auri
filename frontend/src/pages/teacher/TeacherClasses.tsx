@@ -89,7 +89,7 @@ export const TeacherClasses = () => {
                       <h3 className="font-bold text-lg text-brand-900 group-hover:text-accent-600 transition-colors">
                         {cls.name}
                       </h3>
-                      <p className="text-sm text-slate-500">{cls.discipline.name}</p>
+                      <p className="text-sm text-slate-500">{cls.language}</p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-bold rounded-full ${
                       cls.status === 'ATIVA' 
@@ -113,7 +113,7 @@ export const TeacherClasses = () => {
                 </div>
                 <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-between items-center">
                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                     {cls.discipline.language}
+                     {cls.language}
                    </span>
                    <span className="text-sm font-medium text-brand-600 group-hover:underline">
                      Ver detalhes

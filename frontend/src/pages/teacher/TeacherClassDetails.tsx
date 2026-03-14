@@ -100,7 +100,7 @@ export const TeacherClassDetails = () => {
               <div className="flex items-center gap-4 mt-2 text-slate-600">
                 <span className="flex items-center gap-1">
                   <Code className="w-4 h-4" />
-                  {classData.discipline.name}
+                  {classData.language}
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />

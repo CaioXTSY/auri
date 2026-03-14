@@ -26,19 +26,6 @@ export class ClassesService {
     const classEntity = await this.prisma.class.findUnique({
       where: { code },
       include: {
-        discipline: {
-          select: {
-            id: true,
-            name: true,
-            language: true,
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
         _count: {
           select: {
             students: true,
@@ -83,7 +70,12 @@ export class ClassesService {
       include: {
         class: {
           include: {
-            discipline: true,
+            _count: {
+              select: {
+                students: true,
+                activities: true,
+              },
+            },
           },
         },
       },
@@ -96,26 +88,9 @@ export class ClassesService {
   }
 
   async create(createClassDto: CreateClassDto): Promise<Class> {
-    // Verificar se a disciplina existe
-    const discipline = await this.prisma.discipline.findUnique({
-      where: { id: createClassDto.disciplineId },
-    });
-
-    if (!discipline) {
-      throw new NotFoundException('Disciplina não encontrada');
-    }
-
     return this.prisma.class.create({
       data: createClassDto,
       include: {
-        discipline: {
-          select: {
-            id: true,
-            name: true,
-            language: true,
-            status: true,
-          },
-        },
         _count: {
           select: {
             students: true,
@@ -132,8 +107,8 @@ export class ClassesService {
     const {
       page = 1,
       limit = 10,
-      disciplineId,
       name,
+      language,
       semester,
       year,
       status,
@@ -147,13 +122,15 @@ export class ClassesService {
 
     const where: any = {};
 
-    if (disciplineId) {
-      where.disciplineId = disciplineId;
-    }
-
     if (name) {
       where.name = {
         contains: name,
+      };
+    }
+
+    if (language) {
+      where.language = {
+        contains: language,
       };
     }
 
@@ -178,20 +155,6 @@ export class ClassesService {
           [sortBy]: sortOrder,
         },
         include: {
-          discipline: {
-            select: {
-              id: true,
-              name: true,
-              language: true,
-              createdBy: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                },
-              },
-            },
-          },
           _count: {
             select: {
               students: true,
@@ -210,22 +173,6 @@ export class ClassesService {
     const classEntity = await this.prisma.class.findUnique({
       where: { id },
       include: {
-        discipline: {
-          select: {
-            id: true,
-            name: true,
-            language: true,
-            description: true,
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-          },
-        },
         students: {
           select: {
             enrolledAt: true,
@@ -290,28 +237,10 @@ export class ClassesService {
   async update(id: string, updateClassDto: UpdateClassDto): Promise<Class> {
     await this.findOne(id);
 
-    // Se está alterando a disciplina, verificar se existe
-    if (updateClassDto.disciplineId) {
-      const discipline = await this.prisma.discipline.findUnique({
-        where: { id: updateClassDto.disciplineId },
-      });
-
-      if (!discipline) {
-        throw new NotFoundException('Disciplina não encontrada');
-      }
-    }
-
     return this.prisma.class.update({
       where: { id },
       data: updateClassDto,
       include: {
-        discipline: {
-          select: {
-            id: true,
-            name: true,
-            language: true,
-          },
-        },
         _count: {
           select: {
             students: true,
@@ -460,13 +389,6 @@ export class ClassesService {
       include: {
         class: {
           include: {
-            discipline: {
-              select: {
-                id: true,
-                name: true,
-                language: true,
-              },
-            },
             _count: {
               select: {
                 students: true,

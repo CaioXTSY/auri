@@ -288,16 +288,6 @@ export class GamificationController {
     return { message: 'Ranking global atualizado com sucesso' };
   }
 
-  @Post('ranking/update/discipline/:disciplineId')
-  @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ summary: 'Atualizar ranking de disciplina' })
-  @ApiParam({ name: 'disciplineId', type: String })
-  @ApiResponse({ status: 200, description: 'Ranking atualizado' })
-  async updateDisciplineRanking(@Param('disciplineId') disciplineId: string) {
-    await this.gamificationService.updateDisciplineRanking(disciplineId);
-    return { message: 'Ranking da disciplina atualizado com sucesso' };
-  }
-
   @Post('ranking/update/class/:classId')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Atualizar ranking de turma' })

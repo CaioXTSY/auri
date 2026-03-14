@@ -70,7 +70,6 @@ model User {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   // Relações
-  createdDisciplines Discipline[]
   classEnrollments   ClassStudent[]
   createdActivities  Activity[]
   submissions        Submission[]
@@ -85,37 +84,18 @@ model User {
   @@map("users")
 }
 
-model Discipline {
-  id          String     @id @default(uuid())
-  name        String
-  description String?    @db.Text
-  language    String     // Python, Java, C, etc
-  status      String     @default("ATIVA") // ATIVA, ENCERRADA
-  createdById String     @map("created_by_id")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-
-  // Relações
-  createdBy  User       @relation(fields: [createdById], references: [id])
-  classes    Class[]
-  activities Activity[]
-
-  @@map("disciplines")
-}
-
 model Class {
-  id           String   @id @default(uuid())
-  disciplineId String   @map("discipline_id")
-  name         String
-  semester     String
-  year         Int
-  code         String   @unique @default(cuid()) // Código único para entrar na turma
-  status       String   @default("ATIVA") // ATIVA, ENCERRADA
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  name      String
+  language  String
+  semester  String
+  year      Int
+  code      String   @unique @default(cuid()) // Código único para entrar na turma
+  status    String   @default("ATIVA") // ATIVA, ENCERRADA
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relações
-  discipline Discipline     @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
   students   ClassStudent[]
   activities Activity[]
   missions   Mission[]
@@ -137,27 +117,25 @@ model ClassStudent {
 }
 
 model Activity {
-  id                  String       @id @default(uuid())
-  classId             String?      @map("class_id")
-  disciplineId        String       @map("discipline_id")
-  title               String       @db.VarChar(200)
-  description         String       @db.Text
-  type                ActivityType
-  difficulty          Difficulty
+  id                String       @id @default(uuid())
+  classId           String?      @map("class_id")
+  title             String       @db.VarChar(200)
+  description       String       @db.Text
+  type              ActivityType
+  difficulty        Difficulty
   points            Int
   starterCode       String?      @db.Text @map("starter_code")
   deadline          DateTime?
-  allowLateSubmission Boolean      @default(true) @map("allow_late_submission")
-  status              String       @default("ATIVA")
-  timeLimit           Int          @default(2) @map("time_limit") // tempo limite em segundos
-  memoryLimit         Int          @default(128000) @map("memory_limit") // memória limite em KB (128MB)
-  createdById         String       @map("created_by_id")
-  createdAt           DateTime     @default(now()) @map("created_at")
-  updatedAt           DateTime     @updatedAt @map("updated_at")
+  allowLateSubmission Boolean    @default(true) @map("allow_late_submission")
+  status            String       @default("ATIVA")
+  timeLimit         Int          @default(2) @map("time_limit") // tempo limite em segundos
+  memoryLimit       Int          @default(128000) @map("memory_limit") // memória limite em KB (128MB)
+  createdById       String       @map("created_by_id")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
 
   // Relações
   class       Class?       @relation(fields: [classId], references: [id], onDelete: Cascade)
-  discipline  Discipline   @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
   createdBy   User         @relation(fields: [createdById], references: [id])
   submissions Submission[]
   testCases   TestCase[]

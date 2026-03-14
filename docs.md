@@ -13,7 +13,7 @@ A solução é dividida em:
 
 Objetivos centrais da plataforma:
 
-- Gestão acadêmica de disciplinas e turmas
+- Gestão acadêmica de turmas e atividades
 - Criação e acompanhamento de atividades
 - Submissão e correção automatizada de código
 - Camada de gamificação com pontos, níveis, ranking e conquistas
@@ -91,7 +91,6 @@ auri/
 Entidades principais:
 
 - **User**: autenticação e perfil
-- **Discipline**: disciplina criada por professor
 - **Class** e **ClassStudent**: turmas e matrículas
 - **Activity** e **TestCase**: exercícios e casos de teste
 - **Submission**: envio de solução do aluno
@@ -125,12 +124,6 @@ Enums relevantes:
 - Perfil do usuário logado
 - Upload de avatar
 - Listagem com paginação/filtros
-
-### Disciplines
-
-- CRUD de disciplinas
-- Regras de permissão por perfil
-- Filtros e paginação
 
 ### Classes
 
@@ -192,7 +185,6 @@ Enums relevantes:
 
 - `/auth`
 - `/users`
-- `/disciplines`
 - `/classes`
 - `/activities`
 - `/submissions`
@@ -235,7 +227,7 @@ Usado para geração automática de quiz diário no módulo de missões.
 ### Área autenticada (dashboard)
 
 - Aluno: home, turmas, atividade, missões, conquistas, configurações
-- Professor: disciplinas, turmas, criação de atividade, submissões
+- Professor: turmas, criação de atividade, submissões
 
 ### Estado de autenticação
 
@@ -321,7 +313,7 @@ Exemplo base:
 ### Funcionalidades implementadas
 
 - Núcleo de autenticação/autorização
-- Gestão de usuários, disciplinas, turmas e atividades
+- Gestão de usuários, turmas e atividades
 - Submissões com processamento e estatísticas
 - Sistema de gamificação (pontos, níveis, ranking, conquistas)
 - Missões com automação diária/semanal
@@ -371,8 +363,7 @@ Exemplo base:
 
 ## 16. Glossário Rápido
 
-- **Disciplina**: unidade acadêmica (ex.: Algoritmos)
-- **Turma**: oferta da disciplina em período específico
+- **Turma**: unidade acadêmica ativa no MVP (ex.: Turma A - Python)
 - **Atividade**: tarefa avaliativa com ou sem código
 - **Submissão**: envio de solução pelo aluno
 - **Missão**: objetivo gamificado paralelo às atividades

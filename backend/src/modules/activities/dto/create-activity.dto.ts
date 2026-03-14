@@ -24,14 +24,6 @@ export class CreateActivityDto {
   classId?: string;
 
   @ApiProperty({
-    description: 'ID da disciplina',
-    example: 'uuid-disciplina',
-  })
-  @IsNotEmpty()
-  @IsUUID()
-  disciplineId: string;
-
-  @ApiProperty({
     description: 'Título da atividade',
     example: 'FizzBuzz',
     maxLength: 200,
