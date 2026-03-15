@@ -48,6 +48,7 @@ async function bootstrap() {
     .addTag('gamification', 'Sistema de gamificação')
     .addTag('missions', 'Missões e rotina')
     .addTag('notifications', 'Notificações')
+    .addTag('posts', 'Postagens e respostas em markdown')
     .addTag('dashboard', 'Visão consolidada do aluno')
     .build();
 

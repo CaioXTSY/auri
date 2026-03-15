@@ -80,6 +80,8 @@ model User {
   missionQuizAttempts MissionQuizAttempt[]
   notifications      Notification[]
   aiGenerations      AIGeneration[]
+  posts              Post[]
+  postReplies        PostReply[]
 
   @@map("users")
 }
@@ -98,6 +100,7 @@ model Class {
   students   ClassStudent[]
   activities Activity[]
   missions   Mission[]
+  posts      Post[]
 
   @@map("classes")
 }
@@ -347,4 +350,34 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+model Post {
+  id          String   @id @default(uuid())
+  classId     String?  @map("class_id")
+  authorId    String   @map("author_id")
+  title       String
+  content     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  class     Class?      @relation(fields: [classId], references: [id], onDelete: Cascade)
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies   PostReply[]
+
+  @@map("posts")
+}
+
+model PostReply {
+  id          String   @id @default(uuid())
+  postId      String   @map("post_id")
+  authorId    String   @map("author_id")
+  content     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("post_replies")
 }

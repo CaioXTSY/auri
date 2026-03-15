@@ -12,6 +12,7 @@ import { GamificationModule } from './modules/gamification/gamification.module';
 import { MissionsModule } from './modules/missions/missions.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PostsModule } from './modules/posts/posts.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     MissionsModule,
     DashboardModule,
     NotificationsModule,
+    PostsModule,
   ],
 })
 export class AppModule {}
