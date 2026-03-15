@@ -4,6 +4,7 @@ export interface PostAuthor {
   id: string;
   name: string;
   role: 'ADMIN' | 'PROFESSOR' | 'ALUNO';
+  avatar?: string | null;
 }
 
 export interface PostClassInfo {

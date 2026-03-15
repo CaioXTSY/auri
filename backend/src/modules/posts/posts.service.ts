@@ -76,7 +76,7 @@ export class PostsService {
           select: { id: true, name: true },
         },
         author: {
-          select: { id: true, name: true, role: true },
+          select: { id: true, name: true, role: true, avatar: true },
         },
         _count: {
           select: { replies: true },
@@ -123,7 +123,7 @@ export class PostsService {
             select: { id: true, name: true },
           },
           author: {
-            select: { id: true, name: true, role: true },
+            select: { id: true, name: true, role: true, avatar: true },
           },
           _count: {
             select: { replies: true },
@@ -152,13 +152,13 @@ export class PostsService {
           select: { id: true, name: true },
         },
         author: {
-          select: { id: true, name: true, role: true },
+          select: { id: true, name: true, role: true, avatar: true },
         },
         replies: {
           orderBy: { createdAt: 'asc' },
           include: {
             author: {
-              select: { id: true, name: true, role: true },
+              select: { id: true, name: true, role: true, avatar: true },
             },
           },
         },
@@ -203,7 +203,7 @@ export class PostsService {
           select: { id: true, name: true },
         },
         author: {
-          select: { id: true, name: true, role: true },
+          select: { id: true, name: true, role: true, avatar: true },
         },
         _count: {
           select: { replies: true },
@@ -254,7 +254,7 @@ export class PostsService {
       },
       include: {
         author: {
-          select: { id: true, name: true, role: true },
+          select: { id: true, name: true, role: true, avatar: true },
         },
       },
     });
@@ -285,7 +285,7 @@ export class PostsService {
       data: { content: updateReplyDto.content },
       include: {
         author: {
-          select: { id: true, name: true, role: true },
+          select: { id: true, name: true, role: true, avatar: true },
         },
       },
     });

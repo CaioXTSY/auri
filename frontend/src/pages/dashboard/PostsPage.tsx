@@ -13,6 +13,12 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 import { Eye, Loader2, MessageSquare, Pencil, Plus, Send, Trash2 } from 'lucide-react';
 
+const getUserInitials = (name?: string) => {
+  if (!name) return 'U';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('') || 'U';
+};
+
 export const PostsPage = () => {
   const user = useAuthStore((state) => state.user);
   const [posts, setPosts] = useState<PostItem[]>([]);
@@ -256,17 +262,28 @@ export const PostsPage = () => {
                       : 'hover:bg-slate-50'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-sm text-slate-900 line-clamp-2">{post.title}</p>
-                    <span className="text-[10px] font-semibold uppercase rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
-                      {post.class?.name || 'Geral'}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[11px] font-bold overflow-hidden">
+                      {post.author.avatar ? (
+                        <img src={post.author.avatar} alt={post.author.name} className="h-full w-full object-cover" />
+                      ) : (
+                        getUserInitials(post.author.name)
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-sm text-slate-900 line-clamp-2">{post.title}</p>
+                        <span className="text-[10px] font-semibold uppercase rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+                          {post.class?.name || 'Geral'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500 flex items-center gap-2">
+                        <span>{post.author.name}</span>
+                        <span>•</span>
+                        <span>{post._count?.replies || 0} respostas</span>
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 flex items-center gap-2">
-                    <span>{post.author.name}</span>
-                    <span>•</span>
-                    <span>{post._count?.replies || 0} respostas</span>
-                  </p>
                 </button>
               ))}
             </div>
@@ -374,9 +391,18 @@ export const PostsPage = () => {
                   <div className="rounded-xl bg-slate-50 p-4 min-h-[360px]">
                     <article className="rounded-xl bg-white p-4 shadow-sm">
                       <h4 className="text-lg font-bold text-slate-900">{postTitle || 'Sem título'}</h4>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {user?.name || 'Professor'} • {postClassId ? classes.find((classItem) => classItem.id === postClassId)?.name : 'Todas as turmas'}
-                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                          {user?.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                          ) : (
+                            getUserInitials(user?.name)
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          {user?.name || 'Professor'} • {postClassId ? classes.find((classItem) => classItem.id === postClassId)?.name : 'Todas as turmas'}
+                        </p>
+                      </div>
                       <div className="mt-4 text-sm text-slate-700">
                         <MarkdownContent content={postContent || 'Comece a escrever para visualizar o markdown...'} />
                       </div>
@@ -426,7 +452,15 @@ export const PostsPage = () => {
                 <div className="space-y-5">
                   <article className="rounded-xl bg-white p-5 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold overflow-hidden">
+                          {selectedPost.author.avatar ? (
+                            <img src={selectedPost.author.avatar} alt={selectedPost.author.name} className="h-full w-full object-cover" />
+                          ) : (
+                            getUserInitials(selectedPost.author.name)
+                          )}
+                        </div>
+                        <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                           {selectedPost.class?.name || 'Comunicado geral'}
                         </p>
@@ -434,6 +468,7 @@ export const PostsPage = () => {
                         <p className="text-xs text-slate-500 mt-1">
                           enviado por {selectedPost.author.name}
                         </p>
+                        </div>
                       </div>
                       {isProfessor && canEditSelectedPost && (
                         <div className="flex gap-2">
@@ -471,10 +506,19 @@ export const PostsPage = () => {
                           return (
                             <div key={reply.id} className="rounded-lg p-3 bg-slate-50">
                               <div className="flex items-center justify-between mb-2">
-                                <p className="text-xs text-slate-500">
-                                  <span className="font-semibold text-slate-700">{reply.author.name}</span>{' '}
-                                  • {new Date(reply.createdAt).toLocaleString('pt-BR')}
-                                </p>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                                    {reply.author.avatar ? (
+                                      <img src={reply.author.avatar} alt={reply.author.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                      getUserInitials(reply.author.name)
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-slate-500">
+                                    <span className="font-semibold text-slate-700">{reply.author.name}</span>{' '}
+                                    • {new Date(reply.createdAt).toLocaleString('pt-BR')}
+                                  </p>
+                                </div>
                                 {canDeleteReply && (
                                   <button
                                     type="button"

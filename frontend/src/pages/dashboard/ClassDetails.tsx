@@ -9,6 +9,12 @@ import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { Calendar, Trophy, Clock, ChevronRight, MessageSquare } from 'lucide-react';
 
+const getUserInitials = (name?: string) => {
+  if (!name) return 'U';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('') || 'U';
+};
+
 export const ClassDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [classroom, setClassroom] = useState<Class | null>(null);
@@ -189,8 +195,17 @@ export const ClassDetails = () => {
                   <div className="text-sm text-slate-700 line-clamp-4">
                     <MarkdownContent content={post.content} className="space-y-2" />
                   </div>
-                  <div className="mt-3 text-xs text-slate-500">
-                    por {post.author.name} • {post._count?.replies || 0} respostas
+                  <div className="mt-3 text-xs text-slate-500 flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden text-[10px] font-bold text-slate-600">
+                      {post.author.avatar ? (
+                        <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
+                      ) : (
+                        getUserInitials(post.author.name)
+                      )}
+                    </div>
+                    <span>{post.author.name}</span>
+                    <span>•</span>
+                    <span>{post._count?.replies || 0} respostas</span>
                   </div>
                 </div>
               ))}
