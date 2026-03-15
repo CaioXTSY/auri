@@ -845,25 +845,27 @@ export class MissionsService {
     const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
     const targetDifficulty = await this.getTargetDailyDifficulty();
     const prompt = [
-      'Gere um quiz diário de programação em português para alunos de graduação.',
-      `Nível alvo: ${targetDifficulty}. Priorize raciocínio, análise de código e depuração.`,
-      'Evite questões triviais de definição ou memorização direta.',
-      'A pergunta deve exigir pelo menos um passo de inferência.',
-      'Inclua mini trecho de código, cenário técnico, saída esperada ou análise de comportamento.',
-      'Retorne apenas JSON válido com o formato exato:',
+      'Gere um quiz diário de programação em português para alunos de graduação em computação.',
+      `Nível alvo: ${targetDifficulty}.`,
+      'FOCO: Raciocínio lógico, análise de fluxo de execução, depuração e semântica de linguagens (Python, JavaScript, Java, C/C++).',
+      'REGRAS TÉCNICAS CRÍTICAS:',
+      '1. PRECISÃO SEMÂNTICA: Se o código fornecido resultar em erro (TypeError, SyntaxError, ReferenceError, etc.), a resposta correta DEVE ser o erro correspondente.',
+      '2. SEM ALUCINAÇÃO: Não invente saídas para códigos que falham. Analise rigorosamente os tipos e a sintaxe.',
+      '3. CÓDIGO REALISTA: Use trechos de código que testem conceitos como escopo, tipos, closures, referências, recursão ou estruturas de dados.',
+      '4. FORMATO: Retorne apenas JSON válido no formato exato:',
       '{',
-      '"title": "string",',
-      '"question": "string",',
+      '"title": "Título curto e instigante",',
+      '"question": "Enunciado claro com bloco de código se necessário",',
       '"difficulty": "FACIL" | "MEDIO" | "DIFICIL",',
       '"options": ["A","B","C","D"],',
       '"correctIndex": 0,',
-      '"explanations": ["exp A","exp B","exp C","exp D"]',
+      '"explanations": ["Explicação técnica para A","Explicação para B","Explicação para C","Explicação para D"]',
       '}',
-      'Regras obrigatórias:',
+      'REGRAS DE FORMATAÇÃO:',
       '- Exatamente 4 alternativas.',
-      '- Apenas 1 alternativa correta.',
-      '- Explicações objetivas para cada alternativa.',
-      '- Não usar markdown.',
+      '- Explicações devem ser educativas e detalhadas (mínimo 15 palavras cada).',
+      '- Não use markdown fora do JSON.',
+      '- Se usar código na pergunta, use blocos formatados com \\n.',
     ].join('\n');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -878,11 +880,11 @@ export class MissionsService {
           {
             role: 'system',
             content:
-              'Você é um designer instrucional de programação. Gere quizzes técnicos desafiadores, claros e sem ambiguidade.',
+              'Você é um Professor de Ciência da Computação especialista em semântica de linguagens de programação. Seu objetivo é criar questões de prova rigorosas e tecnicamente impecáveis. Você nunca ignora erros de tipo ou exceções de runtime.',
           },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.55,
+        temperature: 0.4,
         response_format: { type: 'json_object' },
       }),
     });
