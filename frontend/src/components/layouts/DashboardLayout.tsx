@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag, Bell, X, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
@@ -251,14 +251,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <Trophy className="h-4 w-4" />
             <span>Gamificação</span>
           </Link>
-
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors"
-          >
-            <CalendarDays className="h-4 w-4" />
-            <span>Atividades</span>
-          </button>
 
           <Link
             to="/dashboard/settings"

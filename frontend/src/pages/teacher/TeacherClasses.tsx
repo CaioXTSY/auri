@@ -69,7 +69,7 @@ export const TeacherClasses = () => {
             </div>
             <h3 className="text-lg font-medium text-slate-900">Nenhuma turma encontrada</h3>
             <p className="text-slate-500 max-w-sm mx-auto mt-2 mb-6">
-              Você ainda não criou nenhuma turma. Comece criando uma para organizar seus alunos e atividades.
+              Você ainda não criou nenhuma turma. Comece criando uma para organizar seus alunos.
             </p>
             <Button onClick={() => navigate('/dashboard/teacher/classes/new')} variant="outline">
               Criar Primeira Turma
