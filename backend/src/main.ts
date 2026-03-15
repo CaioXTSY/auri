@@ -47,7 +47,8 @@ async function bootstrap() {
     .addTag('submissions', 'Submissões de código')
     .addTag('gamification', 'Sistema de gamificação')
     .addTag('missions', 'Missões e rotina')
-    .addTag('ai', 'Assistente de IA')
+    .addTag('notifications', 'Notificações')
+    .addTag('dashboard', 'Visão consolidada do aluno')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

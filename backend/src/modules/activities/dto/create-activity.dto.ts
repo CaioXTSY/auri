@@ -44,7 +44,7 @@ export class CreateActivityDto {
   @ApiProperty({
     description: 'Tipo da atividade',
     enum: ActivityType,
-    example: 'EXERCISE',
+    example: 'EXERCICIO',
   })
   @IsNotEmpty()
   @IsEnum(ActivityType)

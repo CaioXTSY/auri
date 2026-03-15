@@ -15,7 +15,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
-  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 import { ClassesService } from './classes.service';
@@ -118,14 +117,6 @@ export class ClassesController {
     summary: 'Listar todas as turmas com paginação',
     description: 'Retorna lista paginada de turmas com filtros opcionais'
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'name', required: false, type: String, example: 'Turma A' })
-  @ApiQuery({ name: 'semester', required: false, type: String, example: '2024.1' })
-  @ApiQuery({ name: 'year', required: false, type: Number, example: 2024 })
-  @ApiQuery({ name: 'status', required: false, enum: ['ATIVA', 'ENCERRADA'], example: 'ATIVA' })
-  @ApiQuery({ name: 'sortBy', required: false, type: String, example: 'createdAt' })
-  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'], example: 'desc' })
   @ApiResponse({
     status: 200,
     description: 'Lista de turmas retornada com sucesso',

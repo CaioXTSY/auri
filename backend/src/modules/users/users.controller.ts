@@ -13,7 +13,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiQuery, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -82,13 +82,6 @@ export class UsersController {
     summary: 'Listar todos os usuários (Admin e Professor)',
     description: 'Retorna lista paginada de usuários com filtros opcionais'
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'role', required: false, enum: Role, example: 'ALUNO' })
-  @ApiQuery({ name: 'name', required: false, type: String, example: 'João' })
-  @ApiQuery({ name: 'email', required: false, type: String, example: 'joao@example.com' })
-  @ApiQuery({ name: 'sortBy', required: false, type: String, example: 'createdAt' })
-  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'], example: 'desc' })
   @ApiResponse({ 
     status: 200, 
     description: 'Lista de usuários',

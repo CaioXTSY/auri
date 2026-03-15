@@ -20,7 +20,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
-@ApiTags('Missions')
+@ApiTags('missions')
 @Controller('missions')
 export class MissionsController {
   constructor(private readonly missionsService: MissionsService) {}

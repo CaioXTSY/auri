@@ -122,43 +122,6 @@ export class ActivitiesController {
     summary: 'Listar todas as atividades com paginação',
     description: 'Retorna lista paginada de atividades com filtros opcionais',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({
-    name: 'classId',
-    required: false,
-    type: String,
-    description: 'UUID da turma',
-  })
-  @ApiQuery({
-    name: 'type',
-    required: false,
-    enum: ['EXERCICIO', 'DESAFIO', 'PROJETO', 'QUIZ'],
-  })
-  @ApiQuery({
-    name: 'difficulty',
-    required: false,
-    enum: ['FACIL', 'MEDIO', 'DIFICIL'],
-  })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: ['ATIVA', 'INATIVA'],
-    example: 'ATIVA',
-  })
-  @ApiQuery({ name: 'title', required: false, type: String, example: 'FizzBuzz' })
-  @ApiQuery({
-    name: 'sortBy',
-    required: false,
-    type: String,
-    example: 'deadline',
-  })
-  @ApiQuery({
-    name: 'sortOrder',
-    required: false,
-    enum: ['asc', 'desc'],
-    example: 'asc',
-  })
   @ApiResponse({
     status: 200,
     description: 'Lista de atividades',

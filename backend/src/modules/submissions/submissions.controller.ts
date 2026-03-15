@@ -15,7 +15,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
-  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 import { SubmissionsService } from './submissions.service';
@@ -107,37 +106,6 @@ export class SubmissionsController {
     summary: 'Listar submissões',
     description:
       'Lista submissões com paginação. Alunos veem apenas suas submissões. Professores e Admin veem todas.',
-  })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({
-    name: 'activityId',
-    required: false,
-    type: String,
-    description: 'UUID da atividade',
-  })
-  @ApiQuery({
-    name: 'userId',
-    required: false,
-    type: String,
-    description: 'UUID do usuário (apenas Admin/Professor)',
-  })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: ['PENDENTE', 'EXECUTANDO', 'APROVADO', 'PARCIAL', 'REPROVADO', 'ERRO'],
-  })
-  @ApiQuery({
-    name: 'sortBy',
-    required: false,
-    type: String,
-    example: 'submittedAt',
-  })
-  @ApiQuery({
-    name: 'sortOrder',
-    required: false,
-    enum: ['asc', 'desc'],
-    example: 'desc',
   })
   @ApiResponse({
     status: 200,
