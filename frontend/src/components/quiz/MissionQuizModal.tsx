@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import { cn } from '@/lib/utils';
 import { missionsService, type MissionQuiz, type MissionQuizAnswerResponse } from '@/services/missions-service';
 import { useAuthStore } from '@/stores/auth-store';
@@ -154,7 +155,7 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
             {!isLoading && quiz && (
               <div className="space-y-5">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-slate-700 text-sm leading-relaxed">
-                  {quiz.question}
+                  <MarkdownContent content={quiz.question} />
                 </div>
 
                 <div className="grid gap-2.5">
@@ -192,9 +193,9 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
                               {option}
                             </span>
                             {result && (
-                              <p className="text-xs text-slate-600 leading-relaxed">
-                                {result.explanations?.[index]}
-                              </p>
+                              <div className="text-xs text-slate-600 leading-relaxed">
+                                <MarkdownContent content={String(result.explanations?.[index] || '')} />
+                              </div>
                             )}
                           </div>
                         </div>
