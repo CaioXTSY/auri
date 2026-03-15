@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag, Bell, X } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Trophy, CalendarDays, Settings, LogOut, Flag, Bell, X, MessageSquare } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
@@ -203,6 +203,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <BookOpen className="h-4 w-4" />
                 <span>Gerenciar Turmas</span>
               </Link>
+              <Link
+                to="/dashboard/posts"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Postagens</span>
+              </Link>
             </>
           ) : (
             <>
@@ -226,6 +233,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               >
                 <Flag className="h-4 w-4" />
                 <span>Missões</span>
+              </Link>
+              <Link
+                to="/dashboard/posts"
+                className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Postagens</span>
               </Link>
             </>
           )}

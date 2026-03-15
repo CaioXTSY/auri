@@ -19,6 +19,7 @@ import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
 import { JoinClass } from '@/pages/dashboard/JoinClass';
 import { AchievementsPage } from '@/pages/dashboard/AchievementsPage';
+import { PostsPage } from '@/pages/dashboard/PostsPage';
 
 function App() {
   return (
@@ -43,6 +44,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AchievementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/posts"
+          element={
+            <ProtectedRoute>
+              <PostsPage />
             </ProtectedRoute>
           }
         />

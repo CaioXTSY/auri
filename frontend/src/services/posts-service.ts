@@ -16,7 +16,7 @@ export interface PostReply {
   postId: string;
   authorId: string;
   content: string;
-  eatedAt: string;
+  createdAt: string;
   updatedAt: string;
   author: PostAuthor;
 }

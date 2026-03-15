@@ -4,13 +4,16 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { activityService, type Activity } from '@/services/activity-service';
 import { gamificationService, type RankingEntry } from '@/services/gamification-service';
+import { postsService, type PostItem } from '@/services/posts-service';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
-import { Calendar, Trophy, Clock, ChevronRight } from 'lucide-react';
+import { MarkdownContent } from '@/components/ui/markdown-content';
+import { Calendar, Trophy, Clock, ChevronRight, MessageSquare } from 'lucide-react';
 
 export const ClassDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [classroom, setClassroom] = useState<Class | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [posts, setPosts] = useState<PostItem[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,16 +28,18 @@ export const ClassDetails = () => {
         setIsLoading(true);
         setError(null);
 
-        const [classData, activitiesData, rankingData] = await Promise.all([
+        const [classData, activitiesData, rankingData, postsData] = await Promise.all([
           classService.getClassDetails(id),
           activityService.getActivitiesByClass(id),
           gamificationService.getRanking('TURMA', id, 10),
+          postsService.list({ classId: id, page: 1, limit: 8 }),
         ]);
 
         if (isMounted) {
           setClassroom(classData);
           setActivities(activitiesData.data);
           setRanking(rankingData);
+          setPosts(postsData.data);
         }
       } catch (err) {
         if (isMounted) {
@@ -152,6 +157,48 @@ export const ClassDetails = () => {
             </div>
           </div>
         </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-display font-bold text-brand-900 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-accent-600" />
+              Postagens da Turma
+            </h2>
+            <Link
+              to="/dashboard/posts"
+              className="text-sm font-semibold text-brand-700 hover:text-brand-900"
+            >
+              Ver todas
+            </Link>
+          </div>
+
+          {posts.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-500">
+              Nenhuma postagem publicada para esta turma.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {posts.map((post) => (
+                <div key={post.id} className="bg-white rounded-xl border border-slate-200 p-4">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="text-base font-semibold text-brand-900">{post.title}</h3>
+                    <span className="text-xs text-slate-500 whitespace-nowrap">
+                      {new Date(post.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                  <div className="text-sm text-slate-700 line-clamp-4">
+                    <MarkdownContent content={post.content} className="space-y-2" />
+                  </div>
+                  <div className="mt-3 text-xs text-slate-500">
+                    por {post.author.name} • {post._count?.replies || 0} respostas
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="h-px bg-slate-200" />
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

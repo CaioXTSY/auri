@@ -3,14 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { activityService, type Activity } from '@/services/activity-service';
+import { postsService, type PostItem } from '@/services/posts-service';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronLeft, Calendar, Users, Trophy, Loader2, Copy, Check } from 'lucide-react';
+import { MarkdownContent } from '@/components/ui/markdown-content';
+import { Plus, ChevronLeft, Calendar, Users, Trophy, Loader2, Copy, Check, MessageSquare } from 'lucide-react';
 
 export const TeacherClassDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [classData, setClassData] = useState<Class | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [posts, setPosts] = useState<PostItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -30,14 +33,16 @@ export const TeacherClassDetails = () => {
       if (!id) return;
       try {
         setIsLoading(true);
-        const [cls, acts] = await Promise.all([
+        const [cls, acts, postsData] = await Promise.all([
           classService.getClassDetails(id),
-          activityService.getActivitiesByClass(id)
+          activityService.getActivitiesByClass(id),
+          postsService.list({ classId: id, page: 1, limit: 8 }),
         ]);
         
         if (isMounted) {
           setClassData(cls);
           setActivities(acts.data);
+          setPosts(postsData.data);
         }
       } catch (err) {
         if (isMounted) {
@@ -153,6 +158,43 @@ export const TeacherClassDetails = () => {
             <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Média da Turma</h3>
             <p className="text-3xl font-bold text-brand-900 mt-2">-</p>
           </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-brand-900 font-display flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-accent-600" />
+              Postagens da Turma
+            </h2>
+            <Button variant="outline" onClick={() => navigate('/dashboard/posts')}>
+              Gerenciar Postagens
+            </Button>
+          </div>
+
+          {posts.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-lg border border-slate-200 border-dashed text-slate-500">
+              Nenhuma postagem publicada ainda.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {posts.map((post) => (
+                <div key={post.id} className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="text-base font-semibold text-brand-900">{post.title}</h3>
+                    <span className="text-xs text-slate-500 whitespace-nowrap">
+                      {new Date(post.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                  <div className="text-sm text-slate-700">
+                    <MarkdownContent content={post.content} className="space-y-2" />
+                  </div>
+                  <p className="mt-3 text-xs text-slate-500">
+                    por {post.author.name} • {post._count?.replies || 0} respostas
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Activities List */}
