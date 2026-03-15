@@ -231,7 +231,7 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
                     >
                       {result.isCorrect
                         ? `Resposta correta! Você ganhou ${result.pointsAwarded} XP.`
-                        : 'Resposta incorreta. Veja as explicações e tente amanhã.'}
+                        : 'Resposta incorreta. Veja as explicações e continue praticando nos próximos desafios.'}
                     </div>
                     <div className="flex justify-end">
                       <Button
