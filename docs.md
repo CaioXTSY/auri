@@ -8,7 +8,7 @@ A solução é dividida em:
 
 - **Backend** em NestJS com Prisma e MySQL
 - **Frontend** em React + TypeScript + Vite
-- **Execução de código** via Judge0
+- **Atividades práticas** de programação
 - **Recursos de IA** para geração de quiz/missões
 
 Objetivos centrais da plataforma:
@@ -92,7 +92,7 @@ Entidades principais:
 
 - **User**: autenticação e perfil
 - **Class** e **ClassStudent**: turmas e matrículas
-- **Activity** e **TestCase**: exercícios e casos de teste
+- **Activity**: exercícios e tarefas
 - **Submission**: envio de solução do aluno
 - **UserPoint**, **Achievement**, **UserAchievement**, **Ranking**: gamificação
 - **Mission**, **MissionQuiz**, **MissionQuizAttempt**, **UserMission**: missões
@@ -197,14 +197,6 @@ Enums relevantes:
 
 ## 8. Integrações Externas
 
-### Judge0
-
-Responsável pela execução de código submetido pelos alunos.
-
-- URL configurável via `JUDGE0_URL`
-- Linguagens mapeadas: JavaScript, TypeScript, Python, Java, C, C++
-- Usa polling de resultado por token
-
 ### OpenAI
 
 Usado para geração automática de quiz diário no módulo de missões.
@@ -244,7 +236,6 @@ Usado para geração automática de quiz diário no módulo de missões.
 - Node.js 20+
 - npm
 - MySQL 8+
-- Judge0 (opcional para fluxo completo de submissão)
 
 ### Backend
 
@@ -280,8 +271,6 @@ Exemplo base:
 - `JWT_REFRESH_SECRET`
 - `JWT_REFRESH_EXPIRES_IN`
 - `OPENAI_API_KEY`
-- `JUDGE0_URL`
-- `JUDGE0_AUTH_TOKEN`
 - `CORS_ORIGIN`
 - `MAX_FILE_SIZE`
 - `UPLOAD_DIR`

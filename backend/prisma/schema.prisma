@@ -13,26 +13,10 @@ enum Role {
   ALUNO
 }
 
-enum ActivityType {
-  EXERCICIO
-  QUIZ
-  DESAFIO
-  PROJETO
-}
-
 enum Difficulty {
   FACIL
   MEDIO
   DIFICIL
-}
-
-enum SubmissionStatus {
-  PENDENTE
-  EXECUTANDO
-  APROVADO
-  PARCIAL
-  REPROVADO
-  ERRO
 }
 
 enum MissionType {
@@ -50,7 +34,6 @@ enum MissionStatus {
 
 enum NotificationType {
   SISTEMA
-  ATIVIDADE
   CONQUISTA
   MISSAO
   RANKING
@@ -71,8 +54,6 @@ model User {
 
   // Relações
   classEnrollments   ClassStudent[]
-  createdActivities  Activity[]
-  submissions        Submission[]
   points             UserPoint[]
   achievements       UserAchievement[]
   rankings           Ranking[]
@@ -98,7 +79,6 @@ model Class {
 
   // Relações
   students   ClassStudent[]
-  activities Activity[]
   missions   Mission[]
   posts      Post[]
 
@@ -116,69 +96,6 @@ model ClassStudent {
 
   @@id([classId, userId])
   @@map("class_students")
-}
-
-model Activity {
-  id                String       @id @default(uuid())
-  classId           String?      @map("class_id")
-  title             String       @db.VarChar(200)
-  description       String       @db.Text
-  type              ActivityType
-  difficulty        Difficulty
-  points            Int
-  starterCode       String?      @db.Text @map("starter_code")
-  deadline          DateTime?
-  allowLateSubmission Boolean    @default(true) @map("allow_late_submission")
-  status            String       @default("ATIVA")
-  timeLimit         Int          @default(2) @map("time_limit") // tempo limite em segundos
-  memoryLimit       Int          @default(128000) @map("memory_limit") // memória limite em KB (128MB)
-  createdById       String       @map("created_by_id")
-  createdAt         DateTime     @default(now()) @map("created_at")
-  updatedAt         DateTime     @updatedAt @map("updated_at")
-
-  // Relações
-  class       Class?       @relation(fields: [classId], references: [id], onDelete: Cascade)
-  createdBy   User         @relation(fields: [createdById], references: [id])
-  submissions Submission[]
-  testCases   TestCase[]
-
-  @@map("activities")
-}
-
-model TestCase {
-  id             String   @id @default(uuid())
-  activityId     String   @map("activity_id")
-  input          String   @db.Text
-  expectedOutput String   @db.Text @map("expected_output")
-  points         Int
-  isVisible      Boolean  @default(true) @map("is_visible")
-  description    String?  @db.Text
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  // Relações
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-
-  @@map("test_cases")
-}
-
-model Submission {
-  id            String           @id @default(uuid())
-  activityId    String           @map("activity_id")
-  userId        String           @map("user_id")
-  code          String           @db.Text
-  language      String
-  status        SubmissionStatus @default(PENDENTE)
-  result        String?          @db.Text
-  executionTime Int?             @map("execution_time") // em ms
-  memoryUsed    Int?             @map("memory_used") // em KB
-  pointsEarned  Int              @default(0) @map("points_earned")
-  submittedAt   DateTime         @default(now()) @map("submitted_at")
-
-  // Relações
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("submissions")
 }
 
 model UserPoint {
@@ -305,13 +222,13 @@ model MissionQuizAttempt {
 }
 
 model UserMission {
-  id          String        @id @default(uuid())
-  userId      String        @map("user_id")
-  missionId   String        @map("mission_id")
-  status      MissionStatus @default(NAO_INICIADA)
-  progress    Int           @default(0)
-  completedAt DateTime?     @map("completed_at")
-  startedAt   DateTime      @default(now()) @map("started_at")
+  id          String             @id @default(uuid())
+  userId      String             @map("user_id")
+  missionId   String             @map("mission_id")
+  status      MissionStatus      @default(NAO_INICIADA)
+  progress    Int                @default(0)
+  completedAt DateTime?          @map("completed_at")
+  startedAt   DateTime           @default(now()) @map("started_at")
 
   // Relações
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)

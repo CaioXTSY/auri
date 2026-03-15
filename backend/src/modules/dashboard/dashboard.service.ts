@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { MissionsService } from '../missions/missions.service';
-import { SubmissionsService } from '../submissions/submissions.service';
-import { ActivitiesService } from '../activities/activities.service';
 
 @Injectable()
 export class DashboardService {
@@ -11,23 +9,17 @@ export class DashboardService {
     private readonly prisma: PrismaService,
     private readonly gamificationService: GamificationService,
     private readonly missionsService: MissionsService,
-    private readonly submissionsService: SubmissionsService,
-    private readonly activitiesService: ActivitiesService,
   ) {}
 
   async getStudentDashboard(userId: string) {
     const [
       gamification,
       missions,
-      submissions,
-      upcomingActivities,
       recentAchievements,
       classEnrollment,
     ] = await Promise.all([
       this.gamificationService.getUserGamificationStats(userId),
       this.missionsService.getUserMissionStats(userId),
-      this.submissionsService.getUserStats(userId),
-      this.activitiesService.findUpcomingForStudent(userId, 5),
       this.prisma.userAchievement.findMany({
         where: { userId },
         orderBy: { unlockedAt: 'desc' },
@@ -100,8 +92,6 @@ export class DashboardService {
         classId: classEnrollment?.classId || null,
       },
       missions,
-      submissions,
-      upcomingActivities,
     };
   }
 }

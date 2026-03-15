@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MissionStatus } from '@prisma/client';
 
 /**
  * Serviço de Gamificação
@@ -373,112 +374,35 @@ export class GamificationService {
     });
 
     if (achievement) {
-      await this.unlockAchievement(userId, achievement.id);
+      // Verificar se usuário completou alguma missão
+      const completedMissionsCount = await this.prisma.userMission.count({
+        where: {
+          userId,
+          status: MissionStatus.CONCLUIDA,
+        },
+      });
+
+      if (completedMissionsCount > 0) {
+        await this.unlockAchievement(userId, achievement.id);
+      }
     }
   }
 
   /**
-   * Verificar conquistas detalhadas de submissão (tempo, performance, linguagens)
+   * Verificar conquistas de quiz
    */
-  async checkSubmissionDetailAchievements(userId: string, submission: any) {
-    const now = new Date();
-    const hour = now.getHours();
-    const day = now.getDay(); // 0 = Domingo, 6 = Sábado
-
-    // 1. NIGHT_OWL (00h - 04h)
-    if (hour >= 0 && hour <= 4) {
-      const achievement = await this.prisma.achievement.findUnique({
-        where: { condition: 'NIGHT_OWL' },
-      });
-      if (achievement) await this.unlockAchievement(userId, achievement.id);
-    }
-
-    // 2. EARLY_BIRD (05h - 08h)
-    if (hour >= 5 && hour <= 8) {
-      const achievement = await this.prisma.achievement.findUnique({
-        where: { condition: 'EARLY_BIRD' },
-      });
-      if (achievement) await this.unlockAchievement(userId, achievement.id);
-    }
-
-    // 3. WEEKEND_WARRIOR (Sábado ou Domingo)
-    if (day === 0 || day === 6) {
-      const achievement = await this.prisma.achievement.findUnique({
-        where: { condition: 'WEEKEND_WARRIOR' },
-      });
-      if (achievement) await this.unlockAchievement(userId, achievement.id);
-    }
-
-    // 4. PERFECT_SUBMISSION (Pontuação total da atividade)
-    if (submission.activity && submission.pointsEarned === submission.activity.points) {
-      const achievement = await this.prisma.achievement.findUnique({
-        where: { condition: 'PERFECT_SUBMISSION' },
-      });
-      if (achievement) await this.unlockAchievement(userId, achievement.id);
-    }
-
-    // 5. POLYGLOT (2 linguagens diferentes)
-    const distinctLanguages = await this.prisma.submission.groupBy({
-      by: ['language'],
-      where: {
-        userId,
-        status: 'APROVADO',
-      },
+  async checkQuizAchievements(userId: string) {
+    const achievement = await this.prisma.achievement.findUnique({
+      where: { condition: 'FIRST_QUIZ_COMPLETED' },
     });
 
-    if (distinctLanguages.length >= 2) {
-      const achievement = await this.prisma.achievement.findUnique({
-        where: { condition: 'POLYGLOT' },
+    if (achievement) {
+      const completedQuizCount = await this.prisma.missionQuizAttempt.count({
+        where: { userId },
       });
-      if (achievement) await this.unlockAchievement(userId, achievement.id);
-    }
 
-    // 6. FIRST_APPROVED (Primeira submissão aprovada)
-    // Contar submissões aprovadas do usuário
-    const approvedCount = await this.prisma.submission.count({
-      where: {
-        userId,
-        status: 'APROVADO',
-      },
-    });
-
-    if (approvedCount === 1 && submission.status === 'APROVADO') {
-      const achievement = await this.prisma.achievement.findUnique({
-        where: { condition: 'FIRST_APPROVED' },
-      });
-      if (achievement) await this.unlockAchievement(userId, achievement.id);
-    }
-
-    // 7. APPROVED_X (Marcos de submissões aprovadas)
-    const milestones = [10, 25, 50, 100, 250, 500];
-    if (milestones.includes(approvedCount) && submission.status === 'APROVADO') {
-      const achievement = await this.prisma.achievement.findFirst({
-        where: { condition: `APPROVED_${approvedCount}` },
-      });
-      if (achievement) {
+      if (completedQuizCount > 0) {
         await this.unlockAchievement(userId, achievement.id);
-      }
-    }
-
-    // 8. PERFECTIONIST_10 (10 submissões perfeitas)
-    if (submission.status === 'APROVADO') {
-      const perfectCount = await this.prisma.submission.count({
-        where: {
-          userId,
-          status: 'APROVADO',
-          pointsEarned: {
-            gte: 100, // Assumindo que 100% = pontos máximos da atividade
-          },
-        },
-      });
-
-      if (perfectCount === 10) {
-        const achievement = await this.prisma.achievement.findUnique({
-          where: { condition: 'PERFECTIONIST_10' },
-        });
-        if (achievement) {
-          await this.unlockAchievement(userId, achievement.id);
-        }
       }
     }
   }

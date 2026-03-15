@@ -6,8 +6,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ClassesModule } from './modules/classes/classes.module';
-import { ActivitiesModule } from './modules/activities/activities.module';
-import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { MissionsModule } from './modules/missions/missions.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -28,8 +26,6 @@ import { PostsModule } from './modules/posts/posts.module';
     AuthModule,
     UsersModule,
     ClassesModule,
-    ActivitiesModule,
-    SubmissionsModule,
     GamificationModule,
     MissionsModule,
     DashboardModule,

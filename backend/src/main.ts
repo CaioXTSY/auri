@@ -44,7 +44,7 @@ async function bootstrap() {
     .addTag('users', 'Gestão de usuários')
     .addTag('classes', 'Gestão de turmas')
     .addTag('activities', 'Gestão de atividades')
-    .addTag('submissions', 'Submissões de código')
+    .addTag('submissions', 'Submissões de alunos')
     .addTag('gamification', 'Sistema de gamificação')
     .addTag('missions', 'Missões e rotina')
     .addTag('notifications', 'Notificações')

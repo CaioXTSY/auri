@@ -1,27 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Sparkles, Trophy, Medal, Target, CheckCircle2, Hourglass } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth-store';
-import { dashboardService, type StudentDashboard, type UpcomingActivity } from '@/services/dashboard-service';
-
-type NormalizedActivityStatus = 'em_andamento' | 'pendente';
-
-interface Activity {
-  id: string;
-  title: string;
-  className: string;
-  dueDate: string;
-  status: NormalizedActivityStatus;
-}
+import { dashboardService, type StudentDashboard } from '@/services/dashboard-service';
 
 export const DashboardHome = () => {
   const user = useAuthStore((state) => state.user);
 
   const [dashboardData, setDashboardData] = useState<StudentDashboard | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
 
@@ -31,61 +18,18 @@ export const DashboardHome = () => {
     const loadDashboardData = async () => {
       // Professores não têm dashboard de aluno (gamificação/atividades) por enquanto
       if (user?.role === 'PROFESSOR') {
-        setIsLoading(false);
         return;
       }
 
       try {
-        setIsLoading(true);
-        setError(null);
-
         const dashboardResponse = await dashboardService.getStudentDashboard();
 
         if (!isMounted) return;
 
         setDashboardData(dashboardResponse);
-
-        const normalizedActivities: Activity[] = dashboardResponse.upcomingActivities.map(
-          (activity: UpcomingActivity) => {
-            const deadlineDate = new Date(activity.deadline);
-            const now = new Date();
-            const isToday =
-              deadlineDate.toDateString() === now.toDateString();
-
-            const dueLabel = isToday
-              ? `Hoje • ${deadlineDate.toLocaleTimeString('pt-BR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}`
-              : deadlineDate.toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: '2-digit',
-                });
-
-            const normalizedStatus: NormalizedActivityStatus =
-              activity.status === 'EM_ANDAMENTO'
-                ? 'em_andamento'
-                : 'pendente';
-
-            return {
-              id: activity.id,
-              title: activity.title,
-              className: activity.className,
-              dueDate: dueLabel,
-              status: normalizedStatus,
-            };
-          },
-        );
-
-        setActivities(normalizedActivities);
       } catch (loadError) {
         if (!isMounted) return;
-        setError('Não foi possível carregar os dados do dashboard.');
         console.error(loadError);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
       }
     };
 
@@ -102,19 +46,13 @@ export const DashboardHome = () => {
   const recentAchievements = dashboardData?.achievements.recent ?? [];
   const rankingGlobal = dashboardData?.ranking.global;
   const rankingClass = dashboardData?.ranking.class;
-  const submissions = dashboardData?.submissions;
   const missions = dashboardData?.missions;
   const nextLevelXp =
     levelInfo && levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel > 0
       ? levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel
       : 0;
 
-  const progress = useMemo(() => {
-    if (!levelInfo) return 0;
-    if (levelInfo.progressToNextLevel == null) return 0;
-    if (!Number.isFinite(levelInfo.progressToNextLevel)) return 0;
-    return Math.min(100, Math.max(0, Math.round(levelInfo.progressToNextLevel)));
-  }, [levelInfo]);
+  const progress = levelInfo?.progressToNextLevel ? Math.min(100, Math.max(0, Math.round(levelInfo.progressToNextLevel))) : 0;
 
   const openDailyQuiz = () => {
     window.dispatchEvent(new Event('open-daily-quiz'));
@@ -129,7 +67,7 @@ export const DashboardHome = () => {
               Bem-vindo, Professor {firstName}.
             </h2>
             <p className="mt-2 text-slate-600">
-              Gerencie suas turmas e atividades através do menu lateral.
+              Gerencie suas turmas através do menu lateral.
             </p>
           </section>
         </div>
@@ -150,7 +88,7 @@ export const DashboardHome = () => {
                 Bem-vindo de volta, {firstName}.
               </h2>
               <p className="mt-2 text-sm text-slate-600 max-w-md">
-                Continue evoluindo sua trilha. Complete atividades, acumule pontos e avance de nível
+                Continue evoluindo sua trilha. Participe das turmas, acumule pontos e avance de nível
                 na AURI.
               </p>
               <Button
@@ -200,84 +138,17 @@ export const DashboardHome = () => {
               Meta da Semana
             </p>
             <h2 className="mt-2 text-xl font-display font-bold">
-              Complete 3 atividades e conquiste um novo emblema.
+              Complete suas missões diárias e suba no ranking.
             </h2>
             <p className="mt-2 text-sm text-brand-100">
-              Foque em entregar as próximas atividades antes do prazo para manter sua streak ativa.
+              Mantenha o foco em suas missões para garantir o bônus de XP semanal.
             </p>
             <div className="mt-4 flex items-center gap-4 text-xs">
               <div className="flex-1 h-1.5 bg-brand-800 rounded-full overflow-hidden">
-                <div className="h-full w-2/3 bg-accent-500 rounded-full" />
+                <div className="h-full w-1/3 bg-accent-500 rounded-full" />
               </div>
-              <span className="font-semibold text-accent-200">2 de 3 concluídas</span>
+              <span className="font-semibold text-accent-200">1 de 3 concluídas</span>
             </div>
-          </div>
-        </section>
-
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em]">
-                Próximas Atividades
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Atividades organizadas por proximidade de entrega.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
-            {isLoading && (
-              <div className="px-5 py-6 text-sm text-slate-500">
-                Carregando próximas atividades...
-              </div>
-            )}
-            {!isLoading && error && (
-              <div className="px-5 py-6 text-sm text-red-500">
-                {error}
-              </div>
-            )}
-            {!isLoading && !error && activities.length === 0 && (
-              <div className="px-5 py-6 text-sm text-slate-500">
-                Nenhuma atividade próxima encontrada.
-              </div>
-            )}
-            {!isLoading && !error && activities.map((activity) => (
-              <div
-                key={activity.id}
-                className="px-5 py-4 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-slate-800">
-                    {activity.title}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {activity.className}
-                  </span>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-[0.16em]">
-                      Prazo
-                    </p>
-                    <p className="text-xs text-slate-800">
-                      {activity.dueDate}
-                    </p>
-                  </div>
-                  <span
-                    className={
-                      activity.status === 'em_andamento'
-                        ? 'inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100'
-                        : 'inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-100'
-                    }
-                  >
-                    {activity.status === 'em_andamento'
-                      ? 'Em andamento'
-                      : 'Pendente'}
-                  </span>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -355,25 +226,6 @@ export const DashboardHome = () => {
               </div>
               <p className="mt-3 text-xs text-slate-500">
                 Taxa de conclusão: {missions?.completionRate ?? 0}%
-              </p>
-            </div>
-
-            <div className="border-t border-slate-200 pt-4">
-              <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
-                📤 Submissões
-              </h4>
-              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em]">Aprovadas</p>
-                  <p className="text-lg font-bold text-slate-800">{submissions?.approved ?? 0}</p>
-                </div>
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em]">Pendentes</p>
-                  <p className="text-lg font-bold text-slate-800">{submissions?.pending ?? 0}</p>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-slate-500">
-                Taxa de aprovação: {submissions?.approvalRate ?? 0}%
               </p>
             </div>
           </div>

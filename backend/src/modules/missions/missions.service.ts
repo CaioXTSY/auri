@@ -7,7 +7,7 @@ import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { GamificationService } from '../gamification/gamification.service';
 import { ConfigService } from '@nestjs/config';
-import { Difficulty } from '@prisma/client';
+import { Difficulty, MissionType, MissionStatus } from '@prisma/client';
 
 @Injectable()
 export class MissionsService {
@@ -55,7 +55,7 @@ export class MissionsService {
    */
   async findAll(filters?: {
     classId?: string;
-    type?: 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA';
+    type?: MissionType;
     active?: boolean;
   }) {
     const where: any = {};
@@ -301,7 +301,7 @@ export class MissionsService {
       data: {
         userId,
         missionId,
-        status: 'EM_PROGRESSO',
+        status: MissionStatus.EM_PROGRESSO,
         progress: 0,
       },
       include: {
@@ -334,11 +334,11 @@ export class MissionsService {
       throw new NotFoundException('Você não iniciou esta missão');
     }
 
-    if (userMission.status === 'CONCLUIDA') {
+    if (userMission.status === MissionStatus.CONCLUIDA) {
       throw new BadRequestException('Esta missão já foi concluída');
     }
 
-    if (userMission.status === 'EXPIRADA') {
+    if (userMission.status === MissionStatus.EXPIRADA) {
       throw new BadRequestException('Esta missão expirou');
     }
 
@@ -348,7 +348,7 @@ export class MissionsService {
     };
 
     if (updateProgressDto.progress >= 100) {
-      data.status = 'CONCLUIDA';
+      data.status = MissionStatus.CONCLUIDA;
       data.completedAt = new Date();
 
       // Adicionar pontos ao usuário
@@ -471,7 +471,7 @@ export class MissionsService {
         data: {
           userId,
           missionId,
-          status: 'EM_PROGRESSO',
+          status: MissionStatus.EM_PROGRESSO,
           progress: 0,
         },
       });
@@ -495,7 +495,7 @@ export class MissionsService {
         },
       },
       data: {
-        status: 'CONCLUIDA',
+        status: MissionStatus.CONCLUIDA,
         progress: 100,
         completedAt: new Date(),
       },
@@ -511,8 +511,11 @@ export class MissionsService {
           referenceId: missionId,
         },
       });
-      await this.gamificationService.checkMissionAchievements(userId);
     }
+
+    // Verificar conquistas de missão e quiz
+    await this.gamificationService.checkMissionAchievements(userId);
+    await this.gamificationService.checkQuizAchievements(userId);
 
     return {
       isCorrect,
@@ -680,10 +683,16 @@ export class MissionsService {
   /**
    * Completar missão manualmente
    */
-  async completeMission(missionId: string, userId: string) {
-    return this.updateProgress(missionId, userId, {
-      progress: 100,
-      status: 'CONCLUIDA' as any,
+  async completeMission(userId: string, missionId: string) {
+    return this.prisma.userMission.update({
+      where: {
+        userId_missionId: { userId, missionId },
+      },
+      data: {
+        status: MissionStatus.CONCLUIDA,
+        progress: 100,
+        completedAt: new Date(),
+      },
     });
   }
 

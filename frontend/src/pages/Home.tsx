@@ -205,8 +205,8 @@ export const Home = () => {
                   </h3>
                   <ul className="space-y-4 mb-8">
                     {[
-                      'Feedback imediato do código submetido',
-                      'Ambiente de desenvolvimento integrado (IDE)',
+                      'Atividades práticas de programação',
+                      'TODO(em breve): Feedback imediato do código',
                       'Sistema de níveis e conquistas motivacional',
                       'Histórico de evolução e portfólio'
                     ].map((item, i) => (
@@ -240,14 +240,14 @@ export const Home = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 {
-                  title: 'Judge0 Integration',
-                  desc: 'Compilação e execução de código em ambiente isolado e seguro, suportando múltiplas linguagens e casos de teste.',
-                  icon: Cpu
+                  title: 'Prática de Programação',
+                  desc: 'Atividades práticas focadas no desenvolvimento de habilidades técnicas e resolução de problemas reais.',
+                  icon: Code2
                 },
                 {
-                  title: 'Feedback Automatizado',
-                  desc: 'Análise estática e dinâmica do código dos alunos para prover dicas e correções instantâneas.',
-                  icon: Code2
+                  title: 'Ambiente de Estudo',
+                  desc: 'TODO(em breve): Suporte a execução de código em tempo real e feedback automatizado para alunos.',
+                  icon: Cpu
                 },
                 {
                   title: 'Gamificação Estratégica',

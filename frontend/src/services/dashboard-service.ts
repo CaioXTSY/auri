@@ -65,20 +65,11 @@ export interface StudentDashboard {
     classId: string | null;
   };
   missions: MissionStats;
-  submissions: SubmissionStats;
-  upcomingActivities: UpcomingActivity[];
 }
 
 export const dashboardService = {
   getMyLevel: async (): Promise<LevelInfo> => {
     const response = await api.get<LevelInfo>('/gamification/level/me');
-    return response.data;
-  },
-
-  getUpcomingActivities: async (limit = 3): Promise<UpcomingActivity[]> => {
-    const response = await api.get<UpcomingActivity[]>('/activities/upcoming', {
-      params: { limit },
-    });
     return response.data;
   },
 

@@ -29,7 +29,6 @@ export class ClassesService {
         _count: {
           select: {
             students: true,
-            activities: true,
           },
         },
       },
@@ -73,7 +72,6 @@ export class ClassesService {
             _count: {
               select: {
                 students: true,
-                activities: true,
               },
             },
           },
@@ -94,7 +92,6 @@ export class ClassesService {
         _count: {
           select: {
             students: true,
-            activities: true,
           },
         },
       },
@@ -151,7 +148,6 @@ export class ClassesService {
           _count: {
             select: {
               students: true,
-              activities: true,
             },
           },
         },
@@ -180,11 +176,6 @@ export class ClassesService {
           },
           orderBy: {
             enrolledAt: 'asc',
-          },
-        },
-        _count: {
-          select: {
-            activities: true,
           },
         },
       },
@@ -237,7 +228,6 @@ export class ClassesService {
         _count: {
           select: {
             students: true,
-            activities: true,
           },
         },
       },
@@ -246,17 +236,6 @@ export class ClassesService {
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-
-    // Verificar se existem atividades associadas
-    const activitiesCount = await this.prisma.activity.count({
-      where: { classId: id },
-    });
-
-    if (activitiesCount > 0) {
-      throw new BadRequestException(
-        'Não é possível remover turma com atividades associadas. Considere encerrar a turma ao invés de removê-la.',
-      );
-    }
 
     await this.prisma.class.delete({
       where: { id },
@@ -385,7 +364,6 @@ export class ClassesService {
             _count: {
               select: {
                 students: true,
-                activities: true,
               },
             },
           },
