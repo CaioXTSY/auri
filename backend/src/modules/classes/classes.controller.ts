@@ -84,7 +84,6 @@ export class ClassesController {
         summary: 'Criar turma',
         value: {
           name: 'Turma A - Manhã',
-          language: 'Python',
           semester: '2024.1',
           year: 2024
         }
@@ -98,7 +97,6 @@ export class ClassesController {
       example: {
         id: 'uuid-here',
         name: 'Turma A - Manhã',
-        language: 'Python',
         semester: '2024.1',
         year: 2024,
         status: 'ATIVA',
@@ -123,7 +121,6 @@ export class ClassesController {
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiQuery({ name: 'name', required: false, type: String, example: 'Turma A' })
-  @ApiQuery({ name: 'language', required: false, type: String, example: 'Python' })
   @ApiQuery({ name: 'semester', required: false, type: String, example: '2024.1' })
   @ApiQuery({ name: 'year', required: false, type: Number, example: 2024 })
   @ApiQuery({ name: 'status', required: false, enum: ['ATIVA', 'ENCERRADA'], example: 'ATIVA' })
@@ -138,7 +135,6 @@ export class ClassesController {
           {
             id: 'uuid-here',
             name: 'Turma A - Manhã',
-            language: 'Python',
             semester: '2024.1',
             year: 2024,
             status: 'ATIVA',
@@ -177,7 +173,6 @@ export class ClassesController {
         {
           id: 'uuid-here',
           name: 'Turma A - Manhã',
-          language: 'Python',
           semester: '2024.1',
           year: 2024,
           status: 'ATIVA',
@@ -205,7 +200,6 @@ export class ClassesController {
       example: {
         id: 'uuid-here',
         name: 'Turma A - Manhã',
-        language: 'Python',
         semester: '2024.1',
         year: 2024,
         status: 'ATIVA',

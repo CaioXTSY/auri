@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { activityService, type Activity } from '@/services/activity-service';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronLeft, Calendar, Users, Trophy, Code, Loader2, Copy, Check } from 'lucide-react';
+import { Plus, ChevronLeft, Calendar, Users, Trophy, Loader2, Copy, Check } from 'lucide-react';
 
 export const TeacherClassDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -98,10 +98,6 @@ export const TeacherClassDetails = () => {
             <div>
               <h1 className="text-3xl font-bold text-brand-900 font-display">{classData.name}</h1>
               <div className="flex items-center gap-4 mt-2 text-slate-600">
-                <span className="flex items-center gap-1">
-                  <Code className="w-4 h-4" />
-                  {classData.language}
-                </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   {classData.semester}

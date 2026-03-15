@@ -10,7 +10,7 @@ type NormalizedActivityStatus = 'em_andamento' | 'pendente';
 interface Activity {
   id: string;
   title: string;
-  discipline: string;
+  className: string;
   dueDate: string;
   status: NormalizedActivityStatus;
 }
@@ -70,7 +70,7 @@ export const DashboardHome = () => {
             return {
               id: activity.id,
               title: activity.title,
-              discipline: activity.disciplineName,
+              className: activity.className,
               dueDate: dueLabel,
               status: normalizedStatus,
             };
@@ -252,7 +252,7 @@ export const DashboardHome = () => {
                     {activity.title}
                   </span>
                   <span className="text-xs text-slate-500">
-                    {activity.discipline}
+                    {activity.className}
                   </span>
                 </div>
                 <div className="flex items-center gap-6">

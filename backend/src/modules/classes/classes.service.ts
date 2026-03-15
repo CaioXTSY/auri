@@ -108,7 +108,6 @@ export class ClassesService {
       page = 1,
       limit = 10,
       name,
-      language,
       semester,
       year,
       status,
@@ -125,12 +124,6 @@ export class ClassesService {
     if (name) {
       where.name = {
         contains: name,
-      };
-    }
-
-    if (language) {
-      where.language = {
-        contains: language,
       };
     }
 

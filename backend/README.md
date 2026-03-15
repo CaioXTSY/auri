@@ -82,7 +82,6 @@ src/
 │   ├── activities/    # Atividades e Casos de Teste
 │   ├── auth/          # Autenticação e Guards
 │   ├── classes/       # Turmas e Matrículas
-│   ├── disciplines/   # Disciplinas
 │   ├── gamification/  # Sistema de Pontos e Níveis
 │   ├── submissions/   # Execução de Código e Feedback
 │   └── users/         # Gerenciamento de Usuários

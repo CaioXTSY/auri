@@ -8,7 +8,7 @@ export class UpcomingActivityDto {
   title: string;
 
   @ApiProperty()
-  disciplineName: string;
+  className: string;
 
   @ApiProperty()
   deadline: Date;

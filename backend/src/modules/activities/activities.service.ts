@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import {
   CreateActivityDto,
   UpdateActivityDto,
@@ -37,20 +38,22 @@ export class ActivitiesService {
       }
     }
 
+    const { classId, deadline, ...rest } = createActivityDto;
+
+    const data = {
+      ...rest,
+      classId,
+      deadline: deadline ? new Date(deadline) : null,
+      createdById: userId,
+    } as unknown as Prisma.ActivityUncheckedCreateInput;
+
     return this.prisma.activity.create({
-      data: {
-        ...createActivityDto,
-        deadline: createActivityDto.deadline
-          ? new Date(createActivityDto.deadline)
-          : null,
-        createdById: userId,
-      },
+      data,
       include: {
         class: {
           select: {
             id: true,
             name: true,
-            language: true,
             semester: true,
             year: true,
           },
@@ -108,7 +111,6 @@ export class ActivitiesService {
             select: {
               id: true,
               name: true,
-              language: true,
               semester: true,
               year: true,
             },
@@ -181,7 +183,7 @@ export class ActivitiesService {
       id: activity.id,
       title: activity.title,
       deadline: activity.deadline!,
-      disciplineName: activity.class?.name || 'Turma',
+      className: activity.class?.name || 'Turma',
       status: 'PENDENTE',
     }));
   }
@@ -194,7 +196,6 @@ export class ActivitiesService {
           select: {
             id: true,
             name: true,
-            language: true,
             semester: true,
             year: true,
             status: true,
@@ -262,14 +263,21 @@ export class ActivitiesService {
       }
     }
 
+    const { classId, deadline, ...rest } = updateActivityDto;
+
+    const data = {
+      ...rest,
+      ...(classId !== undefined ? { classId } : {}),
+      ...(deadline !== undefined
+        ? {
+            deadline: deadline ? new Date(deadline) : null,
+          }
+        : {}),
+    } as unknown as Prisma.ActivityUncheckedUpdateInput;
+
     return this.prisma.activity.update({
       where: { id },
-      data: {
-        ...updateActivityDto,
-        deadline: updateActivityDto.deadline
-          ? new Date(updateActivityDto.deadline)
-          : undefined,
-      },
+      data,
       include: {
         class: true,
         _count: {

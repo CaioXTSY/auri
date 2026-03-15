@@ -43,7 +43,7 @@ export class ActivitiesController {
   @ApiOperation({
     summary: 'Criar nova atividade',
     description:
-      'Cria atividade de programação. Atividades podem ser vinculadas a turmas (opcional) ou disciplinas.',
+      'Cria atividade de programação. Atividades podem ser vinculadas a turmas (opcional).',
   })
   @ApiBody({
     type: CreateActivityDto,
@@ -51,12 +51,11 @@ export class ActivitiesController {
       exercise: {
         summary: 'Exercício de programação',
         value: {
-          disciplineId: 'uuid-disciplina',
           classId: 'uuid-turma',
           title: 'FizzBuzz',
           description:
             'Escreva um programa que imprime números de 1 a 100. Para múltiplos de 3, imprime "Fizz", para múltiplos de 5 imprime "Buzz", e para múltiplos de ambos imprime "FizzBuzz".',
-          type: 'EXERCISE',
+          type: 'EXERCICIO',
           difficulty: 'FACIL',
           points: 100,
           deadline: '2024-12-31T23:59:59.000Z',
@@ -67,10 +66,10 @@ export class ActivitiesController {
       challenge: {
         summary: 'Desafio avançado',
         value: {
-          disciplineId: 'uuid-disciplina',
+          classId: 'uuid-turma',
           title: 'Sistema de Gerenciamento',
           description: 'Implemente um sistema completo de gerenciamento...',
-          type: 'CHALLENGE',
+          type: 'DESAFIO',
           difficulty: 'DIFICIL',
           points: 500,
           deadline: '2024-12-31T23:59:59.000Z',
@@ -85,10 +84,9 @@ export class ActivitiesController {
       example: {
         id: 'uuid-here',
         classId: 'uuid-turma',
-        disciplineId: 'uuid-disciplina',
         title: 'FizzBuzz',
         description: 'Escreva um programa...',
-        type: 'EXERCISE',
+        type: 'EXERCICIO',
         difficulty: 'FACIL',
         points: 100,
         deadline: '2024-12-31T23:59:59.000Z',
@@ -97,10 +95,11 @@ export class ActivitiesController {
         allowLateSubmission: true,
         createdById: 'uuid-professor',
         createdAt: '2024-01-26T00:00:00.000Z',
-        discipline: {
-          id: 'uuid-disciplina',
-          name: 'Lógica de Programação',
-          language: 'javascript',
+        class: {
+          id: 'uuid-turma',
+          name: 'Turma A - 2024.1',
+          semester: '2024.1',
+          year: 2024,
         },
         _count: {
           testCases: 0,
@@ -112,7 +111,7 @@ export class ActivitiesController {
   @ApiResponse({ status: 400, description: 'Dados inválidos ou deadline no passado' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  @ApiResponse({ status: 404, description: 'Disciplina ou turma não encontrada' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   create(@Body() createActivityDto: CreateActivityDto, @Request() req) {
     return this.activitiesService.create(createActivityDto, req.user.id);
   }
@@ -126,12 +125,6 @@ export class ActivitiesController {
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiQuery({
-    name: 'disciplineId',
-    required: false,
-    type: String,
-    description: 'UUID da disciplina',
-  })
-  @ApiQuery({
     name: 'classId',
     required: false,
     type: String,
@@ -140,7 +133,7 @@ export class ActivitiesController {
   @ApiQuery({
     name: 'type',
     required: false,
-    enum: ['EXERCISE', 'CHALLENGE', 'PROJECT', 'QUIZ'],
+    enum: ['EXERCICIO', 'DESAFIO', 'PROJETO', 'QUIZ'],
   })
   @ApiQuery({
     name: 'difficulty',
@@ -176,16 +169,11 @@ export class ActivitiesController {
             id: 'uuid-here',
             title: 'FizzBuzz',
             description: 'Escreva um programa...',
-            type: 'EXERCISE',
+            type: 'EXERCICIO',
             difficulty: 'FACIL',
             points: 100,
             deadline: '2024-12-31T23:59:59.000Z',
             status: 'ATIVA',
-            discipline: {
-              id: 'uuid-disciplina',
-              name: 'Lógica de Programação',
-              language: 'javascript',
-            },
             class: {
               id: 'uuid-turma',
               name: 'Turma A - 2024.1',
@@ -247,22 +235,15 @@ export class ActivitiesController {
       example: {
         id: 'uuid-here',
         classId: 'uuid-turma',
-        disciplineId: 'uuid-disciplina',
         title: 'FizzBuzz',
         description: 'Escreva um programa...',
-        type: 'EXERCISE',
+        type: 'EXERCICIO',
         difficulty: 'FACIL',
         points: 100,
         deadline: '2024-12-31T23:59:59.000Z',
         status: 'ATIVA',
         starterCode: 'function fizzBuzz(n) {...}',
         allowLateSubmission: true,
-        discipline: {
-          id: 'uuid-disciplina',
-          name: 'Lógica de Programação',
-          language: 'javascript',
-          description: 'Aprenda lógica',
-        },
         class: {
           id: 'uuid-turma',
           name: 'Turma A - 2024.1',

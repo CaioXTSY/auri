@@ -223,7 +223,7 @@ export class GamificationController {
   @ApiOperation({ summary: 'Obter ranking' })
   @ApiQuery({
     name: 'type',
-    enum: ['GLOBAL', 'DISCIPLINA', 'TURMA'],
+    enum: ['GLOBAL', 'TURMA'],
     required: true,
   })
   @ApiQuery({ name: 'referenceId', required: false, type: String })
@@ -259,14 +259,14 @@ export class GamificationController {
   @ApiOperation({ summary: 'Obter minha posição no ranking' })
   @ApiQuery({
     name: 'type',
-    enum: ['GLOBAL', 'DISCIPLINA', 'TURMA'],
+    enum: ['GLOBAL', 'TURMA'],
     required: true,
   })
   @ApiQuery({ name: 'referenceId', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Posição no ranking' })
   async getMyRankingPosition(
     @Request() req,
-    @Query('type') type: 'GLOBAL' | 'DISCIPLINA' | 'TURMA',
+    @Query('type') type: 'GLOBAL' | 'TURMA',
     @Query('referenceId') referenceId?: string,
   ) {
     return this.gamificationService.getUserRankingPosition(

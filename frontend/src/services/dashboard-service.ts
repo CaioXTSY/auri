@@ -13,7 +13,7 @@ export interface LevelInfo {
 export interface UpcomingActivity {
   id: string;
   title: string;
-  disciplineName: string;
+  className: string;
   deadline: string;
   status: 'PENDENTE' | 'EM_ANDAMENTO';
 }

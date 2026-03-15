@@ -42,7 +42,6 @@ async function bootstrap() {
     .addBearerAuth()
     .addTag('auth', 'Autenticação e autorização')
     .addTag('users', 'Gestão de usuários')
-    .addTag('disciplines', 'Gestão de disciplinas')
     .addTag('classes', 'Gestão de turmas')
     .addTag('activities', 'Gestão de atividades')
     .addTag('submissions', 'Submissões de código')

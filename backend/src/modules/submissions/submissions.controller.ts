@@ -161,11 +161,6 @@ export class SubmissionsController {
               id: 'uuid-atividade',
               title: 'FizzBuzz',
               points: 100,
-              discipline: {
-                id: 'uuid-disciplina',
-                name: 'Lógica de Programação',
-                language: 'javascript',
-              },
             },
             user: {
               id: 'uuid-aluno',
@@ -289,9 +284,10 @@ export class SubmissionsController {
           title: 'FizzBuzz',
           description: 'Implementar FizzBuzz',
           points: 100,
-          discipline: {
-            id: 'uuid-disciplina',
-            name: 'Lógica de Programação',
+          class: {
+            id: 'uuid-turma',
+            name: 'Turma A - 2024.1',
+            language: 'javascript',
           },
           testCases: [
             {

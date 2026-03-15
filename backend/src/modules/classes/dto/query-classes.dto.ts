@@ -42,14 +42,6 @@ export class QueryClassesDto {
   semester?: string;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por linguagem',
-    example: 'Python',
-  })
-  @IsString()
-  @IsOptional()
-  language?: string;
-
-  @ApiPropertyOptional({
     description: 'Filtrar por ano',
     example: 2024,
   })

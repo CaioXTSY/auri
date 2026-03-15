@@ -43,7 +43,7 @@ auri/
     │
     ├── 05-modulos/                 # MÓDULOS DO SISTEMA
     │   ├── 01-usuarios-acesso.md           # 🔜 A criar
-    │   ├── 02-disciplinas-turmas.md        # 🔜 A criar
+    │   ├── 02-turmas.md                    # 🔜 A criar
     │   ├── 03-atividades-desafios.md       # 🔜 A criar
     │   ├── 04-ia-assistente.md             # ✅ Criado - USO ÉTICO DA IA
     │   ├── 05-gamificacao.md               # ✅ Criado - Sistema completo
@@ -232,7 +232,7 @@ auri/
 
 4. **05-modulos/** (completar os 6 módulos restantes)
    - 01-usuarios-acesso.md
-   - 02-disciplinas-turmas.md
+   - 02-turmas.md
    - 03-atividades-desafios.md
    - 06-missoes-rotina.md
    - 07-dashboards.md

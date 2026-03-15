@@ -57,7 +57,7 @@ export const gamificationService = {
     return response.data;
   },
 
-  getRanking: async (type: 'GLOBAL' | 'DISCIPLINA' | 'TURMA', referenceId?: string, limit = 50): Promise<RankingEntry[]> => {
+  getRanking: async (type: 'GLOBAL' | 'TURMA', referenceId?: string, limit = 50): Promise<RankingEntry[]> => {
     const response = await api.get<RankingEntry[]>('/gamification/ranking', {
       params: { type, referenceId, limit },
     });

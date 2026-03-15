@@ -5,16 +5,16 @@ import { Type } from 'class-transformer';
 export class GetRankingQueryDto {
   @ApiProperty({
     description: 'Tipo de ranking',
-    enum: ['GLOBAL', 'DISCIPLINA', 'TURMA'],
+    enum: ['GLOBAL', 'TURMA'],
     example: 'GLOBAL',
   })
-  @IsEnum(['GLOBAL', 'DISCIPLINA', 'TURMA'])
-  type: 'GLOBAL' | 'DISCIPLINA' | 'TURMA';
+  @IsEnum(['GLOBAL', 'TURMA'])
+  type: 'GLOBAL' | 'TURMA';
 
   @ApiProperty({
-    description: 'ID de referência (disciplina ou turma)',
+    description: 'ID de referência da turma',
     required: false,
-    example: 'uuid-disciplina',
+    example: 'uuid-turma',
   })
   @IsString()
   @IsOptional()

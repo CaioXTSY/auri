@@ -5,7 +5,7 @@ import { classService, type Class } from '@/services/class-service';
 import { activityService, type Activity } from '@/services/activity-service';
 import { gamificationService, type RankingEntry } from '@/services/gamification-service';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
-import { Calendar, Trophy, Clock, ChevronRight, BookOpen } from 'lucide-react';
+import { Calendar, Trophy, Clock, ChevronRight } from 'lucide-react';
 
 export const ClassDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -121,10 +121,6 @@ export const ClassDetails = () => {
                 {classroom.name}
               </h1>
               <div className="flex items-center gap-6 mt-6 text-sm text-slate-500">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  <span>{classroom.language}</span>
-                </div>
                 {classroom._count && (
                   <>
                     <div className="flex items-center gap-2">

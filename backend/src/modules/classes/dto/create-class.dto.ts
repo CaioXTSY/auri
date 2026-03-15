@@ -12,15 +12,6 @@ export class CreateClassDto {
   name: string;
 
   @ApiProperty({
-    description: 'Linguagem principal da turma',
-    example: 'Python',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  language: string;
-
-  @ApiProperty({
     description: 'Semestre',
     example: '2024/1',
   })

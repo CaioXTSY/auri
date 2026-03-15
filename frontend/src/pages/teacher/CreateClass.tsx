@@ -12,7 +12,6 @@ import { ChevronLeft, Loader2 } from 'lucide-react';
 
 const createClassSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
-  language: z.string().min(2, 'Informe a linguagem principal'),
   semester: z.string().min(1, 'Informe o semestre (ex: 2024.1)'),
   year: z.coerce.number().min(2024, 'Ano inválido'),
 });
@@ -29,7 +28,6 @@ export const CreateClass = () => {
     defaultValues: {
       year: new Date().getFullYear(),
       semester: `${new Date().getFullYear()}.${new Date().getMonth() < 6 ? '1' : '2'}`,
-      language: 'Python',
     }
   });
 
@@ -75,18 +73,6 @@ export const CreateClass = () => {
             )}
 
             <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="language">Linguagem Principal</Label>
-                <Input 
-                  id="language" 
-                  placeholder="Ex: Python, JavaScript, Java"
-                  {...register('language')} 
-                />
-                {errors.language && (
-                  <p className="text-xs text-red-500">{errors.language.message}</p>
-                )}
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="name">Nome da Turma</Label>
                 <Input 

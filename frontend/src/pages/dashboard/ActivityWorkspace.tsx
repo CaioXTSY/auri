@@ -33,15 +33,8 @@ export const ActivityWorkspace = () => {
         if (isMounted) {
           setActivity(data);
           // Set starter code or template
-          const lang = data.class?.language?.toLowerCase() || 'javascript';
-          const templates: Record<string, string> = {
-            python: '# Escreva sua solução aqui\n\ndef solution(input):\n    pass',
-            javascript: '// Escreva sua solução aqui\n\nfunction solution(input) {\n  \n}',
-            java: '// Escreva sua solução aqui\n\npublic class Solution {\n    public static void main(String[] args) {\n        \n    }\n}',
-            c: '// Escreva sua solução aqui\n\n#include <stdio.h>\n\nint main() {\n    return 0;\n}'
-          };
-          
-          setCode(templates[lang] || templates['javascript']);
+          const starterTemplate = '// Escreva sua solução aqui\n\nfunction solution(input) {\n  \n}';
+          setCode(starterTemplate);
         }
       } catch (err) {
         if (isMounted) {
@@ -78,7 +71,7 @@ export const ActivityWorkspace = () => {
       const submission = await submissionService.createSubmission({
         activityId: id,
         code: code,
-        language: activity.class?.language?.toLowerCase() || 'javascript',
+        language: 'javascript',
       });
 
       // Feedback imediato
@@ -286,8 +279,8 @@ export const ActivityWorkspace = () => {
           <div className="flex-1 relative min-h-0">
             <Editor
               height="100%"
-              defaultLanguage={activity.class?.language?.toLowerCase() || 'javascript'}
-              language={activity.class?.language?.toLowerCase() || 'javascript'}
+              defaultLanguage="javascript"
+              language="javascript"
               value={code}
               theme="vs-dark"
               onChange={(value) => setCode(value || '')}

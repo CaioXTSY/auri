@@ -3,7 +3,6 @@ import api from '@/lib/api';
 export interface Class {
   id: string;
   name: string;
-  language: string;
   semester: string;
   year: number;
   code: string;
@@ -17,7 +16,6 @@ export interface Class {
 
 export interface CreateClassDto {
   name: string;
-  language: string;
   semester: string;
   year: number;
 }

@@ -654,7 +654,7 @@ export class GamificationService {
    * Obter ranking
    */
   async getRanking(
-    type: 'GLOBAL' | 'DISCIPLINA' | 'TURMA',
+    type: 'GLOBAL' | 'TURMA',
     referenceId?: string,
     limit = 50,
   ) {
@@ -685,7 +685,7 @@ export class GamificationService {
    */
   async getUserRankingPosition(
     userId: string,
-    type: 'GLOBAL' | 'DISCIPLINA' | 'TURMA',
+    type: 'GLOBAL' | 'TURMA',
     referenceId?: string,
   ) {
     const where: any = { userId, type };

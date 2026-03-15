@@ -14,7 +14,6 @@ export interface Activity {
   class?: {
     id: string;
     name: string;
-    language?: string;
   };
   _count?: {
     testCases: number;
