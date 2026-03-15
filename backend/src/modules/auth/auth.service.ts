@@ -102,15 +102,7 @@ export class AuthService {
 
     await this.usersService.updateResetToken(user.id, hashedToken, expires);
 
-    // TODO: Enviar email com o resetToken
-    // Por enquanto, retornar o token (APENAS PARA DESENVOLVIMENTO)
-    console.log('Reset token:', resetToken);
-
-    return { 
-      message: 'Se o email existir, um link de recuperação será enviado',
-      // TODO: Remover em produção
-      resetToken: resetToken, 
-    };
+    return { message: 'Se o email existir, um link de recuperação será enviado' };
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {

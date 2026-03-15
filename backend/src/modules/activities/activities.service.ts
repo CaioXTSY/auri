@@ -40,12 +40,12 @@ export class ActivitiesService {
 
     const { classId, deadline, ...rest } = createActivityDto;
 
-    const data = {
+    const data: Prisma.ActivityUncheckedCreateInput = {
       ...rest,
       classId,
       deadline: deadline ? new Date(deadline) : null,
       createdById: userId,
-    } as unknown as Prisma.ActivityUncheckedCreateInput;
+    };
 
     return this.prisma.activity.create({
       data,
@@ -265,7 +265,7 @@ export class ActivitiesService {
 
     const { classId, deadline, ...rest } = updateActivityDto;
 
-    const data = {
+    const data: Prisma.ActivityUncheckedUpdateInput = {
       ...rest,
       ...(classId !== undefined ? { classId } : {}),
       ...(deadline !== undefined
@@ -273,7 +273,7 @@ export class ActivitiesService {
             deadline: deadline ? new Date(deadline) : null,
           }
         : {}),
-    } as unknown as Prisma.ActivityUncheckedUpdateInput;
+    };
 
     return this.prisma.activity.update({
       where: { id },
