@@ -7,6 +7,7 @@ import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { GamificationService } from '../gamification/gamification.service';
 import { ConfigService } from '@nestjs/config';
+import { Difficulty } from '@prisma/client';
 
 @Injectable()
 export class MissionsService {
@@ -833,9 +834,14 @@ export class MissionsService {
     }
 
     const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
+    const targetDifficulty = await this.getTargetDailyDifficulty();
     const prompt = [
-      'Gere um quiz diário de programação em português.',
-      'Retorne apenas JSON com o formato:',
+      'Gere um quiz diário de programação em português para alunos de graduação.',
+      `Nível alvo: ${targetDifficulty}. Priorize raciocínio, análise de código e depuração.`,
+      'Evite questões triviais de definição ou memorização direta.',
+      'A pergunta deve exigir pelo menos um passo de inferência.',
+      'Inclua mini trecho de código, cenário técnico, saída esperada ou análise de comportamento.',
+      'Retorne apenas JSON válido com o formato exato:',
       '{',
       '"title": "string",',
       '"question": "string",',
@@ -844,8 +850,11 @@ export class MissionsService {
       '"correctIndex": 0,',
       '"explanations": ["exp A","exp B","exp C","exp D"]',
       '}',
-      'As explicações devem justificar porque cada alternativa é correta ou errada.',
-      'Não use markdown.',
+      'Regras obrigatórias:',
+      '- Exatamente 4 alternativas.',
+      '- Apenas 1 alternativa correta.',
+      '- Explicações objetivas para cada alternativa.',
+      '- Não usar markdown.',
     ].join('\n');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -857,10 +866,14 @@ export class MissionsService {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: 'Você é um gerador de quizzes objetivos.' },
+          {
+            role: 'system',
+            content:
+              'Você é um designer instrucional de programação. Gere quizzes técnicos desafiadores, claros e sem ambiguidade.',
+          },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.7,
+        temperature: 0.55,
         response_format: { type: 'json_object' },
       }),
     });
@@ -879,26 +892,34 @@ export class MissionsService {
     const parsed = this.parseJsonFromText(content);
     const title = String(parsed?.title || '').trim();
     const question = String(parsed?.question || '').trim();
-    const options = Array.isArray(parsed?.options) ? parsed.options : [];
-    const explanations = Array.isArray(parsed?.explanations) ? parsed.explanations : [];
+    const options = Array.isArray(parsed?.options)
+      ? parsed.options
+          .map((option) => String(option).trim())
+          .filter((option) => option.length > 0)
+      : [];
+    const explanations = Array.isArray(parsed?.explanations)
+      ? parsed.explanations
+          .map((exp) => String(exp).trim())
+          .filter((exp) => exp.length > 0)
+      : [];
     const correctIndex = Number(parsed?.correctIndex);
     const difficultyRaw = String(parsed?.difficulty || '').trim().toUpperCase();
     const difficulty =
       difficultyRaw === 'FACIL' || difficultyRaw === 'MEDIO' || difficultyRaw === 'DIFICIL'
         ? difficultyRaw
-        : 'MEDIO';
+        : targetDifficulty;
     const pointsByDifficulty = {
-      FACIL: 30,
-      MEDIO: 60,
-      DIFICIL: 100,
+      FACIL: 40,
+      MEDIO: 85,
+      DIFICIL: 140,
     };
     const points = pointsByDifficulty[difficulty];
 
-    if (!title || !question || options.length < 2 || explanations.length !== options.length) {
+    if (!title || !question || options.length !== 4 || explanations.length !== 4) {
       throw new BadRequestException('Quiz gerado inválido');
     }
 
-    if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex >= options.length) {
+    if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
       throw new BadRequestException('Quiz gerado inválido');
     }
 
@@ -957,6 +978,44 @@ export class MissionsService {
       throw new BadRequestException('Resposta inválida da IA');
     }
     return JSON.parse(match[0]);
+  }
+
+  private async getTargetDailyDifficulty(): Promise<Difficulty> {
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - 14);
+
+    const attempts = await this.prisma.missionQuizAttempt.findMany({
+      where: {
+        answeredAt: { gte: cutoff },
+        mission: {
+          type: 'DIARIA',
+          classId: null,
+        },
+      },
+      select: {
+        isCorrect: true,
+      },
+    });
+
+    if (attempts.length < 20) {
+      return now.getDay() === 0 || now.getDay() === 3 || now.getDay() === 6
+        ? 'DIFICIL'
+        : 'MEDIO';
+    }
+
+    const correctAnswers = attempts.filter((attempt) => attempt.isCorrect).length;
+    const accuracy = correctAnswers / attempts.length;
+
+    if (accuracy >= 0.75) {
+      return 'DIFICIL';
+    }
+
+    if (accuracy <= 0.35) {
+      return 'MEDIO';
+    }
+
+    return now.getDay() === 0 || now.getDay() === 6 ? 'DIFICIL' : 'MEDIO';
   }
 
   /**
