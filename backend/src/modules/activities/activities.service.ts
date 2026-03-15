@@ -5,7 +5,6 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
 import {
   CreateActivityDto,
   UpdateActivityDto,
@@ -40,7 +39,7 @@ export class ActivitiesService {
 
     const { classId, deadline, ...rest } = createActivityDto;
 
-    const data: Prisma.ActivityUncheckedCreateInput = {
+    const data = {
       ...rest,
       classId,
       deadline: deadline ? new Date(deadline) : null,
@@ -265,7 +264,7 @@ export class ActivitiesService {
 
     const { classId, deadline, ...rest } = updateActivityDto;
 
-    const data: Prisma.ActivityUncheckedUpdateInput = {
+    const data = {
       ...rest,
       ...(classId !== undefined ? { classId } : {}),
       ...(deadline !== undefined
