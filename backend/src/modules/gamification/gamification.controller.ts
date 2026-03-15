@@ -23,7 +23,6 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import {
   AddPointsDto,
-  CreateAchievementDto,
   GetRankingQueryDto,
 } from './dto';
 
@@ -185,17 +184,6 @@ export class GamificationController {
       limit ? Number(limit) : 10,
       filter || 'ALL',
     );
-  }
-
-  @Post('achievements')
-  @Roles(Role.ADMIN)
-  @ApiOperation({
-    summary: 'Criar nova conquista',
-    description: 'Apenas Admin pode criar conquistas',
-  })
-  @ApiResponse({ status: 201, description: 'Conquista criada' })
-  async createAchievement(@Body() createAchievementDto: CreateAchievementDto) {
-    return this.gamificationService.createAchievement(createAchievementDto);
   }
 
   @Post('achievements/:achievementId/unlock/:userId')

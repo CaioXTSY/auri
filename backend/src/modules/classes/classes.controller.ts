@@ -66,6 +66,8 @@ export class ClassesController {
     status: 409,
     description: 'Aluno já matriculado',
   })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Aluno)' })
   joinClass(@Body('code') code: string, @Request() req) {
     return this.classesService.joinClass(code, req.user.id);
   }
@@ -146,6 +148,7 @@ export class ClassesController {
     }
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
   findAll(@Query() query: QueryClassesDto) {
     return this.classesService.findAll(query);
   }

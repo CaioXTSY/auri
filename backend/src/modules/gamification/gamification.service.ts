@@ -186,28 +186,6 @@ export class GamificationService {
    */
 
   /**
-   * Criar uma conquista
-   */
-  async createAchievement(data: {
-    name: string;
-    description: string;
-    icon?: string;
-    category: string;
-    points: number;
-    rarity?: string;
-    condition: string;
-    criteria?: string;
-  }) {
-    return this.prisma.achievement.create({
-      data: {
-        ...data,
-        rarity: data.rarity || 'COMUM',
-        criteria: data.criteria || '{}',
-      },
-    });
-  }
-
-  /**
    * Listar todas as conquistas
    */
   async getAllAchievements() {
