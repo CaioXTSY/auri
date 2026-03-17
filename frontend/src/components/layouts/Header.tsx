@@ -75,21 +75,10 @@ export const Header = () => {
         )}
       >
         <div className="container mx-auto px-6 lg:px-12 flex items-center justify-between">
-          {/* Logo Clássico */}
-          <Link to="/" className="flex flex-col group">
-            <div className="flex items-center gap-3">
-              <div className="relative h-12 w-10 flex items-center justify-center bg-brand-900 text-white rounded-b-full pt-1 pb-2 shadow-sm group-hover:bg-brand-800 transition-colors">
-                 <span className="font-display font-bold text-2xl">A</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-display font-bold text-2xl text-brand-900 leading-none tracking-wide">
-                  AURI
-                </span>
-                <span className="font-serif text-xs italic text-slate-500 tracking-wider">
-                  Est. 2024
-                </span>
-              </div>
-            </div>
+          <Link to="/" className="group">
+            <span className="font-display font-bold text-2xl text-brand-900 leading-none tracking-wide group-hover:text-brand-800 transition-colors">
+              AURI
+            </span>
           </Link>
 
           {/* Desktop Nav */}

@@ -37,18 +37,6 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             <p className="text-brand-200 text-lg leading-relaxed font-serif">
               "A educação não é o preenchimento de um balde, mas o acendimento de uma chama."
             </p>
-            <div className="flex items-center gap-4 pt-4">
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-10 w-10 rounded-full border-2 border-brand-900 bg-brand-700 flex items-center justify-center text-xs font-bold">
-                    {String.fromCharCode(64 + i)}
-                  </div>
-                ))}
-              </div>
-              <div className="text-sm text-brand-300">
-                <span className="text-white font-bold">500+</span> alunos ativos
-              </div>
-            </div>
           </div>
 
           <div className="text-xs text-brand-400 font-medium tracking-wider">
