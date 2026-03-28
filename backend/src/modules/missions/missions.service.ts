@@ -500,16 +500,15 @@ export class MissionsService {
 
     const isCorrect = answerQuizDto.selectedIndex === mission.quiz.correctIndex;
 
+    // Verificar tentativa anterior ANTES da transaction: BadRequestException não faz rollback em transações Prisma
+    const priorAttempt = await this.prisma.missionQuizAttempt.findUnique({
+      where: { userId_missionId: { userId, missionId } },
+    });
+    if (priorAttempt?.isCorrect) {
+      throw new BadRequestException('Você já respondeu corretamente este quiz');
+    }
+
     await this.prisma.$transaction(async (tx) => {
-      const existingAttempt = await tx.missionQuizAttempt.findUnique({
-        where: { userId_missionId: { userId, missionId } },
-      });
-
-      // Bloqueia apenas quem já acertou — quem errou pode tentar de novo
-      if (existingAttempt?.isCorrect) {
-        throw new BadRequestException('Você já respondeu corretamente este quiz');
-      }
-
       const userMission = await tx.userMission.findUnique({
         where: { userId_missionId: { userId, missionId } },
       });
@@ -553,7 +552,7 @@ export class MissionsService {
           },
         });
 
-        // Pontos apenas na primeira resposta correta (existingAttempt era nulo ou errado)
+        // Pontos apenas na primeira resposta correta (priorAttempt era nulo ou errado)
         await tx.userPoint.create({
           data: {
             userId,
@@ -1132,50 +1131,54 @@ export class MissionsService {
    */
   @Cron(CronExpression.EVERY_WEEK)
   async resetWeeklyMissions() {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
+    try {
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
 
-    // Buscar missões semanais que expiraram
-    const expiredMissions = await this.prisma.mission.findMany({
-      where: {
-        type: 'SEMANAL',
-        endDate: { lt: now },
-      },
-    });
-
-    for (const mission of expiredMissions) {
-      // Expirar missões em progresso
-      await this.prisma.userMission.updateMany({
+      // Buscar missões semanais que expiraram
+      const expiredMissions = await this.prisma.mission.findMany({
         where: {
-          missionId: mission.id,
-          status: 'EM_PROGRESSO',
-        },
-        data: {
-          status: 'EXPIRADA',
-        },
-      });
-
-      // Criar nova instância da missão semanal
-      await this.prisma.mission.create({
-        data: {
-          title: mission.title,
-          description: mission.description,
           type: 'SEMANAL',
-          points: mission.points,
-          startDate: startOfWeek,
-          endDate: endOfWeek,
-          classId: mission.classId,
-          createdById: mission.createdById,
+          endDate: { lt: now },
         },
       });
-    }
 
-    console.log(`[CRON] Reset de ${expiredMissions.length} missões semanais concluído`);
+      for (const mission of expiredMissions) {
+        // Expirar missões em progresso
+        await this.prisma.userMission.updateMany({
+          where: {
+            missionId: mission.id,
+            status: 'EM_PROGRESSO',
+          },
+          data: {
+            status: 'EXPIRADA',
+          },
+        });
+
+        // Criar nova instância da missão semanal
+        await this.prisma.mission.create({
+          data: {
+            title: mission.title,
+            description: mission.description,
+            type: 'SEMANAL',
+            points: mission.points,
+            startDate: startOfWeek,
+            endDate: endOfWeek,
+            classId: mission.classId,
+            createdById: mission.createdById,
+          },
+        });
+      }
+
+      console.log(`[CRON] Reset de ${expiredMissions.length} missões semanais concluído`);
+    } catch (error) {
+      console.error('[CRON] Falha no reset de missões semanais:', error);
+    }
   }
 
   /**
@@ -1183,33 +1186,37 @@ export class MissionsService {
    */
   @Cron(CronExpression.EVERY_HOUR)
   async expireMissions() {
-    const now = new Date();
+    try {
+      const now = new Date();
 
-    // Buscar missões que expiraram
-    const expiredMissions = await this.prisma.mission.findMany({
-      where: {
-        endDate: { lt: now },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    const missionIds = expiredMissions.map((m) => m.id);
-
-    if (missionIds.length > 0) {
-      // Marcar UserMissions como expiradas
-      const result = await this.prisma.userMission.updateMany({
+      // Buscar missões que expiraram
+      const expiredMissions = await this.prisma.mission.findMany({
         where: {
-          missionId: { in: missionIds },
-          status: { in: ['NAO_INICIADA', 'EM_PROGRESSO'] },
+          endDate: { lt: now },
         },
-        data: {
-          status: 'EXPIRADA',
+        select: {
+          id: true,
         },
       });
 
-      console.log(`[CRON] ${result.count} missões de usuários foram expiradas`);
+      const missionIds = expiredMissions.map((m) => m.id);
+
+      if (missionIds.length > 0) {
+        // Marcar UserMissions como expiradas
+        const result = await this.prisma.userMission.updateMany({
+          where: {
+            missionId: { in: missionIds },
+            status: { in: ['NAO_INICIADA', 'EM_PROGRESSO'] },
+          },
+          data: {
+            status: 'EXPIRADA',
+          },
+        });
+
+        console.log(`[CRON] ${result.count} missões de usuários foram expiradas`);
+      }
+    } catch (error) {
+      console.error('[CRON] Falha na expiração de missões:', error);
     }
   }
 }
