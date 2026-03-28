@@ -33,6 +33,16 @@ export class MissionsService {
       throw new BadRequestException('A data de início deve ser anterior à data de término');
     }
 
+    if (createMissionDto.classId) {
+      const classExists = await this.prisma.class.findUnique({
+        where: { id: createMissionDto.classId },
+        select: { id: true },
+      });
+      if (!classExists) {
+        throw new BadRequestException('Turma não encontrada');
+      }
+    }
+
     // Criar missão
     return this.prisma.mission.create({
       data: {
@@ -439,6 +449,10 @@ export class MissionsService {
       }
     }
 
+    const attempt = await this.prisma.missionQuizAttempt.findUnique({
+      where: { userId_missionId: { userId, missionId } },
+    });
+
     return {
       missionId: mission.id,
       title: mission.quiz.title,
@@ -446,8 +460,10 @@ export class MissionsService {
       difficulty: mission.quiz.difficulty,
       points: mission.points,
       options: mission.quiz.options,
-      answered: false,
-      attempt: null,
+      answered: !!attempt,
+      attempt: attempt
+        ? { selectedIndex: attempt.selectedIndex, isCorrect: attempt.isCorrect, answeredAt: attempt.answeredAt }
+        : null,
     };
   }
 
@@ -750,39 +766,41 @@ export class MissionsService {
   async getUserMissionHistory(userId: string, filters?: {
     status?: 'NAO_INICIADA' | 'EM_PROGRESSO' | 'CONCLUIDA' | 'EXPIRADA';
     classId?: string;
+    page?: number;
+    limit?: number;
   }) {
-    const where: any = {
-      userId,
-    };
+    const page = Math.max(1, filters?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, filters?.limit ?? 20));
+    const skip = (page - 1) * limit;
+
+    const where: any = { userId };
 
     if (filters?.status) {
       where.status = filters.status;
     }
 
     if (filters?.classId) {
-      where.mission = {
-        classId: filters.classId,
-      };
+      where.mission = { classId: filters.classId };
     }
 
-    return this.prisma.userMission.findMany({
-      where,
-      include: {
-        mission: {
-          include: {
-            class: {
-              select: {
-                id: true,
-                name: true,
-              },
+    const [data, total] = await Promise.all([
+      this.prisma.userMission.findMany({
+        where,
+        include: {
+          mission: {
+            include: {
+              class: { select: { id: true, name: true } },
             },
           },
         },
-      },
-      orderBy: {
-        startedAt: 'desc',
-      },
-    });
+        orderBy: { startedAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.userMission.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   /**
@@ -991,6 +1009,16 @@ export class MissionsService {
 
     if (!title || !question || options.length !== 4 || explanations.length !== 4) {
       console.error('[Quiz Diário] Estrutura inválida no quiz gerado — campos ausentes ou array com tamanho errado', { title, question, optionsLen: options.length, explanationsLen: explanations.length });
+      return null;
+    }
+
+    if (title.length > 200) {
+      console.error(`[Quiz Diário] title excede 200 caracteres (${title.length})`);
+      return null;
+    }
+
+    if (question.length > 2000) {
+      console.error(`[Quiz Diário] question excede 2000 caracteres (${question.length})`);
       return null;
     }
 

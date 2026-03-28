@@ -29,11 +29,20 @@ export interface Mission {
 
 export interface UserMission {
   id: string;
+  userId: string;
+  missionId: string;
   status: MissionStatus;
   progress: number;
   completedAt?: string | null;
   startedAt: string;
   mission: Mission;
+}
+
+export interface UserMissionPage {
+  data: UserMission[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface MissionStats {
@@ -79,9 +88,9 @@ export const missionsService = {
     return response.data;
   },
 
-  getMyHistory: async (status?: MissionStatus, classId?: string): Promise<UserMission[]> => {
-    const response = await api.get<UserMission[]>('/missions/my-missions', {
-      params: { status, classId },
+  getMyHistory: async (status?: MissionStatus, classId?: string, page = 1, limit = 20): Promise<UserMissionPage> => {
+    const response = await api.get<UserMissionPage>('/missions/my-missions', {
+      params: { status, classId, page, limit },
     });
     return response.data;
   },
