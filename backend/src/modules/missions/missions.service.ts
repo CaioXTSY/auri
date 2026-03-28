@@ -489,8 +489,9 @@ export class MissionsService {
         where: { userId_missionId: { userId, missionId } },
       });
 
-      if (existingAttempt) {
-        throw new BadRequestException('Você já respondeu este quiz');
+      // Bloqueia apenas quem já acertou — quem errou pode tentar de novo
+      if (existingAttempt?.isCorrect) {
+        throw new BadRequestException('Você já respondeu corretamente este quiz');
       }
 
       const userMission = await tx.userMission.findUnique({
@@ -508,26 +509,35 @@ export class MissionsService {
         });
       }
 
-      await tx.missionQuizAttempt.create({
-        data: {
+      // Upsert: cria na primeira tentativa, atualiza nas seguintes
+      await tx.missionQuizAttempt.upsert({
+        where: { userId_missionId: { userId, missionId } },
+        create: {
           userId,
           missionId,
           missionQuizId: mission.quiz.id,
           selectedIndex: answerQuizDto.selectedIndex,
           isCorrect,
         },
-      });
-
-      await tx.userMission.update({
-        where: { userId_missionId: { userId, missionId } },
-        data: {
-          status: MissionStatus.CONCLUIDA,
-          progress: 100,
-          completedAt: new Date(),
+        update: {
+          selectedIndex: answerQuizDto.selectedIndex,
+          isCorrect,
+          answeredAt: new Date(),
         },
       });
 
       if (isCorrect) {
+        // Missão concluída somente ao acertar
+        await tx.userMission.update({
+          where: { userId_missionId: { userId, missionId } },
+          data: {
+            status: MissionStatus.CONCLUIDA,
+            progress: 100,
+            completedAt: new Date(),
+          },
+        });
+
+        // Pontos apenas na primeira resposta correta (existingAttempt era nulo ou errado)
         await tx.userPoint.create({
           data: {
             userId,
@@ -989,37 +999,42 @@ export class MissionsService {
       return null;
     }
 
-    const aiGeneration = await this.prisma.aIGeneration.create({
-      data: {
-        type: 'QUIZ',
-        prompt,
-        response: content,
-        published: true,
-      },
-    });
+    // Transaction garante que nunca existe Mission sem MissionQuiz associado
+    const mission = await this.prisma.$transaction(async (tx) => {
+      const aiGeneration = await tx.aIGeneration.create({
+        data: {
+          type: 'QUIZ',
+          prompt,
+          response: content,
+          published: true,
+        },
+      });
 
-    const mission = await this.prisma.mission.create({
-      data: {
-        title,
-        description: question,
-        type: 'DIARIA',
-        points,
-        startDate: startOfDay,
-        endDate: endOfDay,
-      },
-    });
+      const created = await tx.mission.create({
+        data: {
+          title,
+          description: question,
+          type: 'DIARIA',
+          points,
+          startDate: startOfDay,
+          endDate: endOfDay,
+        },
+      });
 
-    await this.prisma.missionQuiz.create({
-      data: {
-        missionId: mission.id,
-        title,
-        question,
-        difficulty,
-        options,
-        explanations,
-        correctIndex,
-        aiGenerationId: aiGeneration.id,
-      },
+      await tx.missionQuiz.create({
+        data: {
+          missionId: created.id,
+          title,
+          question,
+          difficulty,
+          options,
+          explanations,
+          correctIndex,
+          aiGenerationId: aiGeneration.id,
+        },
+      });
+
+      return created;
     });
 
     return {
@@ -1090,8 +1105,12 @@ export class MissionsService {
   @Cron(CronExpression.EVERY_WEEK)
   async resetWeeklyMissions() {
     const now = new Date();
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0);
-    const endOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + 6, 23, 59, 59);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
 
     // Buscar missões semanais que expiraram
     const expiredMissions = await this.prisma.mission.findMany({
