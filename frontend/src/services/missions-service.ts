@@ -45,6 +45,12 @@ export interface MissionStats {
   completionRate: number;
 }
 
+export interface MissionQuizAttempt {
+  selectedIndex: number;
+  isCorrect: boolean;
+  answeredAt: string;
+}
+
 export interface MissionQuiz {
   missionId: string;
   title: string;
@@ -52,6 +58,8 @@ export interface MissionQuiz {
   difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
   points: number;
   options: string[];
+  answered: boolean;
+  attempt: MissionQuizAttempt | null;
 }
 
 export interface MissionQuizAnswerResponse {

@@ -457,19 +457,6 @@ export class MissionsService {
       throw new BadRequestException('Esta missão não está mais disponível');
     }
 
-    const existingAttempt = await this.prisma.missionQuizAttempt.findUnique({
-      where: {
-        userId_missionId: {
-          userId,
-          missionId,
-        },
-      },
-    });
-
-    if (existingAttempt) {
-      throw new BadRequestException('Você já respondeu este quiz');
-    }
-
     const options = Array.isArray(mission.quiz.options) ? mission.quiz.options : [];
     if (answerQuizDto.selectedIndex < 0 || answerQuizDto.selectedIndex >= options.length) {
       throw new BadRequestException('Alternativa inválida');
@@ -477,63 +464,63 @@ export class MissionsService {
 
     const isCorrect = answerQuizDto.selectedIndex === mission.quiz.correctIndex;
 
-    const userMission = await this.prisma.userMission.findUnique({
-      where: {
-        userId_missionId: {
-          userId,
-          missionId,
-        },
-      },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      const existingAttempt = await tx.missionQuizAttempt.findUnique({
+        where: { userId_missionId: { userId, missionId } },
+      });
 
-    if (!userMission) {
-      await this.prisma.userMission.create({
+      if (existingAttempt) {
+        throw new BadRequestException('Você já respondeu este quiz');
+      }
+
+      const userMission = await tx.userMission.findUnique({
+        where: { userId_missionId: { userId, missionId } },
+      });
+
+      if (!userMission) {
+        await tx.userMission.create({
+          data: {
+            userId,
+            missionId,
+            status: MissionStatus.EM_PROGRESSO,
+            progress: 0,
+          },
+        });
+      }
+
+      await tx.missionQuizAttempt.create({
         data: {
           userId,
           missionId,
-          status: MissionStatus.EM_PROGRESSO,
-          progress: 0,
+          missionQuizId: mission.quiz.id,
+          selectedIndex: answerQuizDto.selectedIndex,
+          isCorrect,
         },
       });
-    }
 
-    await this.prisma.missionQuizAttempt.create({
-      data: {
-        userId,
-        missionId,
-        missionQuizId: mission.quiz.id,
-        selectedIndex: answerQuizDto.selectedIndex,
-        isCorrect,
-      },
-    });
-
-    await this.prisma.userMission.update({
-      where: {
-        userId_missionId: {
-          userId,
-          missionId,
-        },
-      },
-      data: {
-        status: MissionStatus.CONCLUIDA,
-        progress: 100,
-        completedAt: new Date(),
-      },
-    });
-
-    if (isCorrect) {
-      await this.prisma.userPoint.create({
+      await tx.userMission.update({
+        where: { userId_missionId: { userId, missionId } },
         data: {
-          userId,
-          points: mission.points,
-          source: 'MISSAO',
-          description: `Quiz concluído: ${mission.title}`,
-          referenceId: missionId,
+          status: MissionStatus.CONCLUIDA,
+          progress: 100,
+          completedAt: new Date(),
         },
       });
-    }
 
-    // Verificar conquistas de missão e quiz
+      if (isCorrect) {
+        await tx.userPoint.create({
+          data: {
+            userId,
+            points: mission.points,
+            source: 'MISSAO',
+            description: `Quiz concluído: ${mission.title}`,
+            referenceId: missionId,
+          },
+        });
+      }
+    });
+
+    // Verificar conquistas fora da transaction (são side-effects, não precisam ser atômicos)
     await this.gamificationService.checkMissionAchievements(userId);
     await this.gamificationService.checkQuizAchievements(userId);
 
