@@ -60,9 +60,13 @@ export class MissionsController {
     return this.missionsService.findAll(query);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ALUNO', 'PROFESSOR', 'ADMIN')
+  @ApiBearerAuth()
   @Get('daily-quiz')
   @ApiOperation({ summary: 'Obter quiz diário da plataforma' })
   @ApiResponse({ status: 200, description: 'Quiz diário retornado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 404, description: 'Quiz diário não encontrado' })
   getDailyQuiz() {
     return this.missionsService.getDailyQuiz();

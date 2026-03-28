@@ -20,10 +20,17 @@ async function bootstrap() {
   const apiPrefix = process.env.API_PREFIX || 'api/v1';
   app.setGlobalPrefix(apiPrefix);
 
-  // CORS - liberar para qualquer origem em desenvolvimento
+  // CORS
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
+    : ['http://localhost:5173', 'http://localhost:3000'];
   app.enableCors({
     origin: (origin, callback) => {
-      callback(null, true);
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin not allowed: ${origin}`));
+      }
     },
     credentials: true,
   });

@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
@@ -48,7 +49,15 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const user = await this.usersService.create(registerDto);
+    let user: Awaited<ReturnType<typeof this.usersService.create>>;
+    try {
+      user = await this.usersService.create(registerDto);
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('Email já cadastrado');
+      }
+      throw err;
+    }
     const { password, ...result } = user;
     
     const tokens = await this.generateTokens(result);
