@@ -648,15 +648,43 @@ export class MissionsService {
    * Completar missão manualmente
    */
   async completeMission(missionId: string, userId: string) {
-    return this.prisma.userMission.update({
-      where: {
-        userId_missionId: { userId, missionId },
+    const userMission = await this.prisma.userMission.findUnique({
+      where: { userId_missionId: { userId, missionId } },
+      include: { mission: true },
+    });
+
+    if (!userMission) {
+      throw new NotFoundException('Você não iniciou esta missão');
+    }
+
+    if (userMission.status === MissionStatus.CONCLUIDA) {
+      throw new BadRequestException('Esta missão já foi concluída');
+    }
+
+    if (userMission.status === MissionStatus.EXPIRADA) {
+      throw new BadRequestException('Esta missão expirou');
+    }
+
+    await this.prisma.userPoint.create({
+      data: {
+        userId,
+        points: userMission.mission.points,
+        source: 'MISSAO',
+        description: `Missão concluída: ${userMission.mission.title}`,
+        referenceId: missionId,
       },
+    });
+
+    await this.gamificationService.checkMissionAchievements(userId);
+
+    return this.prisma.userMission.update({
+      where: { userId_missionId: { userId, missionId } },
       data: {
         status: MissionStatus.CONCLUIDA,
         progress: 100,
         completedAt: new Date(),
       },
+      include: { mission: true },
     });
   }
 

@@ -174,9 +174,12 @@ export class MissionsController {
     return this.missionsService.startMission(id, req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Get(':id/quiz')
   @ApiOperation({ summary: 'Obter quiz da missão' })
   @ApiResponse({ status: 200, description: 'Quiz da missão retornado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 404, description: 'Quiz da missão não encontrado' })
   getMissionQuiz(@Param('id') id: string) {
     return this.missionsService.getMissionQuiz(id);
