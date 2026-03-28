@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
@@ -11,6 +11,8 @@ import { Difficulty, MissionType, MissionStatus } from '@prisma/client';
 
 @Injectable()
 export class MissionsService {
+  private dailyQuizGenerationLock = false;
+
   constructor(
     private prisma: PrismaService,
     private gamificationService: GamificationService,
@@ -302,6 +304,16 @@ export class MissionsService {
       throw new BadRequestException('Esta missão não está mais disponível');
     }
 
+    // Verificar matrícula na turma (missões globais não exigem)
+    if (mission.classId) {
+      const enrolled = await this.prisma.classStudent.findUnique({
+        where: { classId_userId: { classId: mission.classId, userId } },
+      });
+      if (!enrolled) {
+        throw new ForbiddenException('Você não está matriculado na turma desta missão');
+      }
+    }
+
     // Verificar se usuário já iniciou
     const existing = await this.prisma.userMission.findUnique({
       where: {
@@ -402,12 +414,10 @@ export class MissionsService {
     });
   }
 
-  async getMissionQuiz(missionId: string) {
+  async getMissionQuiz(missionId: string, userId: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
-      include: {
-        quiz: true,
-      },
+      include: { quiz: true },
     });
 
     if (!mission || !mission.quiz) {
@@ -417,6 +427,16 @@ export class MissionsService {
     const now = new Date();
     if (mission.type !== MissionType.DIARIA && (now < mission.startDate || now > mission.endDate)) {
       throw new BadRequestException('Esta missão não está mais disponível');
+    }
+
+    // Verificar matrícula na turma (missões globais não exigem)
+    if (mission.classId) {
+      const enrolled = await this.prisma.classStudent.findUnique({
+        where: { classId_userId: { classId: mission.classId, userId } },
+      });
+      if (!enrolled) {
+        throw new ForbiddenException('Você não está matriculado na turma desta missão');
+      }
     }
 
     return {
@@ -791,55 +811,64 @@ export class MissionsService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async resetDailyMissions() {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    try {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-    // Buscar missões diárias que expiraram
-    const expiredMissions = await this.prisma.mission.findMany({
-      where: {
-        type: 'DIARIA',
-        endDate: { lt: now },
-      },
-    });
-
-    for (const mission of expiredMissions) {
-      // Expirar missões em progresso
-      await this.prisma.userMission.updateMany({
-        where: {
-          missionId: mission.id,
-          status: 'EM_PROGRESSO',
-        },
-        data: {
-          status: 'EXPIRADA',
-        },
+      const expiredMissions = await this.prisma.mission.findMany({
+        where: { type: 'DIARIA', endDate: { lt: now } },
       });
 
-      // Criar nova instância da missão diária
-      await this.prisma.mission.create({
-        data: {
-          title: mission.title,
-          description: mission.description,
-          type: 'DIARIA',
-          points: mission.points,
-          startDate: startOfDay,
-          endDate: endOfDay,
-          classId: mission.classId,
-          createdById: mission.createdById,
-        },
-      });
+      for (const mission of expiredMissions) {
+        await this.prisma.userMission.updateMany({
+          where: { missionId: mission.id, status: 'EM_PROGRESSO' },
+          data: { status: 'EXPIRADA' },
+        });
+
+        await this.prisma.mission.create({
+          data: {
+            title: mission.title,
+            description: mission.description,
+            type: 'DIARIA',
+            points: mission.points,
+            startDate: startOfDay,
+            endDate: endOfDay,
+            classId: mission.classId,
+            createdById: mission.createdById,
+          },
+        });
+      }
+
+      console.log(`[CRON] Reset de ${expiredMissions.length} missões diárias concluído`);
+      await this.generateDailyQuizMission();
+    } catch (error) {
+      console.error('[CRON] Falha no reset de missões diárias:', error);
     }
-
-    console.log(`[CRON] Reset de ${expiredMissions.length} missões diárias concluído`);
-    await this.generateDailyQuizMission();
   }
 
   private async generateDailyQuizMission() {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey) {
+      console.warn('[Quiz Diário] OPENAI_API_KEY não configurada — geração de quiz ignorada');
       return null;
     }
 
+    // Lock para evitar gerações simultâneas (race condition entre CRON e requests de usuário)
+    if (this.dailyQuizGenerationLock) {
+      console.log('[Quiz Diário] Geração já em andamento, ignorando requisição duplicada');
+      return null;
+    }
+    this.dailyQuizGenerationLock = true;
+
+    try {
+      return await this.doGenerateDailyQuizMission(apiKey);
+    } finally {
+      this.dailyQuizGenerationLock = false;
+    }
+  }
+
+  private async doGenerateDailyQuizMission(apiKey: string) {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -851,9 +880,7 @@ export class MissionsService {
         endDate: { lte: endOfDay },
         quiz: { isNot: null },
       },
-      include: {
-        quiz: true,
-      },
+      include: { quiz: true },
     });
 
     if (existing) {
@@ -909,16 +936,24 @@ export class MissionsService {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new BadRequestException(`Falha ao gerar quiz: ${text}`);
+      console.error(`[Quiz Diário] Falha na API OpenAI (${response.status}): ${text}`);
+      return null;
     }
 
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
-      throw new BadRequestException('Resposta inválida da IA');
+      console.error('[Quiz Diário] Resposta da IA sem conteúdo:', JSON.stringify(data));
+      return null;
     }
 
-    const parsed = this.parseJsonFromText(content);
+    let parsed: any;
+    try {
+      parsed = this.parseJsonFromText(content);
+    } catch {
+      console.error('[Quiz Diário] Falha ao fazer parse do JSON retornado pela IA:', content);
+      return null;
+    }
     const title = String(parsed?.title || '').trim();
     const question = String(parsed?.question || '').trim();
     const options = Array.isArray(parsed?.options)
@@ -945,11 +980,13 @@ export class MissionsService {
     const points = pointsByDifficulty[difficulty];
 
     if (!title || !question || options.length !== 4 || explanations.length !== 4) {
-      throw new BadRequestException('Quiz gerado inválido');
+      console.error('[Quiz Diário] Estrutura inválida no quiz gerado — campos ausentes ou array com tamanho errado', { title, question, optionsLen: options.length, explanationsLen: explanations.length });
+      return null;
     }
 
     if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
-      throw new BadRequestException('Quiz gerado inválido');
+      console.error('[Quiz Diário] correctIndex inválido no quiz gerado:', correctIndex);
+      return null;
     }
 
     const aiGeneration = await this.prisma.aIGeneration.create({

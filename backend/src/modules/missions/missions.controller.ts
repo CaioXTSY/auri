@@ -180,9 +180,10 @@ export class MissionsController {
   @ApiOperation({ summary: 'Obter quiz da missão' })
   @ApiResponse({ status: 200, description: 'Quiz da missão retornado com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Não matriculado na turma' })
   @ApiResponse({ status: 404, description: 'Quiz da missão não encontrado' })
-  getMissionQuiz(@Param('id') id: string) {
-    return this.missionsService.getMissionQuiz(id);
+  getMissionQuiz(@Param('id') id: string, @Request() req) {
+    return this.missionsService.getMissionQuiz(id, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
