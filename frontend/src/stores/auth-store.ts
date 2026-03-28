@@ -9,6 +9,7 @@ interface AuthState {
   login: (user: User, token: string) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
+  setToken: (token: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -19,13 +20,16 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       login: (user, token) => set({ user, token, isAuthenticated: true }),
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
-      updateUser: (updatedUser) => 
+      updateUser: (updatedUser) =>
         set((state) => ({
-          user: state.user ? { ...state.user, ...updatedUser } : null
+          user: state.user ? { ...state.user, ...updatedUser } : null,
         })),
+      setToken: (token) => set({ token }),
     }),
     {
-      name: 'auri-auth-storage', // nome da chave no localStorage
+      name: 'auri-auth-storage',
+      // token fica apenas em memória — não persiste no localStorage
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )
 );

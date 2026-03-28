@@ -1,12 +1,22 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Res, Req, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+const REFRESH_COOKIE = 'refresh_token';
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+  path: '/',
+};
 
 @ApiTags('auth')
 @Controller('auth')
@@ -14,181 +24,69 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @ApiOperation({ 
-    summary: 'Registrar novo usuário',
-    description: 'Cria uma nova conta de usuário. O role padrão é ALUNO.'
-  })
-  @ApiBody({
-    type: RegisterDto,
-    examples: {
-      aluno: {
-        summary: 'Registrar como aluno',
-        value: {
-          name: 'João Silva',
-          email: 'joao@example.com',
-          password: 'Senha@123',
-          role: 'ALUNO'
-        }
-      },
-      professor: {
-        summary: 'Registrar como professor',
-        value: {
-          name: 'Maria Santos',
-          email: 'maria@example.com',
-          password: 'Senha@456',
-          role: 'PROFESSOR'
-        }
-      }
-    }
-  })
-  @ApiResponse({ 
-    status: 201, 
-    description: 'Usuário registrado com sucesso',
-    schema: {
-      example: {
-        user: {
-          id: 'uuid-here',
-          name: 'João Silva',
-          email: 'joao@example.com',
-          role: 'ALUNO',
-          avatar: null,
-          createdAt: '2024-01-26T00:00:00.000Z'
-        },
-        accessToken: 'jwt-token-here',
-        refreshToken: 'refresh-token-here'
-      }
-    }
-  })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Registrar novo usuário' })
+  @ApiBody({ type: RegisterDto })
+  @ApiResponse({ status: 201, description: 'Usuário registrado com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 409, description: 'Email já cadastrado' })
-  register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.register(registerDto);
+    res.cookie(REFRESH_COOKIE, result.refresh_token, COOKIE_OPTIONS);
+    const { refresh_token, ...response } = result;
+    return response;
   }
 
   @Post('login')
-  @ApiOperation({ 
-    summary: 'Login de usuário',
-    description: 'Autentica usuário com email e senha, retornando tokens JWT'
-  })
-  @ApiBody({
-    type: LoginDto,
-    examples: {
-      login: {
-        summary: 'Login de usuário',
-        value: {
-          email: 'joao@example.com',
-          password: 'Senha@123'
-        }
-      }
-    }
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Login realizado com sucesso',
-    schema: {
-      example: {
-        user: {
-          id: 'uuid-here',
-          name: 'João Silva',
-          email: 'joao@example.com',
-          role: 'ALUNO'
-        },
-        accessToken: 'jwt-token-here',
-        refreshToken: 'refresh-token-here'
-      }
-    }
-  })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Login de usuário' })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({ status: 200, description: 'Login realizado com sucesso' })
   @ApiResponse({ status: 401, description: 'Credenciais inválidas' })
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(loginDto);
+    res.cookie(REFRESH_COOKIE, result.refresh_token, COOKIE_OPTIONS);
+    const { refresh_token, ...response } = result;
+    return response;
   }
 
   @Post('refresh')
-  @ApiOperation({ 
-    summary: 'Renovar access token',
-    description: 'Gera novo access token usando refresh token válido'
-  })
-  @ApiBody({
-    type: RefreshTokenDto,
-    examples: {
-      refresh: {
-        summary: 'Renovar token',
-        value: {
-          refreshToken: 'refresh-token-here'
-        }
-      }
-    }
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Token renovado com sucesso',
-    schema: {
-      example: {
-        accessToken: 'new-jwt-token-here',
-        refreshToken: 'new-refresh-token-here'
-      }
-    }
-  })
+  @ApiOperation({ summary: 'Renovar access token' })
+  @ApiResponse({ status: 200, description: 'Token renovado com sucesso' })
   @ApiResponse({ status: 401, description: 'Refresh token inválido ou expirado' })
-  refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto);
+  async refresh(
+    @Req() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const token = req.cookies?.[REFRESH_COOKIE];
+    if (!token) {
+      throw new UnauthorizedException('Refresh token não encontrado');
+    }
+    const result = await this.authService.refreshToken({ refreshToken: token });
+    res.cookie(REFRESH_COOKIE, result.refresh_token, COOKIE_OPTIONS);
+    const { refresh_token, ...response } = result;
+    return response;
   }
 
   @Post('forgot-password')
-  @ApiOperation({ 
-    summary: 'Solicitar recuperação de senha',
-    description: 'Envia email com token para redefinição de senha'
-  })
-  @ApiBody({
-    type: ForgotPasswordDto,
-    examples: {
-      forgot: {
-        summary: 'Solicitar reset',
-        value: {
-          email: 'joao@example.com'
-        }
-      }
-    }
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Email de recuperação enviado',
-    schema: {
-      example: {
-        message: 'If email exists, password reset instructions have been sent'
-      }
-    }
-  })
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiOperation({ summary: 'Solicitar recuperação de senha' })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({ status: 200, description: 'Email de recuperação enviado' })
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
   @Post('reset-password')
-  @ApiOperation({ 
-    summary: 'Redefinir senha',
-    description: 'Redefine senha usando token recebido por email'
-  })
-  @ApiBody({
-    type: ResetPasswordDto,
-    examples: {
-      reset: {
-        summary: 'Redefinir senha',
-        value: {
-          token: 'reset-token-from-email',
-          newPassword: 'NovaSenha@123'
-        }
-      }
-    }
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Senha redefinida com sucesso',
-    schema: {
-      example: {
-        message: 'Password successfully reset'
-      }
-    }
-  })
+  @ApiOperation({ summary: 'Redefinir senha' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Senha redefinida com sucesso' })
   @ApiResponse({ status: 400, description: 'Token inválido ou expirado' })
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
@@ -197,21 +95,14 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
-    summary: 'Logout de usuário',
-    description: 'Invalida refresh token do usuário'
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Logout realizado com sucesso',
-    schema: {
-      example: {
-        message: 'Logged out successfully'
-      }
-    }
-  })
+  @ApiOperation({ summary: 'Logout de usuário' })
+  @ApiResponse({ status: 200, description: 'Logout realizado com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  logout(@Request() req) {
+  async logout(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    res.clearCookie(REFRESH_COOKIE, { path: '/' });
     return this.authService.logout(req.user.id);
   }
 }
