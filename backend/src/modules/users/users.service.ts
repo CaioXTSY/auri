@@ -159,11 +159,11 @@ export class UsersService {
     });
   }
 
-  async findByResetToken(): Promise<User[]> {
-    return this.prisma.user.findMany({
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
       where: {
-        resetToken: { not: null },
-        resetTokenExpires: { not: null },
+        resetToken: token,
+        resetTokenExpires: { gt: new Date() },
       },
     });
   }

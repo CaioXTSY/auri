@@ -97,42 +97,22 @@ export class AuthService {
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = await bcrypt.hash(resetToken, 10);
     const expires = new Date(Date.now() + 3600000); // 1 hora
 
-    await this.usersService.updateResetToken(user.id, hashedToken, expires);
+    await this.usersService.updateResetToken(user.id, resetToken, expires);
 
     return { message: 'Se o email existir, um link de recuperação será enviado' };
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const user = await this.usersService.findByResetToken();
-    
+    const user = await this.usersService.findByResetToken(resetPasswordDto.token);
+
     if (!user) {
       throw new BadRequestException('Token inválido ou expirado');
     }
 
-    const validUsers = [];
-    for (const u of user) {
-      if (u.resetToken && u.resetTokenExpires) {
-        const tokenMatches = await bcrypt.compare(
-          resetPasswordDto.token,
-          u.resetToken,
-        );
-        
-        if (tokenMatches && u.resetTokenExpires > new Date()) {
-          validUsers.push(u);
-        }
-      }
-    }
-
-    if (validUsers.length === 0) {
-      throw new BadRequestException('Token inválido ou expirado');
-    }
-
-    const validUser = validUsers[0];
-    await this.usersService.updatePassword(validUser.id, resetPasswordDto.newPassword);
-    await this.usersService.clearResetToken(validUser.id);
+    await this.usersService.updatePassword(user.id, resetPasswordDto.newPassword);
+    await this.usersService.clearResetToken(user.id);
 
     return { message: 'Senha alterada com sucesso' };
   }
