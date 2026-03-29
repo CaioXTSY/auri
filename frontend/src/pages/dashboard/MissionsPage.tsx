@@ -57,7 +57,7 @@ export const MissionsPage = () => {
         missionsService.getMyStats(),
       ]);
       setAvailable(availableResponse);
-      setHistory(historyResponse);
+      setHistory(historyResponse.data);
       setStats(statsResponse);
       const initialProgress: Record<string, number> = {};
       availableResponse.forEach((mission) => {
