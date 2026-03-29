@@ -28,8 +28,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auri-auth-storage',
-      // token fica apenas em memória — não persiste no localStorage
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated, token: state.token }),
     }
   )
 );
