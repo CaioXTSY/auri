@@ -233,6 +233,21 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
                         ? `Resposta correta! Você ganhou ${result.pointsAwarded} XP.`
                         : 'Resposta incorreta. Veja as explicações e continue praticando nos próximos desafios.'}
                     </div>
+                    {result.isCorrect && result.newStreak && result.newStreak > 0 && (
+                      <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700 flex items-center gap-3">
+                        <span className="text-2xl leading-none">🔥</span>
+                        <div>
+                          <p className="font-bold">
+                            Sequência: {result.newStreak} {result.newStreak === 1 ? 'dia' : 'dias'}!
+                          </p>
+                          <p className="text-xs text-orange-600">
+                            {result.newStreak >= 7
+                              ? 'Incrível! Você está em chamas!'
+                              : 'Continue amanhã para aumentar sua sequência!'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex justify-end">
                       <Button
                         type="button"

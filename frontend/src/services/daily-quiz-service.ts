@@ -27,6 +27,7 @@ export interface DailyQuizAnswerResponse {
   selectedIndex: number;
   difficulty: DailyQuizDifficulty;
   pointsAwarded: number;
+  newStreak?: number;
 }
 
 export const dailyQuizService = {

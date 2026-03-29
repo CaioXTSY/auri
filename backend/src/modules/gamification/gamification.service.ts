@@ -66,9 +66,13 @@ export class GamificationService {
    * Obter estatísticas gerais do usuário
    */
   async getUserStats(userId: string) {
-    const [levelInfo, achievements] = await Promise.all([
+    const [levelInfo, achievements, user] = await Promise.all([
       this.getUserLevel(userId),
-      this.getUserAchievements(userId, 1, 1), // Fetch just 1 to get meta stats
+      this.getUserAchievements(userId, 1, 1),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { currentStreak: true, longestStreak: true, streakLastDate: true },
+      }),
     ]);
 
     return {
@@ -80,6 +84,8 @@ export class GamificationService {
       progress: levelInfo.progressToNextLevel,
       achievementsCount: achievements.meta.totalUnlocked,
       totalAchievements: achievements.meta.totalAchievements,
+      currentStreak: user ? this.getEffectiveStreak(user) : 0,
+      longestStreak: user?.longestStreak ?? 0,
     };
   }
 
@@ -408,6 +414,98 @@ export class GamificationService {
   }
 
   /**
+   * SISTEMA DE STREAK
+   */
+
+  /**
+   * Retorna o streak efetivo do usuário (0 se quebrado, sem tocar no banco)
+   */
+  private getEffectiveStreak(user: {
+    currentStreak: number;
+    streakLastDate: Date | null;
+  }): number {
+    if (!user.streakLastDate) return 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const last = new Date(user.streakLastDate);
+    last.setHours(0, 0, 0, 0);
+    return last >= yesterday ? user.currentStreak : 0;
+  }
+
+  /**
+   * Incrementa o streak ao acertar o quiz diário (idempotente para o mesmo dia)
+   */
+  async updateStreak(userId: string): Promise<{ newStreak: number; isNewRecord: boolean }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentStreak: true, longestStreak: true, streakLastDate: true },
+    });
+
+    if (!user) return { newStreak: 0, isNewRecord: false };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const last = user.streakLastDate ? new Date(user.streakLastDate) : null;
+    if (last) last.setHours(0, 0, 0, 0);
+
+    // Idempotência: já foi atualizado hoje
+    if (last && last >= today) {
+      return { newStreak: user.currentStreak, isNewRecord: false };
+    }
+
+    // Consecutivo (ontem) → incrementa; senão → reinicia em 1
+    const newStreak = last && last >= yesterday ? user.currentStreak + 1 : 1;
+    const newLongest = Math.max(newStreak, user.longestStreak);
+    const isNewRecord = newLongest > user.longestStreak;
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        currentStreak: newStreak,
+        longestStreak: newLongest,
+        streakLastDate: today,
+      },
+    });
+
+    // Bônus de pontos nos marcos
+    const bonusMap: Record<number, number> = { 7: 50, 14: 100, 30: 250, 100: 500 };
+    const bonus = bonusMap[newStreak];
+    if (bonus) {
+      await this.addPoints(
+        userId,
+        bonus,
+        'STREAK_BONUS',
+        `Bônus de sequência: ${newStreak} dias consecutivos!`,
+      );
+    }
+
+    this.logger.log(`Streak atualizado para usuário ${userId}: ${newStreak} dias`);
+    return { newStreak, isNewRecord };
+  }
+
+  /**
+   * Desbloqueia conquistas de streak para os marcos atingidos
+   */
+  async checkStreakAchievements(userId: string, currentStreak: number): Promise<void> {
+    const milestones = [3, 7, 14, 30, 100];
+    for (const days of milestones) {
+      if (currentStreak >= days) {
+        const achievement = await this.prisma.achievement.findUnique({
+          where: { condition: `STREAK_${days}` },
+        });
+        if (achievement) {
+          await this.unlockAchievement(userId, achievement.id);
+        }
+      }
+    }
+  }
+
+  /**
    * Verificar conquistas baseadas em pontos
    */
   private async checkPointsAchievements(userId: string) {
@@ -621,12 +719,16 @@ export class GamificationService {
    * Obter estatísticas completas de gamificação do usuário
    */
   async getUserGamificationStats(userId: string) {
-    const [totalPoints, levelInfo, achievements, globalRanking] =
+    const [totalPoints, levelInfo, achievements, globalRanking, user] =
       await Promise.all([
         this.getUserTotalPoints(userId),
         this.getUserLevel(userId),
         this.getUserAchievements(userId, 1, 1),
         this.getUserRankingPosition(userId, 'GLOBAL'),
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { currentStreak: true, longestStreak: true, streakLastDate: true },
+        }),
       ]);
 
     return {
@@ -647,6 +749,11 @@ export class GamificationService {
       ranking: {
         global: globalRanking?.position || null,
         points: globalRanking?.points || 0,
+      },
+      streak: {
+        current: user ? this.getEffectiveStreak(user) : 0,
+        longest: user?.longestStreak ?? 0,
+        lastDate: user?.streakLastDate ?? null,
       },
     };
   }

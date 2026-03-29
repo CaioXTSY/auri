@@ -142,9 +142,18 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     setShowDailyQuiz(false);
   };
 
-  const handleDailyQuizAnswered = () => {
+  const handleDailyQuizAnswered = async () => {
     if (dailyQuizKey) {
       localStorage.setItem(dailyQuizKey, 'answered');
+    }
+    // Atualiza o badge de streak no header imediatamente após responder
+    if (user?.role === 'ALUNO') {
+      try {
+        const stats = await gamificationService.getMyStats();
+        setUserStats(stats);
+      } catch {
+        // silencioso — o badge será atualizado no próximo carregamento
+      }
     }
   };
 
@@ -301,8 +310,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 {user?.role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
               </span>
               {user?.role === 'ALUNO' && userStats && (
-                <span className="mt-1 text-[11px] text-slate-500">
+                <span className="mt-1 text-[11px] text-slate-500 flex items-center gap-1">
                   XP {userStats.currentXp} • Nível {userStats.level}
+                  {userStats.currentStreak > 0 && (
+                    <span className="ml-1 font-semibold text-orange-500">
+                      🔥 {userStats.currentStreak}
+                    </span>
+                  )}
                 </span>
               )}
             </div>

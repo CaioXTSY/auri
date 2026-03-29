@@ -47,6 +47,8 @@ export interface UserStats {
   progress: number;
   achievementsCount: number;
   totalAchievements: number;
+  currentStreak: number;
+  longestStreak: number;
 }
 
 export const gamificationService = {

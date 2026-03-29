@@ -65,6 +65,11 @@ export interface StudentDashboard {
     classId: string | null;
   };
   missions: MissionStats;
+  streak: {
+    current: number;
+    longest: number;
+    lastDate: string | null;
+  };
 }
 
 export const dashboardService = {

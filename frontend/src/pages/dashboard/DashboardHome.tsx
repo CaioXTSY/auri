@@ -135,20 +135,26 @@ export const DashboardHome = () => {
 
           <div className="bg-brand-900 rounded-xl border border-brand-800 shadow-sm px-6 py-5 text-brand-50">
             <p className="text-xs font-semibold text-accent-300 uppercase tracking-[0.2em]">
-              Meta da Semana
+              Sequência Diária
             </p>
-            <h2 className="mt-2 text-xl font-display font-bold">
-              Complete suas missões diárias e suba no ranking.
-            </h2>
-            <p className="mt-2 text-sm text-brand-100">
-              Mantenha o foco em suas missões para garantir o bônus de XP semanal.
-            </p>
-            <div className="mt-4 flex items-center gap-4 text-xs">
-              <div className="flex-1 h-1.5 bg-brand-800 rounded-full overflow-hidden">
-                <div className="h-full w-1/3 bg-accent-500 rounded-full" />
+            <div className="mt-3 flex items-center gap-4">
+              <span className="text-5xl font-display font-bold text-accent-300 leading-none">
+                🔥 {dashboardData?.streak?.current ?? 0}
+              </span>
+              <div>
+                <p className="text-sm font-bold text-white">
+                  {(dashboardData?.streak?.current ?? 0) === 1 ? 'dia' : 'dias'} consecutivos
+                </p>
+                <p className="text-xs text-brand-200">
+                  Recorde: {dashboardData?.streak?.longest ?? 0} {(dashboardData?.streak?.longest ?? 0) === 1 ? 'dia' : 'dias'}
+                </p>
               </div>
-              <span className="font-semibold text-accent-200">1 de 3 concluídas</span>
             </div>
+            <p className="mt-3 text-xs text-brand-300">
+              {(dashboardData?.streak?.current ?? 0) === 0
+                ? 'Responda o quiz diário para começar sua sequência!'
+                : 'Continue amanhã para manter a chama acesa.'}
+            </p>
           </div>
         </section>
 

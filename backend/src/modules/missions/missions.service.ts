@@ -569,6 +569,14 @@ export class MissionsService {
     await this.gamificationService.checkMissionAchievements(userId);
     await this.gamificationService.checkQuizAchievements(userId);
 
+    // Atualizar streak apenas na primeira resposta correta de um quiz diário
+    let newStreak: number | undefined;
+    if (isCorrect && mission.type === MissionType.DIARIA) {
+      const streakResult = await this.gamificationService.updateStreak(userId);
+      newStreak = streakResult.newStreak;
+      await this.gamificationService.checkStreakAchievements(userId, newStreak);
+    }
+
     return {
       isCorrect,
       correctIndex: mission.quiz.correctIndex,
@@ -576,6 +584,7 @@ export class MissionsService {
       selectedIndex: answerQuizDto.selectedIndex,
       difficulty: mission.quiz.difficulty,
       pointsAwarded: isCorrect ? mission.points : 0,
+      newStreak,
     };
   }
 

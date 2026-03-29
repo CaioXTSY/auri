@@ -92,6 +92,7 @@ export class DashboardService {
         classId: classEnrollment?.classId || null,
       },
       missions,
+      streak: gamification.streak,
     };
   }
 }
