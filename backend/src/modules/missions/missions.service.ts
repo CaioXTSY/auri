@@ -400,6 +400,15 @@ export class MissionsService {
       throw new BadRequestException('Esta missão expirou');
     }
 
+    if (userMission.mission.classId) {
+      const enrolled = await this.prisma.classStudent.findUnique({
+        where: { classId_userId: { classId: userMission.mission.classId, userId } },
+      });
+      if (!enrolled) {
+        throw new ForbiddenException('Você não está matriculado na turma desta missão');
+      }
+    }
+
     // Se progresso chegou a 100%, completar automaticamente
     const data: any = {
       progress: updateProgressDto.progress,
@@ -502,6 +511,15 @@ export class MissionsService {
 
     if (!mission || !mission.quiz) {
       throw new NotFoundException('Quiz da missão não encontrado');
+    }
+
+    if (mission.classId) {
+      const enrolled = await this.prisma.classStudent.findUnique({
+        where: { classId_userId: { classId: mission.classId, userId } },
+      });
+      if (!enrolled) {
+        throw new ForbiddenException('Você não está matriculado na turma desta missão');
+      }
     }
 
     const now = new Date();
