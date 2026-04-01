@@ -391,7 +391,7 @@ export const MissionsPage = () => {
                   )}
 
                   <div className="flex flex-wrap gap-2">
-                    {status === 'EM_PROGRESSO' && (
+                    {status === 'EM_PROGRESSO' && mission.type !== 'DIARIA' && (
                       <>
                         <Button
                           type="button"
@@ -410,14 +410,16 @@ export const MissionsPage = () => {
                         </Button>
                       </>
                     )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="border-slate-200 text-slate-600"
-                      onClick={() => openMissionQuiz(mission.id)}
-                    >
-                      Abrir quiz
-                    </Button>
+                    {mission.type === 'DIARIA' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-slate-200 text-slate-600"
+                        onClick={() => openMissionQuiz(mission.id)}
+                      >
+                        Abrir quiz
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
