@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
@@ -40,6 +40,22 @@ export class MissionsService {
       });
       if (!classExists) {
         throw new BadRequestException('Turma não encontrada');
+      }
+    }
+
+    if (createMissionDto.type === 'DIARIA') {
+      const startOfDay = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0);
+      const endOfDay = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59);
+      const existing = await this.prisma.mission.findFirst({
+        where: {
+          type: 'DIARIA',
+          startDate: { gte: startOfDay },
+          endDate: { lte: endOfDay },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        throw new ConflictException('Já existe uma missão diária para este dia');
       }
     }
 
@@ -617,12 +633,7 @@ export class MissionsService {
   }
 
   async getDailyQuizForUser(userId: string) {
-    let mission = await this.getPendingDailyQuizMissionForUser(userId);
-
-    // Se não houver pendência, usa o quiz gerado no dia atual.
-    if (!mission) {
-      mission = await this.getTodayDailyQuizMission();
-    }
+    let mission = await this.getTodayDailyQuizMission();
 
     if (!mission || !mission.quiz) {
       const generated = await this.generateDailyQuizMission();
@@ -634,10 +645,7 @@ export class MissionsService {
         };
       }
 
-      mission = await this.getPendingDailyQuizMissionForUser(userId);
-      if (!mission) {
-        mission = await this.getTodayDailyQuizMission();
-      }
+      mission = await this.getTodayDailyQuizMission();
     }
 
     if (!mission || !mission.quiz) {
@@ -751,26 +759,6 @@ export class MissionsService {
     });
   }
 
-  private async getPendingDailyQuizMissionForUser(userId: string) {
-    return this.prisma.mission.findFirst({
-      where: {
-        type: MissionType.DIARIA,
-        classId: null,
-        quiz: { isNot: null },
-        quizAttempts: {
-          none: {
-            userId,
-          },
-        },
-      },
-      include: {
-        quiz: true,
-      },
-      orderBy: {
-        startDate: 'asc',
-      },
-    });
-  }
   async getUserMissionHistory(userId: string, filters?: {
     status?: 'NAO_INICIADA' | 'EM_PROGRESSO' | 'CONCLUIDA' | 'EXPIRADA';
     classId?: string;
@@ -849,30 +837,16 @@ export class MissionsService {
   async resetDailyMissions() {
     try {
       const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
       const expiredMissions = await this.prisma.mission.findMany({
         where: { type: 'DIARIA', endDate: { lt: now } },
+        select: { id: true },
       });
 
       for (const mission of expiredMissions) {
         await this.prisma.userMission.updateMany({
           where: { missionId: mission.id, status: 'EM_PROGRESSO' },
           data: { status: 'EXPIRADA' },
-        });
-
-        await this.prisma.mission.create({
-          data: {
-            title: mission.title,
-            description: mission.description,
-            type: 'DIARIA',
-            points: mission.points,
-            startDate: startOfDay,
-            endDate: endOfDay,
-            classId: mission.classId,
-            createdById: mission.createdById,
-          },
         });
       }
 
