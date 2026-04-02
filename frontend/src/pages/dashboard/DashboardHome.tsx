@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Trophy, Medal, Target, CheckCircle2, Hourglass } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Sparkles, Trophy, Medal, Target } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -351,31 +352,54 @@ export const DashboardHome = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
-                <Target className="h-4 w-4 text-emerald-500" />
-                Missões
-              </h3>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em] flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                    Concluídas
-                  </p>
-                  <p className="text-lg font-bold text-slate-800">{missions?.completed ?? 0}</p>
-                </div>
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <p className="text-xs text-slate-500 uppercase tracking-[0.16em] flex items-center gap-1">
-                    <Hourglass className="h-3 w-3 text-amber-500" />
-                    Em andamento
-                  </p>
-                  <p className="text-lg font-bold text-slate-800">{missions?.inProgress ?? 0}</p>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-slate-500">
-                Taxa de conclusão: {missions?.completionRate ?? 0}%
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col gap-4">
+            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
+              <Target className="h-4 w-4 text-emerald-500" />
+              Missões
+            </h3>
+
+            <div className="flex items-end gap-3">
+              <p className="text-5xl font-display font-bold text-brand-900 leading-none">
+                {missions?.completed ?? 0}
               </p>
+              <p className="text-sm text-slate-500 mb-1 leading-tight">
+                {(missions?.completed ?? 0) === 1 ? 'missão' : 'missões'}<br />concluídas
+              </p>
+            </div>
+
+            {(missions?.completed ?? 0) === 0 ? (
+              <p className="text-xs text-slate-400">
+                Complete missões para acumular XP e subir no ranking.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: `${Math.min(100, missions?.completionRate ?? 0)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-400">
+                  {missions?.completionRate ?? 0}% das missões disponíveis concluídas
+                </p>
+              </div>
+            )}
+
+            <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={openDailyQuiz}
+                className="text-xs font-semibold text-accent-600 hover:text-accent-700 transition-colors flex items-center gap-1"
+              >
+                <Sparkles className="h-3 w-3" />
+                Quiz do dia
+              </button>
+              <Link
+                to="/dashboard/missions"
+                className="text-xs font-semibold text-brand-700 hover:text-brand-900 transition-colors"
+              >
+                Ver todas →
+              </Link>
             </div>
           </div>
         </section>}
