@@ -13,7 +13,6 @@ import {
 import { MissionsService } from './missions.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
-import { UpdateProgressDto } from './dto/update-progress.dto';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { QueryMissionsDto } from './dto/query-missions.dto';
 import { QueryUserMissionsDto } from './dto/query-user-missions.dto';
@@ -207,25 +206,6 @@ export class MissionsController {
     @Body() answerQuizDto: AnswerQuizDto,
   ) {
     return this.missionsService.answerMissionQuiz(id, req.user.id, answerQuizDto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  @Patch(':id/progress')
-  @Roles('ALUNO')
-  @ApiOperation({ summary: 'Atualizar progresso da missão (Aluno)' })
-  @ApiBody({ type: UpdateProgressDto })
-  @ApiResponse({ status: 200, description: 'Progresso atualizado com sucesso' })
-  @ApiResponse({ status: 400, description: 'Progresso inválido' })
-  @ApiResponse({ status: 401, description: 'Não autenticado' })
-  @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
-  @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  updateProgress(
-    @Param('id') id: string,
-    @Request() req,
-    @Body() updateProgressDto: UpdateProgressDto,
-  ) {
-    return this.missionsService.updateProgress(id, req.user.id, updateProgressDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

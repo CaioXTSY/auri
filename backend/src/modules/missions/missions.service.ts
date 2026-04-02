@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, BadRequestException, ConflictException, 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
-import { UpdateProgressDto } from './dto/update-progress.dto';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { GamificationService } from '../gamification/gamification.service';
@@ -375,80 +374,6 @@ export class MissionsService {
   /**
    * Atualizar progresso da missão
    */
-  async updateProgress(missionId: string, userId: string, updateProgressDto: UpdateProgressDto) {
-    const userMission = await this.prisma.userMission.findUnique({
-      where: {
-        userId_missionId: {
-          userId,
-          missionId,
-        },
-      },
-      include: {
-        mission: true,
-      },
-    });
-
-    if (!userMission) {
-      throw new NotFoundException('Você não iniciou esta missão');
-    }
-
-    if (userMission.status === MissionStatus.CONCLUIDA) {
-      throw new BadRequestException('Esta missão já foi concluída');
-    }
-
-    if (userMission.status === MissionStatus.EXPIRADA) {
-      throw new BadRequestException('Esta missão expirou');
-    }
-
-    if (userMission.mission.classId) {
-      const enrolled = await this.prisma.classStudent.findUnique({
-        where: { classId_userId: { classId: userMission.mission.classId, userId } },
-      });
-      if (!enrolled) {
-        throw new ForbiddenException('Você não está matriculado na turma desta missão');
-      }
-    }
-
-    // Se progresso chegou a 100%, completar automaticamente
-    const data: any = {
-      progress: updateProgressDto.progress,
-    };
-
-    if (updateProgressDto.progress >= 100) {
-      data.status = MissionStatus.CONCLUIDA;
-      data.completedAt = new Date();
-
-      // Adicionar pontos ao usuário
-      await this.prisma.userPoint.create({
-        data: {
-          userId,
-          points: userMission.mission.points,
-          source: 'MISSAO',
-          description: `Missão concluída: ${userMission.mission.title}`,
-          referenceId: missionId,
-        },
-      });
-
-      // Verificar conquistas de missão
-      await this.gamificationService.checkMissionAchievements(userId);
-    } else if (updateProgressDto.status) {
-      data.status = updateProgressDto.status;
-    }
-
-    return this.prisma.userMission.update({
-      where: {
-        userId_missionId: {
-          userId,
-          missionId,
-        },
-      },
-      data,
-      include: {
-        mission: true,
-      },
-    });
-  }
-
   async getMissionQuiz(missionId: string, userId: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },

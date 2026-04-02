@@ -3,7 +3,6 @@ import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
-import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -38,7 +37,6 @@ export const MissionsPage = () => {
   const [stats, setStats] = useState<MissionStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA'>('ALL');
@@ -60,13 +58,6 @@ export const MissionsPage = () => {
       setAvailable(availableResponse);
       setHistory(historyResponse.data);
       setStats(statsResponse);
-      const initialProgress: Record<string, number> = {};
-      availableResponse.forEach((mission) => {
-        if (mission.userStatus) {
-          initialProgress[mission.id] = mission.userStatus.progress;
-        }
-      });
-      setProgressMap(initialProgress);
     } catch (err) {
       setError('Não foi possível carregar as missões.');
       notify({ title: 'Falha ao carregar missões', variant: 'error' });
@@ -95,19 +86,6 @@ export const MissionsPage = () => {
 
   const openMissionQuiz = (missionId: string) => {
     setActiveMissionId(missionId);
-  };
-
-  const handleUpdateProgress = async (missionId: string) => {
-    const progress = progressMap[missionId] ?? 0;
-    try {
-      await missionsService.updateProgress(missionId, progress);
-      await loadData();
-      notify({ title: 'Progresso atualizado', variant: 'success' });
-    } catch (err) {
-      setError('Não foi possível atualizar o progresso.');
-      notify({ title: 'Falha ao atualizar progresso', variant: 'error' });
-      console.error(err);
-    }
   };
 
   const handleCompleteMission = async (missionId: string) => {
@@ -335,7 +313,6 @@ export const MissionsPage = () => {
           <div className="grid gap-6 md:grid-cols-2">
             {paginatedAvailable.map((mission) => {
               const status = mission.userStatus?.status ?? 'NAO_INICIADA';
-              const progress = mission.userStatus?.progress ?? 0;
               return (
                 <div
                   key={mission.id}
@@ -373,47 +350,15 @@ export const MissionsPage = () => {
                     )}
                   </div>
 
-                  {status === 'EM_PROGRESSO' && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-slate-500">
-                        <span>Progresso</span>
-                        <span>{progressMap[mission.id] ?? progress}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={progressMap[mission.id] ?? progress}
-                        onChange={(event) =>
-                          setProgressMap((prev) => ({
-                            ...prev,
-                            [mission.id]: Number(event.target.value),
-                          }))
-                        }
-                        className="w-full accent-brand-900"
-                      />
-                    </div>
-                  )}
-
                   <div className="flex flex-wrap gap-2">
                     {status === 'EM_PROGRESSO' && mission.type !== 'DIARIA' && (
-                      <>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="border-slate-200 text-slate-600"
-                          onClick={() => handleUpdateProgress(mission.id)}
-                        >
-                          Atualizar progresso
-                        </Button>
-                        <Button
-                          type="button"
-                          className="bg-brand-900 hover:bg-brand-800 text-white"
-                          onClick={() => handleCompleteMission(mission.id)}
-                        >
-                          Concluir
-                        </Button>
-                      </>
+                      <Button
+                        type="button"
+                        className="bg-brand-900 hover:bg-brand-800 text-white"
+                        onClick={() => handleCompleteMission(mission.id)}
+                      >
+                        Concluir
+                      </Button>
                     )}
                     {mission.type === 'DIARIA' && (
                       <Button
@@ -489,18 +434,6 @@ export const MissionsPage = () => {
                     {entry.mission.points} XP
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>Progresso</span>
-                  <span>{entry.progress}%</span>
-                </div>
-                <ProgressBar
-                  value={entry.progress}
-                  variant={
-                    entry.status === 'CONCLUIDA' ? 'success'
-                    : entry.status === 'EM_PROGRESSO' ? 'default'
-                    : 'muted'
-                  }
-                />
               </div>
             ))}
           </div>

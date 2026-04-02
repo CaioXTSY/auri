@@ -104,10 +104,6 @@ export const missionsService = {
     await api.post(`/missions/${missionId}/start`);
   },
 
-  updateProgress: async (missionId: string, progress: number): Promise<void> => {
-    await api.patch(`/missions/${missionId}/progress`, { progress });
-  },
-
   completeMission: async (missionId: string): Promise<void> => {
     await api.post(`/missions/${missionId}/complete`);
   },
