@@ -130,28 +130,69 @@ export const DashboardHome = () => {
             </div>
           </div>
 
-          <div className="bg-brand-900 rounded-xl border border-brand-800 shadow-sm px-6 py-5 text-brand-50">
-            <p className="text-xs font-semibold text-accent-300 uppercase tracking-[0.2em]">
-              Sequência Diária
-            </p>
-            <div className="mt-3 flex items-center gap-4">
-              <span className="text-5xl font-display font-bold text-accent-300 leading-none">
-                🔥 {dashboardData?.streak?.current ?? 0}
+          <div className="bg-brand-900 rounded-xl border border-brand-800 shadow-sm px-6 py-5 text-brand-50 flex flex-col justify-between gap-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-accent-300 uppercase tracking-[0.2em]">
+                Sequência Diária
+              </p>
+              {(dashboardData?.streak?.longest ?? 0) > 0 && (
+                <p className="text-xs text-brand-300">
+                  Recorde: <span className="text-brand-100 font-semibold">{dashboardData?.streak?.longest} {(dashboardData?.streak?.longest ?? 0) === 1 ? 'dia' : 'dias'}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-4xl leading-none">
+                {(dashboardData?.streak?.current ?? 0) > 0 ? '🔥' : '🌑'}
               </span>
               <div>
-                <p className="text-sm font-bold text-white">
-                  {(dashboardData?.streak?.current ?? 0) === 1 ? 'dia' : 'dias'} consecutivos
+                <p className="text-3xl font-display font-bold text-white leading-none">
+                  {dashboardData?.streak?.current ?? 0}
+                  <span className="ml-1.5 text-base font-normal text-brand-300">
+                    {(dashboardData?.streak?.current ?? 0) === 1 ? 'dia' : 'dias'}
+                  </span>
                 </p>
-                <p className="text-xs text-brand-200">
-                  Recorde: {dashboardData?.streak?.longest ?? 0} {(dashboardData?.streak?.longest ?? 0) === 1 ? 'dia' : 'dias'}
+                <p className="mt-0.5 text-xs text-brand-300">
+                  {(dashboardData?.streak?.current ?? 0) === 0
+                    ? 'Nenhuma sequência ativa'
+                    : 'consecutivos'}
                 </p>
               </div>
             </div>
-            <p className="mt-3 text-xs text-brand-300">
-              {(dashboardData?.streak?.current ?? 0) === 0
-                ? 'Responda o quiz diário para começar sua sequência!'
-                : 'Continue amanhã para manter a chama acesa.'}
-            </p>
+
+            <div className="space-y-1.5">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-brand-400 font-semibold">Últimos 7 dias</p>
+              <div className="flex gap-1.5">
+                {Array.from({ length: 7 }, (_, i) => {
+                  const streak = dashboardData?.streak?.current ?? 0;
+                  const lastDate = dashboardData?.streak?.lastDate ? new Date(dashboardData.streak.lastDate) : null;
+                  const today = new Date(); today.setHours(0, 0, 0, 0);
+                  const lastDay = lastDate ? new Date(lastDate) : null;
+                  if (lastDay) lastDay.setHours(0, 0, 0, 0);
+                  const diffDays = lastDay ? Math.round((today.getTime() - lastDay.getTime()) / 86400000) : 999;
+                  const streakActive = diffDays <= 1;
+                  const filledFromRight = streakActive ? streak : 0;
+                  const filled = i >= (7 - filledFromRight);
+                  return (
+                    <div
+                      key={i}
+                      className={`flex-1 h-2 rounded-full transition-all ${filled ? 'bg-accent-400' : 'bg-brand-700'}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {(dashboardData?.streak?.current ?? 0) === 0 && (
+              <button
+                type="button"
+                onClick={openDailyQuiz}
+                className="text-xs font-semibold text-accent-400 hover:text-accent-300 text-left transition-colors"
+              >
+                Responda o quiz diário para começar →
+              </button>
+            )}
           </div>
         </section>
 
