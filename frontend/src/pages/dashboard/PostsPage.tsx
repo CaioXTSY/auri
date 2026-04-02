@@ -11,6 +11,7 @@ import {
   type PostReply,
 } from '@/services/posts-service';
 import { useAuthStore } from '@/stores/auth-store';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, ChevronUp, Eye, Loader2, MessageSquare, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
 
 const getUserInitials = (name?: string) => {
@@ -387,8 +388,30 @@ export const PostsPage = () => {
 
         {/* Feed */}
         {isLoadingPosts ? (
-          <div className="py-16 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-brand-700" />
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="h-1.5 bg-slate-200" />
+                <div className="p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-3.5 w-32" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-5 w-3/4" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-3.5 w-full" />
+                    <Skeleton className="h-3.5 w-full" />
+                    <Skeleton className="h-3.5 w-2/3" />
+                  </div>
+                  <div className="pt-3 border-t border-slate-100">
+                    <Skeleton className="h-3.5 w-28" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : posts.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 py-16 text-center text-slate-500">
@@ -479,8 +502,22 @@ export const PostsPage = () => {
                   {isExpanded && (
                     <div className="border-t border-slate-100 bg-slate-50 px-5 py-4 space-y-4">
                       {isLoadingPostDetails ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="h-5 w-5 animate-spin text-brand-600" />
+                        <div className="space-y-3">
+                          {Array.from({ length: 2 }).map((_, i) => (
+                            <div key={i} className="flex gap-3">
+                              <Skeleton className="h-8 w-8 rounded-full flex-shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <div className="bg-white rounded-xl px-4 py-3 border border-slate-200 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Skeleton className="h-3 w-24" />
+                                    <Skeleton className="h-3 w-12" />
+                                  </div>
+                                  <Skeleton className="h-3.5 w-full" />
+                                  <Skeleton className="h-3.5 w-4/5" />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <>

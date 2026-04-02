@@ -6,6 +6,7 @@ import { gamificationService, type RankingEntry } from '@/services/gamification-
 import { postsService, type PostItem } from '@/services/posts-service';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare } from 'lucide-react';
 
 const getUserInitials = (name?: string) => {
@@ -52,8 +53,56 @@ export const ClassDetails = () => {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-slate-500">Carregando detalhes da turma...</div>
+        <div className="space-y-8">
+          {/* Header skeleton */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-3">
+              <Skeleton className="h-5 w-28 rounded-full" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-9 w-64" />
+          </div>
+
+          {/* Posts skeleton */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <div className="grid gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-3.5 w-20" />
+                  </div>
+                  <Skeleton className="h-3.5 w-full" />
+                  <Skeleton className="h-3.5 w-3/4" />
+                  <div className="flex items-center gap-2 mt-1">
+                    <Skeleton className="h-7 w-7 rounded-full" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-px bg-slate-200" />
+
+          {/* Leaderboard skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+              <Skeleton className="h-5 w-36" />
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     );

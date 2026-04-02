@@ -4,7 +4,8 @@ import { AchievementCard } from '@/components/gamification/AchievementCard';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { gamificationService, type Achievement, type PaginatedAchievements, type RankingEntry, type UserStats } from '@/services/gamification-service';
-import { Loader2, Trophy, Star, Medal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Trophy, Star, Medal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth-store';
@@ -102,21 +103,26 @@ export const AchievementsPage = () => {
     return Math.round((stats.achievementsCount / stats.totalAchievements) * 100);
   }, [stats?.achievementsCount, stats?.totalAchievements]);
 
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-full min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {isLoading ? (
+            <>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                  <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3.5 w-36" />
+                    <Skeleton className="h-7 w-24" />
+                    <Skeleton className="h-2 w-full rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
               <Trophy className="w-6 h-6" />
@@ -154,7 +160,7 @@ export const AchievementsPage = () => {
                 <p className="text-lg font-bold text-slate-900">{stats?.levelName || 'Iniciante'}</p>
                 {stats && (
                   <div className="w-full bg-slate-100 h-1.5 mt-2 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="bg-purple-600 h-full rounded-full transition-all duration-500"
                       style={{ width: `${stats.progress}%` }}
                     />
@@ -163,6 +169,8 @@ export const AchievementsPage = () => {
               </div>
             </div>
           </div>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -193,8 +201,17 @@ export const AchievementsPage = () => {
             </div>
             
             {isAchievementsLoading ? (
-              <div className="h-64 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <>

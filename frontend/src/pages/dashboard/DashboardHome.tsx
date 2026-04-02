@@ -3,6 +3,7 @@ import { Sparkles, Trophy, Medal, Target, CheckCircle2, Hourglass } from 'lucide
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/stores/auth-store';
 import { dashboardService, type StudentDashboard } from '@/services/dashboard-service';
 
@@ -10,18 +11,22 @@ export const DashboardHome = () => {
   const user = useAuthStore((state) => state.user);
 
   const [dashboardData, setDashboardData] = useState<StudentDashboard | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
 
   const loadDashboardData = async () => {
     if (user?.role === 'PROFESSOR') return;
+    setIsLoading(true);
     setLoadError(false);
     try {
       const dashboardResponse = await dashboardService.getStudentDashboard();
       setDashboardData(dashboardResponse);
     } catch {
       setLoadError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,7 +85,71 @@ export const DashboardHome = () => {
             </button>
           </div>
         )}
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
+        {isLoading && (
+          <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-5 space-y-4">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-7 w-56" />
+              <Skeleton className="h-3.5 w-full max-w-sm" />
+              <Skeleton className="h-9 w-36 mt-2 rounded-lg" />
+              <div className="pt-4 flex items-end justify-between gap-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-10 w-28" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+                <div className="flex-1 max-w-xs space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-8" />
+                  </div>
+                  <Skeleton className="h-2.5 w-full rounded-full" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-brand-900 rounded-xl border border-brand-800 shadow-sm px-6 py-5 space-y-4">
+              <Skeleton className="h-3 w-28 bg-brand-700" />
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-full bg-brand-700" />
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-20 bg-brand-700" />
+                  <Skeleton className="h-3 w-24 bg-brand-700" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-2.5 w-full rounded-full bg-brand-700" />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {isLoading && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <Skeleton className="h-3.5 w-36" />
+                <div className="space-y-3 mt-2">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3.5 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3.5 w-2/3" />
+                      <Skeleton className="h-3 w-2/5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {!isLoading && <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-5 flex flex-col justify-between">
             <div className="mb-4">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.2em]">
@@ -194,9 +263,9 @@ export const DashboardHome = () => {
               </button>
             )}
           </div>
-        </section>
+        </section>}
 
-        <section className="grid gap-6 lg:grid-cols-3">
+        {!isLoading && <section className="grid gap-6 lg:grid-cols-3">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.18em] flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-500" />
@@ -273,7 +342,7 @@ export const DashboardHome = () => {
               </p>
             </div>
           </div>
-        </section>
+        </section>}
       </div>
     </DashboardLayout>
   );

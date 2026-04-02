@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
 
 export const MyClasses = () => {
@@ -49,7 +50,21 @@ export const MyClasses = () => {
         </div>
 
         {isLoading && (
-          <div className="text-sm text-slate-500">Carregando turmas...</div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                  <Skeleton className="h-2 w-2 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-3/4" />
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-3.5 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {error && (
