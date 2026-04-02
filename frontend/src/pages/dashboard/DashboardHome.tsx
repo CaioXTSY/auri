@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Sparkles, Trophy, Medal, Target, CheckCircle2, Hourglass } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { useAuthStore } from '@/stores/auth-store';
 import { dashboardService, type StudentDashboard } from '@/services/dashboard-service';
 
@@ -124,12 +125,7 @@ export const DashboardHome = () => {
                     {progress}%
                   </span>
                 </div>
-                <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-accent-600 to-accent-700"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
+                <ProgressBar value={progress} variant="xp" size="md" />
               </div>
             </div>
           </div>

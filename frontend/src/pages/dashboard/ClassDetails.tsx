@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { gamificationService, type RankingEntry } from '@/services/gamification-service';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { postsService, type PostItem } from '@/services/posts-service';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { MarkdownContent } from '@/components/ui/markdown-content';
@@ -111,9 +112,7 @@ export const ClassDetails = () => {
                   <span className="text-2xl font-bold text-brand-900">0%</span>
                   <span className="text-xs text-brand-600 mb-1">concluído</span>
                 </div>
-                <div className="w-full h-1.5 bg-brand-200 rounded-full mt-2 overflow-hidden">
-                  <div className="h-full bg-brand-600 rounded-full w-0" />
-                </div>
+                <ProgressBar value={0} variant="default" className="mt-2" />
               </div>
             </div>
           </div>

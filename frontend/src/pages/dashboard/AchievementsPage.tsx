@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { AchievementCard } from '@/components/gamification/AchievementCard';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { gamificationService, type Achievement, type PaginatedAchievements, type RankingEntry, type UserStats } from '@/services/gamification-service';
 import { Loader2, Trophy, Star, Medal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -125,11 +126,8 @@ export const AchievementsPage = () => {
               <p className="text-2xl font-bold text-slate-900">
                 {stats?.achievementsCount} <span className="text-sm text-slate-400 font-normal">/ {stats?.totalAchievements}</span>
               </p>
-              <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                  style={{ width: `${achievementProgress}%` }}
-                />
+              <div className="mt-2">
+                <ProgressBar value={achievementProgress} variant="xp" />
               </div>
             </div>
           </div>

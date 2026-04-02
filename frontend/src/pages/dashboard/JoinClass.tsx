@@ -120,7 +120,7 @@ export const JoinClass = () => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-brand-600 hover:bg-brand-700 text-white"
+                className="w-full bg-brand-900 hover:bg-brand-800 text-white"
               >
                 {isSubmitting ? (
                   <>

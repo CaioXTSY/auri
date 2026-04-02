@@ -3,6 +3,7 @@ import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -492,19 +493,14 @@ export const MissionsPage = () => {
                   <span>Progresso</span>
                   <span>{entry.progress}%</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full rounded-full',
-                      entry.status === 'CONCLUIDA'
-                        ? 'bg-emerald-500'
-                        : entry.status === 'EM_PROGRESSO'
-                        ? 'bg-brand-600'
-                        : 'bg-slate-300',
-                    )}
-                    style={{ width: `${entry.progress}%` }}
-                  />
-                </div>
+                <ProgressBar
+                  value={entry.progress}
+                  variant={
+                    entry.status === 'CONCLUIDA' ? 'success'
+                    : entry.status === 'EM_PROGRESSO' ? 'default'
+                    : 'muted'
+                  }
+                />
               </div>
             ))}
           </div>
