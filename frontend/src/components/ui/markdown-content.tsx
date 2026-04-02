@@ -77,12 +77,14 @@ const renderInline = (text: string, keyPrefix: string): ReactNode[] => {
 
     const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (linkMatch) {
+      const href = /^https?:\/\//i.test(linkMatch[2]) ? linkMatch[2] : null;
+      if (!href) return <Fragment key={tokenKey}>{linkMatch[1]}</Fragment>;
       return (
         <a
           key={tokenKey}
-          href={linkMatch[2]}
+          href={href}
           target="_blank"
-          rel="noreferrer"
+          rel="noreferrer noopener"
           className="text-brand-700 underline underline-offset-2 hover:text-brand-900"
         >
           {linkMatch[1]}

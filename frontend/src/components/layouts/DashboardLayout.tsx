@@ -86,7 +86,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   useEffect(() => {
     if (!user?.id) return;
-    const socket = io('http://localhost:3001', {
+    const socket = io(import.meta.env.VITE_API_URL ?? 'http://localhost:3001', {
       auth: { userId: user.id, token },
     });
     socket.on('notification', (payload: NotificationItem) => {
