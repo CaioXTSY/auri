@@ -1,8 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
   Param,
   Query,
   UseGuards,
@@ -22,7 +20,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import {
-  AddPointsDto,
   GetRankingQueryDto,
 } from './dto';
 
@@ -32,58 +29,6 @@ import {
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class GamificationController {
   constructor(private readonly gamificationService: GamificationService) {}
-
-  /**
-   * PONTOS
-   */
-
-  @Get('points/me')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Obter meus pontos totais' })
-  @ApiResponse({ status: 200, description: 'Pontos do usuário' })
-  async getMyPoints(@Request() req) {
-    const totalPoints = await this.gamificationService.getUserTotalPoints(
-      req.user.id,
-    );
-    return { userId: req.user.id, totalPoints };
-  }
-
-  @Get('stats/me')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Obter estatísticas do usuário' })
-  @ApiResponse({ status: 200, description: 'Estatísticas do usuário' })
-  async getMyStats(@Request() req) {
-    return this.gamificationService.getUserStats(req.user.id);
-  }
-
-  @Get('points/history')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Obter histórico de pontos' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Histórico de pontos' })
-  async getMyPointsHistory(@Request() req, @Query('limit') limit?: number) {
-    return this.gamificationService.getUserPointsHistory(
-      req.user.id,
-      limit ? parseInt(limit as any) : 50,
-    );
-  }
-
-  @Post('points/add')
-  @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({
-    summary: 'Adicionar pontos manualmente',
-    description: 'Apenas Admin e Professor podem adicionar pontos manualmente',
-  })
-  @ApiResponse({ status: 201, description: 'Pontos adicionados com sucesso' })
-  async addPoints(@Body() addPointsDto: AddPointsDto) {
-    return this.gamificationService.addPoints(
-      addPointsDto.userId,
-      addPointsDto.points,
-      addPointsDto.source,
-      addPointsDto.description,
-      addPointsDto.referenceId,
-    );
-  }
 
   /**
    * NÍVEIS
@@ -111,26 +56,9 @@ export class GamificationController {
     return this.gamificationService.getUserLevel(req.user.id);
   }
 
-  @Get('level/:userId')
-  @Roles(Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Obter nível de um usuário' })
-  @ApiParam({ name: 'userId', type: String })
-  @ApiResponse({ status: 200, description: 'Nível do usuário' })
-  async getUserLevel(@Param('userId') userId: string) {
-    return this.gamificationService.getUserLevel(userId);
-  }
-
   /**
    * CONQUISTAS
    */
-
-  @Get('achievements')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Listar todas as conquistas disponíveis' })
-  @ApiResponse({ status: 200, description: 'Lista de conquistas' })
-  async getAllAchievements() {
-    return this.gamificationService.getAllAchievements();
-  }
 
   @Get('achievements/me')
   @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
@@ -186,22 +114,6 @@ export class GamificationController {
     );
   }
 
-  @Post('achievements/:achievementId/unlock/:userId')
-  @Roles(Role.ADMIN)
-  @ApiOperation({
-    summary: 'Desbloquear conquista para usuário',
-    description: 'Apenas Admin',
-  })
-  @ApiParam({ name: 'achievementId', type: String })
-  @ApiParam({ name: 'userId', type: String })
-  @ApiResponse({ status: 201, description: 'Conquista desbloqueada' })
-  async unlockAchievement(
-    @Param('achievementId') achievementId: string,
-    @Param('userId') userId: string,
-  ) {
-    return this.gamificationService.unlockAchievement(userId, achievementId);
-  }
-
   /**
    * RANKING
    */
@@ -240,50 +152,6 @@ export class GamificationController {
       query.referenceId,
       query.limit || 50,
     );
-  }
-
-  @Get('ranking/me')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Obter minha posição no ranking' })
-  @ApiQuery({
-    name: 'type',
-    enum: ['GLOBAL', 'TURMA'],
-    required: true,
-  })
-  @ApiQuery({ name: 'referenceId', required: false, type: String })
-  @ApiResponse({ status: 200, description: 'Posição no ranking' })
-  async getMyRankingPosition(
-    @Request() req,
-    @Query('type') type: 'GLOBAL' | 'TURMA',
-    @Query('referenceId') referenceId?: string,
-  ) {
-    return this.gamificationService.getUserRankingPosition(
-      req.user.id,
-      type,
-      referenceId,
-    );
-  }
-
-  @Post('ranking/update/global')
-  @Roles(Role.ADMIN)
-  @ApiOperation({
-    summary: 'Atualizar ranking global',
-    description: 'Apenas Admin - executar periodicamente',
-  })
-  @ApiResponse({ status: 200, description: 'Ranking atualizado' })
-  async updateGlobalRanking() {
-    await this.gamificationService.updateGlobalRanking();
-    return { message: 'Ranking global atualizado com sucesso' };
-  }
-
-  @Post('ranking/update/class/:classId')
-  @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ summary: 'Atualizar ranking de turma' })
-  @ApiParam({ name: 'classId', type: String })
-  @ApiResponse({ status: 200, description: 'Ranking atualizado' })
-  async updateClassRanking(@Param('classId') classId: string) {
-    await this.gamificationService.updateClassRanking(classId);
-    return { message: 'Ranking da turma atualizado com sucesso' };
   }
 
   /**

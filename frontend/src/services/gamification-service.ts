@@ -67,7 +67,33 @@ export const gamificationService = {
   },
 
   getMyStats: async (): Promise<UserStats> => {
-    const response = await api.get<UserStats>('/gamification/stats/me');
-    return response.data;
+    const response = await api.get<{
+      points: { total: number };
+      level: {
+        userId: string;
+        totalPoints: number;
+        currentLevel: number;
+        levelName: string;
+        pointsInCurrentLevel: number;
+        pointsNeededForNextLevel: number;
+        progressToNextLevel: number;
+      };
+      achievements: { unlocked: number; total: number; progress: number };
+      ranking: { global: number | null; points: number };
+      streak: { current: number; longest: number; lastDate: string | null };
+    }>('/gamification/stats/me');
+    const { level, achievements, streak } = response.data;
+    return {
+      userId: level.userId,
+      level: level.currentLevel,
+      levelName: level.levelName,
+      currentXp: level.totalPoints,
+      nextLevelXp: level.pointsInCurrentLevel + level.pointsNeededForNextLevel,
+      progress: level.progressToNextLevel,
+      achievementsCount: achievements.unlocked,
+      totalAchievements: achievements.total,
+      currentStreak: streak?.current ?? 0,
+      longestStreak: streak?.longest ?? 0,
+    };
   }
 };

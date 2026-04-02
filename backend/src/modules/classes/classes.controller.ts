@@ -21,7 +21,6 @@ import { ClassesService } from './classes.service';
 import {
   CreateClassDto,
   UpdateClassDto,
-  EnrollStudentDto,
   QueryClassesDto,
 } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -258,55 +257,6 @@ export class ClassesController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   findStudents(@Param('id') id: string) {
     return this.classesService.findStudentsByClass(id);
-  }
-
-  @Post(':id/enroll')
-  @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ 
-    summary: 'Matricular aluno na turma',
-    description: 'Matricula um aluno em uma turma ativa. Apenas usuários com role ALUNO podem ser matriculados.'
-  })
-  @ApiBody({
-    type: EnrollStudentDto,
-    examples: {
-      enroll: {
-        summary: 'Matricular aluno',
-        value: {
-          userId: 'uuid-aluno'
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Aluno matriculado com sucesso',
-    schema: {
-      example: {
-        classId: 'uuid-turma',
-        userId: 'uuid-aluno',
-        enrolledAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Turma ou aluno não encontrado',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Turma encerrada ou usuário não é aluno',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Aluno já matriculado',
-  })
-  @ApiResponse({ status: 401, description: 'Não autenticado' })
-  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  enrollStudent(
-    @Param('id') id: string,
-    @Body() enrollStudentDto: EnrollStudentDto,
-  ) {
-    return this.classesService.enrollStudent(id, enrollStudentDto);
   }
 
   @Delete(':id/students/:userId')
