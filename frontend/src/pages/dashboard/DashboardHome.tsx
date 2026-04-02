@@ -253,15 +253,51 @@ export const DashboardHome = () => {
               </div>
             </div>
 
-            {(dashboardData?.streak?.current ?? 0) === 0 && (
-              <button
-                type="button"
-                onClick={openDailyQuiz}
-                className="text-xs font-semibold text-accent-400 hover:text-accent-300 text-left transition-colors"
-              >
-                Responda o quiz diário para começar →
-              </button>
-            )}
+            {(() => {
+              const current = dashboardData?.streak?.current ?? 0;
+              if (current === 0) {
+                return (
+                  <button
+                    type="button"
+                    onClick={openDailyQuiz}
+                    className="text-xs font-semibold text-accent-400 hover:text-accent-300 text-left transition-colors"
+                  >
+                    Responda o quiz diário para começar →
+                  </button>
+                );
+              }
+              const milestones = [3, 7, 14, 30, 100];
+              const nextMilestone = milestones.find((m) => m > current);
+              if (!nextMilestone) {
+                return (
+                  <p className="text-xs text-amber-300 font-semibold">
+                    👑 Você atingiu o marco máximo de 100 dias!
+                  </p>
+                );
+              }
+              const prevMilestone = milestones[milestones.indexOf(nextMilestone) - 1] ?? 0;
+              const segmentProgress = Math.round(((current - prevMilestone) / (nextMilestone - prevMilestone)) * 100);
+              const daysLeft = nextMilestone - current;
+              return (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] text-brand-400 uppercase tracking-[0.18em] font-semibold">
+                    <span>Próximo marco</span>
+                    <span className="text-brand-200">{nextMilestone} dias</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-brand-700 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-accent-400 transition-all duration-500"
+                      style={{ width: `${segmentProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-brand-300">
+                    {daysLeft === 1
+                      ? 'Falta só 1 dia — você consegue! 🔥'
+                      : `Faltam ${daysLeft} dias — continue assim!`}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         </section>}
 
