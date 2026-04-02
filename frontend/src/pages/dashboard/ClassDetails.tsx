@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { gamificationService, type RankingEntry } from '@/services/gamification-service';
-import { ProgressBar } from '@/components/ui/progress-bar';
 import { postsService, type PostItem } from '@/services/posts-service';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { MarkdownContent } from '@/components/ui/markdown-content';
@@ -103,18 +102,6 @@ export const ClassDetails = () => {
               </h1>
             </div>
             
-            <div className="flex flex-col gap-3 min-w-[200px]">
-              <div className="bg-brand-50 rounded-lg p-4 border border-brand-100">
-                <p className="text-xs font-semibold text-brand-600 uppercase tracking-wide mb-1">
-                  Seu Progresso
-                </p>
-                <div className="flex items-end gap-2">
-                  <span className="text-2xl font-bold text-brand-900">0%</span>
-                  <span className="text-xs text-brand-600 mb-1">concluído</span>
-                </div>
-                <ProgressBar value={0} variant="default" className="mt-2" />
-              </div>
-            </div>
           </div>
         </div>
 
