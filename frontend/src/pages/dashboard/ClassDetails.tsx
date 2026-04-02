@@ -22,45 +22,32 @@ export const ClassDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadData = async () => {
+    if (!id) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [classData, rankingData, postsData] = await Promise.all([
+        classService.getClassDetails(id),
+        gamificationService.getRanking('TURMA', id, 10),
+        postsService.list({ classId: id, page: 1, limit: 8 }),
+      ]);
+      setClassroom(classData);
+      setRanking(rankingData);
+      setPosts(postsData.data);
+    } catch (err) {
+      setError('Não foi possível carregar os detalhes da turma.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      if (!id) return;
-
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const [classData, rankingData, postsData] = await Promise.all([
-          classService.getClassDetails(id),
-          gamificationService.getRanking('TURMA', id, 10),
-          postsService.list({ classId: id, page: 1, limit: 8 }),
-        ]);
-
-        if (isMounted) {
-          setClassroom(classData);
-          setRanking(rankingData);
-          setPosts(postsData.data);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError('Não foi possível carregar os detalhes da turma.');
-          console.error(err);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
     loadData();
-
-    return () => {
-      isMounted = false;
-    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
 
   if (isLoading) {
     return (
@@ -75,8 +62,17 @@ export const ClassDetails = () => {
   if (error || !classroom) {
     return (
       <DashboardLayout>
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
-          {error || 'Turma não encontrada'}
+        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          <span>{error || 'Turma não encontrada'}</span>
+          {error && (
+            <button
+              type="button"
+              onClick={loadData}
+              className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:text-red-800"
+            >
+              Tentar novamente
+            </button>
+          )}
         </div>
       </DashboardLayout>
     );

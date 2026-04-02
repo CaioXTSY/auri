@@ -9,35 +9,24 @@ export const DashboardHome = () => {
   const user = useAuthStore((state) => state.user);
 
   const [dashboardData, setDashboardData] = useState<StudentDashboard | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
 
+  const loadDashboardData = async () => {
+    if (user?.role === 'PROFESSOR') return;
+    setLoadError(false);
+    try {
+      const dashboardResponse = await dashboardService.getStudentDashboard();
+      setDashboardData(dashboardResponse);
+    } catch {
+      setLoadError(true);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const loadDashboardData = async () => {
-      // Professores não têm dashboard de aluno (gamificação/atividades) por enquanto
-      if (user?.role === 'PROFESSOR') {
-        return;
-      }
-
-      try {
-        const dashboardResponse = await dashboardService.getStudentDashboard();
-
-        if (!isMounted) return;
-
-        setDashboardData(dashboardResponse);
-      } catch (loadError) {
-        if (!isMounted) return;
-        console.error(loadError);
-      }
-    };
-
     loadDashboardData();
-
-    return () => {
-      isMounted = false;
-    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role]);
 
   const levelInfo = dashboardData?.level ?? null;
@@ -78,6 +67,18 @@ export const DashboardHome = () => {
   return (
     <DashboardLayout>
       <div className="space-y-8">
+        {loadError && (
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <span>Não foi possível carregar os dados do dashboard.</span>
+            <button
+              type="button"
+              onClick={loadDashboardData}
+              className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:text-red-800"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
         <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-5 flex flex-col justify-between">
             <div className="mb-4">

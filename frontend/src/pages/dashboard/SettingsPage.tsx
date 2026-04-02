@@ -75,6 +75,13 @@ export const SettingsPage = () => {
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      notify({ title: 'A imagem deve ter no máximo 5MB', variant: 'error' });
+      event.target.value = '';
+      return;
+    }
+
     setAvatarPreview(URL.createObjectURL(file));
     setIsUploading(true);
     try {

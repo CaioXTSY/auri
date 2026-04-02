@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { classService } from '@/services/class-service';
 
@@ -18,6 +19,7 @@ type JoinClassForm = z.infer<typeof joinClassSchema>;
 
 export const JoinClass = () => {
   const navigate = useNavigate();
+  const { notify } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +36,8 @@ export const JoinClass = () => {
     setError(null);
 
     try {
-      await classService.joinClass(data.code);
+      const result = await classService.joinClass(data.code);
+      notify({ title: `Você entrou na turma "${result.class.name}"`, variant: 'success' });
       navigate('/dashboard/classes');
     } catch (err: unknown) {
       console.error(err);

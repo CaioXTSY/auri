@@ -299,10 +299,12 @@ export const PostsPage = () => {
 
           {isProfessor && isEditingPost && (
             <div className="space-y-5">
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Modo criador</p>
-                <h3 className="mt-1 text-xl font-display font-bold text-brand-900">
-                  {selectedPost ? 'Editar postagem' : 'Criar nova postagem'}
+              <div className={`rounded-xl p-4 border ${selectedPost ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  {selectedPost ? 'Editando postagem existente' : 'Nova postagem'}
+                </p>
+                <h3 className={`mt-1 text-xl font-display font-bold ${selectedPost ? 'text-amber-800' : 'text-brand-900'}`}>
+                  {selectedPost ? `Editar: ${selectedPost.title}` : 'Criar nova postagem'}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   Escreva em markdown e veja a prévia no estilo feed.

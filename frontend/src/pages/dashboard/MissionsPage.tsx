@@ -316,13 +316,17 @@ export const MissionsPage = () => {
 
         {!isLoading && tab === 'available' && availableEmpty && (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-            Nenhuma missão disponível agora.
+            {searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL'
+              ? 'Nenhuma missão encontrada para os filtros selecionados.'
+              : 'Nenhuma missão disponível agora.'}
           </div>
         )}
 
         {!isLoading && tab === 'history' && historyEmpty && (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-            Você ainda não iniciou nenhuma missão.
+            {searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL'
+              ? 'Nenhuma missão encontrada para os filtros selecionados.'
+              : 'Você ainda não iniciou nenhuma missão.'}
           </div>
         )}
 

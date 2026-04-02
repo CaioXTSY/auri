@@ -41,7 +41,8 @@ export const classService = {
     return response.data;
   },
 
-  joinClass: async (code: string): Promise<void> => {
-    await api.post('/classes/join', { code });
+  joinClass: async (code: string): Promise<{ class: Class }> => {
+    const response = await api.post<{ class: Class }>('/classes/join', { code });
+    return response.data;
   },
 };

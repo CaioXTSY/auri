@@ -11,36 +11,23 @@ export const MyClasses = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadClasses = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await classService.getMyClasses();
+      setClasses(data);
+    } catch (err) {
+      setError('Não foi possível carregar suas turmas.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const loadClasses = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const data = await classService.getMyClasses();
-
-        if (isMounted) {
-          setClasses(data);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError('Não foi possível carregar suas turmas.');
-          console.error(err);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
     loadClasses();
-
-    return () => {
-      isMounted = false;
-    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -65,7 +52,18 @@ export const MyClasses = () => {
           <div className="text-sm text-slate-500">Carregando turmas...</div>
         )}
 
-        {error && <div className="text-sm text-red-500">{error}</div>}
+        {error && (
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={loadClasses}
+              className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:text-red-800"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
 
         {!isLoading && !error && classes.length === 0 && (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
