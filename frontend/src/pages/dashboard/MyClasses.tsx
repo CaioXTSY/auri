@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
@@ -12,24 +12,22 @@ export const MyClasses = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadClasses = async () => {
+  const loadClasses = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const data = await classService.getMyClasses();
       setClasses(data);
-    } catch (err) {
+    } catch {
       setError('Não foi possível carregar suas turmas.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadClasses();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadClasses]);
 
   return (
     <DashboardLayout>

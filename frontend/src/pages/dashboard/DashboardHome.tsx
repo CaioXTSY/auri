@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Trophy, Medal, Target } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -17,7 +17,7 @@ export const DashboardHome = () => {
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     if (user?.role === 'PROFESSOR') return;
     setIsLoading(true);
     setLoadError(false);
@@ -29,12 +29,11 @@ export const DashboardHome = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.role]);
 
   useEffect(() => {
     loadDashboardData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.role]);
+  }, [loadDashboardData]);
 
   const levelInfo = dashboardData?.level ?? null;
   const level = levelInfo?.currentLevel ?? 0;

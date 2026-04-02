@@ -33,8 +33,7 @@ export const AchievementsPage = () => {
         ]);
         setStats(statsData);
         setGlobalRanking(rankingData);
-      } catch (error) {
-        console.error('Failed to load gamification data', error);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -77,8 +76,7 @@ export const AchievementsPage = () => {
             });
           }
         }
-      } catch (error) {
-        console.error('Failed to load achievements', error);
+      } catch {
       } finally {
         setIsAchievementsLoading(false);
       }

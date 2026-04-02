@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
@@ -23,7 +23,7 @@ export const ClassDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
     setError(null);
@@ -36,18 +36,16 @@ export const ClassDetails = () => {
       setClassroom(classData);
       setRanking(rankingData);
       setPosts(postsData.data);
-    } catch (err) {
+    } catch {
       setError('Não foi possível carregar os detalhes da turma.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [loadData]);
 
 
   if (isLoading) {

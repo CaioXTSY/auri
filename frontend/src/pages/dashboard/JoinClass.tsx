@@ -40,10 +40,8 @@ export const JoinClass = () => {
       notify({ title: `Você entrou na turma "${result.class.name}"`, variant: 'success' });
       navigate('/dashboard/classes');
     } catch (err: unknown) {
-      console.error(err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      // @ts-expect-error - axios error structure
-      const serverMessage = err.response?.data?.message;
+      const serverMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
       
       if (serverMessage === 'Turma não encontrada') {
         setError('Código de turma inválido. Verifique e tente novamente.');

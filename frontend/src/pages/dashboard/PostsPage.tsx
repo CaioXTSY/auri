@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -55,6 +55,9 @@ export const PostsPage = () => {
 
   const isProfessor = user?.role === 'PROFESSOR' || user?.role === 'ADMIN';
 
+  const isEditingPostRef = useRef(isEditingPost);
+  isEditingPostRef.current = isEditingPost;
+
   const loadPosts = useCallback(async () => {
     setIsLoadingPosts(true);
     setError(null);
@@ -79,7 +82,7 @@ export const PostsPage = () => {
       const details = await postsService.getById(postId);
       setSelectedPost(details);
       setReplyContent('');
-      if (isProfessor && !isEditingPost) {
+      if (isProfessor && !isEditingPostRef.current) {
         setPostTitle(details.title);
         setPostContent(details.content);
         setPostClassId(details.classId || '');
@@ -89,7 +92,7 @@ export const PostsPage = () => {
     } finally {
       setIsLoadingPostDetails(false);
     }
-  }, [isEditingPost, isProfessor]);
+  }, [isProfessor]);
 
   const loadClasses = useCallback(async () => {
     try {

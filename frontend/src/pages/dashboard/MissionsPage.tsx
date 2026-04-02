@@ -58,10 +58,9 @@ export const MissionsPage = () => {
       setAvailable(availableResponse);
       setHistory(historyResponse.data);
       setStats(statsResponse);
-    } catch (err) {
+    } catch {
       setError('Não foi possível carregar as missões.');
       notify({ title: 'Falha ao carregar missões', variant: 'error' });
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -93,10 +92,9 @@ export const MissionsPage = () => {
       await missionsService.completeMission(missionId);
       await loadData();
       notify({ title: 'Missão concluída', variant: 'success' });
-    } catch (err) {
+    } catch {
       setError('Não foi possível concluir a missão.');
       notify({ title: 'Falha ao concluir missão', variant: 'error' });
-      console.error(err);
     }
   };
 

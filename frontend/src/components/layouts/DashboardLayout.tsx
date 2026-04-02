@@ -148,13 +148,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (dailyQuizKey) {
       localStorage.setItem(dailyQuizKey, 'answered');
     }
-    // Atualiza o badge de streak no header imediatamente após responder
     if (user?.role === 'ALUNO') {
       try {
         const stats = await gamificationService.getMyStats();
         setUserStats(stats);
       } catch {
-        // silencioso — o badge será atualizado no próximo carregamento
       }
     }
   };
