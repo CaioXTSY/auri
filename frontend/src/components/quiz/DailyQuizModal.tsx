@@ -113,8 +113,8 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-slate-950/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.55)] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-950/50 backdrop-blur-sm">
+      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.55)] overflow-hidden flex flex-col max-h-[90vh]">
         <button
           type="button"
           onClick={onClose}
@@ -123,7 +123,7 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
           <X className="h-4 w-4" />
         </button>
 
-        <div className="px-6 py-8 sm:px-8 sm:py-10 space-y-5">
+        <div className="overflow-y-auto flex-1 px-6 py-8 sm:px-8 sm:py-10 space-y-5">
           <div className="flex items-start gap-3">
             <div className="h-11 w-11 rounded-2xl bg-brand-900 text-accent-400 flex items-center justify-center">
               <Sparkles className="h-6 w-6" />
