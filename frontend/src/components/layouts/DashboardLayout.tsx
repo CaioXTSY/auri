@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
@@ -11,16 +11,6 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const MobileNavLink = ({ to, icon, label, active, onNav }: { to: string; icon: React.ReactNode; label: string; active: boolean; onNav: () => void }) => (
-  <Link
-    to={to}
-    onClick={onNav}
-    className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors border-b border-slate-100 last:border-0 ${active ? 'bg-brand-50 text-brand-900' : 'text-slate-700 hover:bg-slate-50'}`}
-  >
-    <span className={active ? 'text-brand-700' : 'text-slate-400'}>{icon}</span>
-    {label}
-  </Link>
-);
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const user = useAuthStore((state) => state.user);
@@ -276,59 +266,27 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         onAnswered={handleDailyQuizAnswered}
       />
 
-      {/* Mobile FAB overlay */}
+      {/* Mobile hamburger — fixed left center */}
+      <button
+        type="button"
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-50 md:hidden bg-brand-950 text-slate-100 rounded-r-xl px-1.5 py-4 shadow-lg flex items-center justify-center"
+        onClick={() => setMobileMenuOpen((o) => !o)}
+      >
+        {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
+
+      {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* Mobile FAB */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden flex flex-col items-center gap-3">
-        {/* Expanded nav panel */}
-        <div className={`transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden min-w-[220px]">
-            {user?.role === 'PROFESSOR' ? (
-              <>
-                <MobileNavLink to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="Visão Geral" active={isActive('/dashboard').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-                <MobileNavLink to="/dashboard/teacher/classes" icon={<BookOpen className="h-4 w-4" />} label="Gerenciar Turmas" active={isActive('/dashboard/teacher/classes').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-                <MobileNavLink to="/dashboard/posts" icon={<MessageSquare className="h-4 w-4" />} label="Postagens" active={isActive('/dashboard/posts').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-              </>
-            ) : (
-              <>
-                <MobileNavLink to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="Visão Geral" active={isActive('/dashboard').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-                <MobileNavLink to="/dashboard/classes" icon={<BookOpen className="h-4 w-4" />} label="Minhas Turmas" active={isActive('/dashboard/classes').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-                <MobileNavLink to="/dashboard/missions" icon={<Flag className="h-4 w-4" />} label="Missões" active={isActive('/dashboard/missions').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-                <MobileNavLink to="/dashboard/posts" icon={<MessageSquare className="h-4 w-4" />} label="Postagens" active={isActive('/dashboard/posts').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-              </>
-            )}
-            <MobileNavLink to="/dashboard/achievements" icon={<Trophy className="h-4 w-4" />} label="Gamificação" active={isActive('/dashboard/achievements').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-            <MobileNavLink to="/dashboard/settings" icon={<Settings className="h-4 w-4" />} label="Configurações" active={isActive('/dashboard/settings').includes('bg-brand')} onNav={() => setMobileMenuOpen(false)} />
-            <div className="border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => { logout(); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="font-medium">Sair</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* FAB button */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen((o) => !o)}
-          className={`h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 ${mobileMenuOpen ? 'bg-slate-800 rotate-45' : 'bg-brand-950'}`}
-        >
-          {mobileMenuOpen
-            ? <X className="h-6 w-6 text-white" />
-            : <div className="h-8 w-7 flex items-center justify-center bg-accent-500 text-brand-950 rounded-b-full"><span className="font-display font-bold text-base leading-none">A</span></div>}
-        </button>
-      </div>
+      {/* Mobile drawer */}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-brand-950 text-slate-100 border-r border-brand-900 transform transition-transform duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <SidebarContent />
+      </aside>
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-64 bg-brand-950 text-slate-100 border-r border-brand-900">
@@ -443,7 +401,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </header>
 
-        <main className="flex-1 px-4 md:px-8 py-6 md:py-8 pb-28 md:pb-8 overflow-y-auto">{children}</main>
+        <main className="flex-1 px-4 md:px-8 py-6 md:py-8 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
