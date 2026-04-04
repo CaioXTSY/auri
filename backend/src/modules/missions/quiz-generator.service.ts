@@ -170,7 +170,6 @@ export class QuizGeneratorService {
           type: 'QUIZ',
           prompt,
           response: content,
-          published: true,
         },
       });
 

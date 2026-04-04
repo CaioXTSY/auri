@@ -62,7 +62,6 @@ model User {
   missions            UserMission[]
   missionQuizAttempts MissionQuizAttempt[]
   notifications       Notification[]
-  aiGenerations       AIGeneration[]
   posts               Post[]
   postReplies         PostReply[]
 
@@ -121,7 +120,6 @@ model Achievement {
   points      Int      @default(0)
   rarity      String   @default("COMUM")
   condition   String   @unique
-  criteria    String   @db.Text
   createdAt   DateTime @default(now()) @map("created_at")
 
   userAchievements UserAchievement[]
@@ -134,7 +132,6 @@ model UserAchievement {
   userId        String   @map("user_id")
   achievementId String   @map("achievement_id")
   unlockedAt    DateTime @default(now()) @map("unlocked_at")
-  earnedAt      DateTime @default(now()) @map("earned_at")
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
@@ -150,7 +147,6 @@ model Ranking {
   referenceId String?  @map("reference_id")
   position    Int
   points      Int
-  period      String   @default("GERAL")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -237,11 +233,8 @@ model AIGeneration {
   type       String
   prompt     String   @db.Text
   response   String   @db.Text
-  reviewedBy String?  @map("reviewed_by")
-  published  Boolean  @default(false)
   createdAt  DateTime @default(now()) @map("created_at")
 
-  reviewer       User?         @relation(fields: [reviewedBy], references: [id])
   missionQuizzes MissionQuiz[]
 
   @@map("ai_generations")

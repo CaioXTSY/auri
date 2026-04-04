@@ -15,7 +15,6 @@ async function seedAchievements() {
       points: 10,
       rarity: 'COMUM',
       condition: 'FIRST_SUBMISSION',
-      criteria: '{"type":"submission_count","value":1}',
     },
     {
       name: 'Na Mosca!',
@@ -25,7 +24,6 @@ async function seedAchievements() {
       points: 25,
       rarity: 'COMUM',
       condition: 'FIRST_APPROVED',
-      criteria: '{"type":"approved_count","value":1}',
     },
     {
       name: 'Praticante',
@@ -35,7 +33,6 @@ async function seedAchievements() {
       points: 100,
       rarity: 'INCOMUM',
       condition: 'APPROVED_10',
-      criteria: '{"type":"approved_count","value":10}',
     },
     {
       name: 'Experiente',
@@ -45,7 +42,6 @@ async function seedAchievements() {
       points: 250,
       rarity: 'RARO',
       condition: 'APPROVED_25',
-      criteria: '{"type":"approved_count","value":25}',
     },
     {
       name: 'Expert',
@@ -55,7 +51,6 @@ async function seedAchievements() {
       points: 500,
       rarity: 'ÉPICO',
       condition: 'APPROVED_50',
-      criteria: '{"type":"approved_count","value":50}',
     },
     {
       name: 'Mestre do Código',
@@ -65,7 +60,6 @@ async function seedAchievements() {
       points: 1000,
       rarity: 'LENDÁRIO',
       condition: 'APPROVED_100',
-      criteria: '{"type":"approved_count","value":100}',
     },
     {
       name: 'Grande Mestre',
@@ -75,7 +69,6 @@ async function seedAchievements() {
       points: 2500,
       rarity: 'LENDÁRIO',
       condition: 'APPROVED_250',
-      criteria: '{"type":"approved_count","value":250}',
     },
     {
       name: 'Lenda Viva',
@@ -85,7 +78,6 @@ async function seedAchievements() {
       points: 5000,
       rarity: 'LENDÁRIO',
       condition: 'APPROVED_500',
-      criteria: '{"type":"approved_count","value":500}',
     },
 
     // PONTOS (5)
@@ -97,7 +89,6 @@ async function seedAchievements() {
       points: 50,
       rarity: 'COMUM',
       condition: 'POINTS_100',
-      criteria: '{"type":"total_points","value":100}',
     },
     {
       name: 'Milionário (de pontos)',
@@ -107,7 +98,6 @@ async function seedAchievements() {
       points: 200,
       rarity: 'RARO',
       condition: 'POINTS_1000',
-      criteria: '{"type":"total_points","value":1000}',
     },
     {
       name: 'Magnata',
@@ -117,7 +107,6 @@ async function seedAchievements() {
       points: 1000,
       rarity: 'ÉPICO',
       condition: 'POINTS_5000',
-      criteria: '{"type":"total_points","value":5000}',
     },
     {
       name: 'Subindo na Vida',
@@ -127,7 +116,6 @@ async function seedAchievements() {
       points: 100,
       rarity: 'INCOMUM',
       condition: 'LEVEL_5',
-      criteria: '{"type":"level","value":5}',
     },
     {
       name: 'No Topo',
@@ -137,7 +125,6 @@ async function seedAchievements() {
       points: 500,
       rarity: 'ÉPICO',
       condition: 'LEVEL_10',
-      criteria: '{"type":"level","value":10}',
     },
 
     // INTERAÇÃO E MISSÕES (3)
@@ -149,7 +136,6 @@ async function seedAchievements() {
       points: 10,
       rarity: 'COMUM',
       condition: 'FIRST_LOGIN',
-      criteria: '{"type":"login","value":1}',
     },
     {
       name: 'Enturmado',
@@ -159,7 +145,6 @@ async function seedAchievements() {
       points: 20,
       rarity: 'COMUM',
       condition: 'FIRST_CLASS_JOIN',
-      criteria: '{"type":"class_join","value":1}',
     },
     {
       name: 'Missão Cumprida',
@@ -169,7 +154,6 @@ async function seedAchievements() {
       points: 30,
       rarity: 'COMUM',
       condition: 'FIRST_MISSION_COMPLETED',
-      criteria: '{"type":"mission_completed","value":1}',
     },
 
     // DESEMPENHO E HÁBITOS (4)
@@ -181,7 +165,6 @@ async function seedAchievements() {
       points: 50,
       rarity: 'INCOMUM',
       condition: 'PERFECT_SUBMISSION',
-      criteria: '{"type":"perfect_score","value":1}',
     },
     {
       name: 'Corujão',
@@ -191,7 +174,6 @@ async function seedAchievements() {
       points: 30,
       rarity: 'INCOMUM',
       condition: 'NIGHT_OWL',
-      criteria: '{"type":"time_window","start":0,"end":4}',
     },
     {
       name: 'Madrugador',
@@ -201,7 +183,6 @@ async function seedAchievements() {
       points: 30,
       rarity: 'INCOMUM',
       condition: 'EARLY_BIRD',
-      criteria: '{"type":"time_window","start":5,"end":8}',
     },
     {
       name: 'Guerreiro do Fim de Semana',
@@ -211,7 +192,6 @@ async function seedAchievements() {
       points: 40,
       rarity: 'INCOMUM',
       condition: 'WEEKEND_WARRIOR',
-      criteria: '{"type":"days","value":[0,6]}',
     },
     {
       name: 'Poliglota',
@@ -221,7 +201,6 @@ async function seedAchievements() {
       points: 100,
       rarity: 'RARO',
       condition: 'POLYGLOT',
-      criteria: '{"type":"languages_count","value":2}',
     },
     // SEQUÊNCIA DIÁRIA (5)
     {
@@ -232,7 +211,6 @@ async function seedAchievements() {
       points: 30,
       rarity: 'COMUM',
       condition: 'STREAK_3',
-      criteria: '{"type":"streak","value":3}',
     },
     {
       name: 'Semana de Fogo',
@@ -242,7 +220,6 @@ async function seedAchievements() {
       points: 75,
       rarity: 'INCOMUM',
       condition: 'STREAK_7',
-      criteria: '{"type":"streak","value":7}',
     },
     {
       name: 'Duas Semanas Imparável',
@@ -252,7 +229,6 @@ async function seedAchievements() {
       points: 150,
       rarity: 'RARO',
       condition: 'STREAK_14',
-      criteria: '{"type":"streak","value":14}',
     },
     {
       name: 'Mês de Dedicação',
@@ -262,7 +238,6 @@ async function seedAchievements() {
       points: 300,
       rarity: 'ÉPICO',
       condition: 'STREAK_30',
-      criteria: '{"type":"streak","value":30}',
     },
     {
       name: 'Centenário',
@@ -272,7 +247,6 @@ async function seedAchievements() {
       points: 750,
       rarity: 'LENDÁRIO',
       condition: 'STREAK_100',
-      criteria: '{"type":"streak","value":100}',
     },
   ];
 
