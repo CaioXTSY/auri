@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, UnauthorizedException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
@@ -10,6 +10,7 @@ import { Difficulty, MissionType, MissionStatus } from '@prisma/client';
 
 @Injectable()
 export class MissionsService {
+  private readonly logger = new Logger(MissionsService.name);
   private dailyQuizGenerationLock = false;
 
   constructor(
@@ -793,23 +794,23 @@ export class MissionsService {
         });
       }
 
-      console.log(`[CRON] Reset de ${expiredMissions.length} missões diárias concluído`);
+      this.logger.log(`Reset de ${expiredMissions.length} missões diárias concluído`);
       await this.generateDailyQuizMission();
     } catch (error) {
-      console.error('[CRON] Falha no reset de missões diárias:', error);
+      this.logger.error('Falha no reset de missões diárias', error);
     }
   }
 
   private async generateDailyQuizMission() {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey) {
-      console.warn('[Quiz Diário] OPENAI_API_KEY não configurada — geração de quiz ignorada');
+      this.logger.warn('OPENAI_API_KEY não configurada — geração de quiz diário ignorada');
       return null;
     }
 
     // Lock para evitar gerações simultâneas (race condition entre CRON e requests de usuário)
     if (this.dailyQuizGenerationLock) {
-      console.log('[Quiz Diário] Geração já em andamento, ignorando requisição duplicada');
+      this.logger.log('Geração de quiz diário já em andamento, ignorando requisição duplicada');
       return null;
     }
     this.dailyQuizGenerationLock = true;
@@ -889,14 +890,14 @@ export class MissionsService {
 
     if (!response.ok) {
       const text = await response.text();
-      console.error(`[Quiz Diário] Falha na API OpenAI (${response.status}): ${text}`);
+      this.logger.error(`Falha na API OpenAI (${response.status}): ${text}`);
       return null;
     }
 
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
-      console.error('[Quiz Diário] Resposta da IA sem conteúdo:', JSON.stringify(data));
+      this.logger.error(`Resposta da IA sem conteúdo: ${JSON.stringify(data)}`);
       return null;
     }
 
@@ -904,7 +905,7 @@ export class MissionsService {
     try {
       parsed = this.parseJsonFromText(content);
     } catch {
-      console.error('[Quiz Diário] Falha ao fazer parse do JSON retornado pela IA:', content);
+      this.logger.error(`Falha ao fazer parse do JSON retornado pela IA: ${content}`);
       return null;
     }
     const title = String(parsed?.title || '').trim();
@@ -933,22 +934,22 @@ export class MissionsService {
     const points = pointsByDifficulty[difficulty];
 
     if (!title || !question || options.length !== 4 || explanations.length !== 4) {
-      console.error('[Quiz Diário] Estrutura inválida no quiz gerado — campos ausentes ou array com tamanho errado', { title, question, optionsLen: options.length, explanationsLen: explanations.length });
+      this.logger.error(`Estrutura inválida no quiz gerado — campos ausentes ou array com tamanho errado: title="${title}", optionsLen=${options.length}, explanationsLen=${explanations.length}`);
       return null;
     }
 
     if (title.length > 200) {
-      console.error(`[Quiz Diário] title excede 200 caracteres (${title.length})`);
+      this.logger.error(`title do quiz excede 200 caracteres (${title.length})`);
       return null;
     }
 
     if (question.length > 2000) {
-      console.error(`[Quiz Diário] question excede 2000 caracteres (${question.length})`);
+      this.logger.error(`question do quiz excede 2000 caracteres (${question.length})`);
       return null;
     }
 
     if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
-      console.error('[Quiz Diário] correctIndex inválido no quiz gerado:', correctIndex);
+      this.logger.error(`correctIndex inválido no quiz gerado: ${correctIndex}`);
       return null;
     }
 
@@ -1101,9 +1102,9 @@ export class MissionsService {
         });
       }
 
-      console.log(`[CRON] Reset de ${expiredMissions.length} missões semanais concluído`);
+      this.logger.log(`Reset de ${expiredMissions.length} missões semanais concluído`);
     } catch (error) {
-      console.error('[CRON] Falha no reset de missões semanais:', error);
+      this.logger.error('Falha no reset de missões semanais', error);
     }
   }
 
@@ -1139,10 +1140,10 @@ export class MissionsService {
           },
         });
 
-        console.log(`[CRON] ${result.count} missões de usuários foram expiradas`);
+        this.logger.log(`${result.count} missões de usuários foram expiradas`);
       }
     } catch (error) {
-      console.error('[CRON] Falha na expiração de missões:', error);
+      this.logger.error('Falha na expiração de missões', error);
     }
   }
 }
