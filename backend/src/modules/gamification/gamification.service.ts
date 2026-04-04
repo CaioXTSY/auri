@@ -63,33 +63,6 @@ export class GamificationService {
   }
 
   /**
-   * Obter estatísticas gerais do usuário
-   */
-  async getUserStats(userId: string) {
-    const [levelInfo, achievements, user] = await Promise.all([
-      this.getUserLevel(userId),
-      this.getUserAchievements(userId, 1, 1),
-      this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { currentStreak: true, longestStreak: true, streakLastDate: true },
-      }),
-    ]);
-
-    return {
-      userId,
-      level: levelInfo.currentLevel,
-      levelName: levelInfo.levelName,
-      currentXp: levelInfo.totalPoints,
-      nextLevelXp: levelInfo.pointsNeededForNextLevel + levelInfo.totalPoints,
-      progress: levelInfo.progressToNextLevel,
-      achievementsCount: achievements.meta.totalUnlocked,
-      totalAchievements: achievements.meta.totalAchievements,
-      currentStreak: user ? this.getEffectiveStreak(user) : 0,
-      longestStreak: user?.longestStreak ?? 0,
-    };
-  }
-
-  /**
    * Obter histórico de pontos
    */
   async getUserPointsHistory(userId: string, limit = 50) {
