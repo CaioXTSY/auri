@@ -40,32 +40,31 @@ enum NotificationType {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  email             String   @unique
+  id                String    @id @default(uuid())
+  email             String    @unique
   password          String
   name              String
-  role              Role     @default(ALUNO)
+  role              Role      @default(ALUNO)
   avatar            String?
-  refreshToken      String?  @map("refresh_token") @db.Text
-  resetToken        String?  @map("reset_token")
+  refreshToken      String?   @map("refresh_token") @db.Text
+  resetToken        String?   @map("reset_token")
   resetTokenExpires DateTime? @map("reset_token_expires")
   currentStreak     Int       @default(0) @map("current_streak")
   longestStreak     Int       @default(0) @map("longest_streak")
   streakLastDate    DateTime? @map("streak_last_date")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  // Relações
-  classEnrollments   ClassStudent[]
-  points             UserPoint[]
-  achievements       UserAchievement[]
-  rankings           Ranking[]
-  missions           UserMission[]
+  classEnrollments    ClassStudent[]
+  points              UserPoint[]
+  achievements        UserAchievement[]
+  rankings            Ranking[]
+  missions            UserMission[]
   missionQuizAttempts MissionQuizAttempt[]
-  notifications      Notification[]
-  aiGenerations      AIGeneration[]
-  posts              Post[]
-  postReplies        PostReply[]
+  notifications       Notification[]
+  aiGenerations       AIGeneration[]
+  posts               Post[]
+  postReplies         PostReply[]
 
   @@map("users")
 }
@@ -75,15 +74,14 @@ model Class {
   name      String
   semester  String
   year      Int
-  code      String   @unique @default(cuid()) // Código único para entrar na turma
-  status    String   @default("ATIVA") // ATIVA, ENCERRADA
+  code      String   @unique @default(cuid())
+  status    String   @default("ATIVA")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relações
-  students   ClassStudent[]
-  missions   Mission[]
-  posts      Post[]
+  students ClassStudent[]
+  missions Mission[]
+  posts    Post[]
 
   @@map("classes")
 }
@@ -93,7 +91,6 @@ model ClassStudent {
   userId     String   @map("user_id")
   enrolledAt DateTime @default(now()) @map("enrolled_at")
 
-  // Relações
   class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -104,13 +101,12 @@ model ClassStudent {
 model UserPoint {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
-  points      Int      // Pontos ganhos nesta transação
-  source      String   // ATIVIDADE, CONQUISTA, BONUS_PROFESSOR, MISSAO
+  points      Int
+  source      String
   description String   @db.Text
-  referenceId String?  @map("reference_id") // ID da atividade, conquista, etc
+  referenceId String?  @map("reference_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relações
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_points")
@@ -121,14 +117,13 @@ model Achievement {
   name        String
   description String   @db.Text
   icon        String?
-  category    String   // SUBMISSÕES, PONTOS, NÍVEIS, ESPECIAL, etc
+  category    String
   points      Int      @default(0)
-  rarity      String   @default("COMUM") // COMUM, INCOMUM, RARO, ÉPICO, LENDÁRIO
-  condition   String   @unique // Identificador único para verificação automática
-  criteria    String   @db.Text // JSON com critérios detalhados
+  rarity      String   @default("COMUM")
+  condition   String   @unique
+  criteria    String   @db.Text
   createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relações
   userAchievements UserAchievement[]
 
   @@map("achievements")
@@ -141,7 +136,6 @@ model UserAchievement {
   unlockedAt    DateTime @default(now()) @map("unlocked_at")
   earnedAt      DateTime @default(now()) @map("earned_at")
 
-  // Relações
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
@@ -152,14 +146,13 @@ model UserAchievement {
 model Ranking {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
-  type        String   // GLOBAL, TURMA
-  referenceId String?  @map("reference_id") // classId quando type = TURMA
-  position    Int      // Posição no ranking
-  points      Int      // Pontos totais
-  period      String   @default("GERAL") // SEMANAL, MENSAL, GERAL
+  type        String
+  referenceId String?  @map("reference_id")
+  position    Int
+  points      Int
+  period      String   @default("GERAL")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  // Relações
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, type])
@@ -179,8 +172,7 @@ model Mission {
   createdById String?     @map("created_by_id")
   createdAt   DateTime    @default(now()) @map("created_at")
 
-  // Relações
-  class        Class?        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class        Class?               @relation(fields: [classId], references: [id], onDelete: Cascade)
   quiz         MissionQuiz?
   userMissions UserMission[]
   quizAttempts MissionQuizAttempt[]
@@ -189,20 +181,20 @@ model Mission {
 }
 
 model MissionQuiz {
-  id             String   @id @default(uuid())
-  missionId      String   @unique @map("mission_id")
-  title          String   @db.VarChar(200)
-  question       String   @db.Text
+  id             String     @id @default(uuid())
+  missionId      String     @unique @map("mission_id")
+  title          String     @db.VarChar(200)
+  question       String     @db.Text
   difficulty     Difficulty
   options        Json
   explanations   Json
-  correctIndex   Int      @map("correct_index")
-  aiGenerationId String?  @map("ai_generation_id")
-  createdAt      DateTime @default(now()) @map("created_at")
+  correctIndex   Int        @map("correct_index")
+  aiGenerationId String?    @map("ai_generation_id")
+  createdAt      DateTime   @default(now()) @map("created_at")
 
-  mission       Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  aiGeneration  AIGeneration? @relation(fields: [aiGenerationId], references: [id])
-  attempts      MissionQuizAttempt[]
+  mission      Mission            @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  aiGeneration AIGeneration?      @relation(fields: [aiGenerationId], references: [id])
+  attempts     MissionQuizAttempt[]
 
   @@map("mission_quizzes")
 }
@@ -216,8 +208,8 @@ model MissionQuizAttempt {
   isCorrect     Boolean  @map("is_correct")
   answeredAt    DateTime @default(now()) @map("answered_at")
 
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mission    Mission     @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission     Mission     @relation(fields: [missionId], references: [id], onDelete: Cascade)
   missionQuiz MissionQuiz @relation(fields: [missionQuizId], references: [id], onDelete: Cascade)
 
   @@unique([userId, missionId])
@@ -225,15 +217,14 @@ model MissionQuizAttempt {
 }
 
 model UserMission {
-  id          String             @id @default(uuid())
-  userId      String             @map("user_id")
-  missionId   String             @map("mission_id")
-  status      MissionStatus      @default(NAO_INICIADA)
-  progress    Int                @default(0)
-  completedAt DateTime?          @map("completed_at")
-  startedAt   DateTime           @default(now()) @map("started_at")
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  missionId   String        @map("mission_id")
+  status      MissionStatus @default(NAO_INICIADA)
+  progress    Int           @default(0)
+  completedAt DateTime?     @map("completed_at")
+  startedAt   DateTime      @default(now()) @map("started_at")
 
-  // Relações
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
 
@@ -243,15 +234,14 @@ model UserMission {
 
 model AIGeneration {
   id         String   @id @default(uuid())
-  type       String   // QUESTAO, QUIZ, MISSAO, MOTIVACIONAL
+  type       String
   prompt     String   @db.Text
   response   String   @db.Text
   reviewedBy String?  @map("reviewed_by")
   published  Boolean  @default(false)
   createdAt  DateTime @default(now()) @map("created_at")
 
-  // Relações
-  reviewer User? @relation(fields: [reviewedBy], references: [id])
+  reviewer       User?         @relation(fields: [reviewedBy], references: [id])
   missionQuizzes MissionQuiz[]
 
   @@map("ai_generations")
@@ -266,38 +256,37 @@ model Notification {
   read      Boolean          @default(false)
   createdAt DateTime         @default(now()) @map("created_at")
 
-  // Relações
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
 
 model Post {
-  id          String   @id @default(uuid())
-  classId     String?  @map("class_id")
-  authorId    String   @map("author_id")
-  title       String
-  content     String   @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  classId   String?  @map("class_id")
+  authorId  String   @map("author_id")
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  class     Class?      @relation(fields: [classId], references: [id], onDelete: Cascade)
-  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  replies   PostReply[]
+  class   Class?      @relation(fields: [classId], references: [id], onDelete: Cascade)
+  author  User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies PostReply[]
 
   @@map("posts")
 }
 
 model PostReply {
-  id          String   @id @default(uuid())
-  postId      String   @map("post_id")
-  authorId    String   @map("author_id")
-  content     String   @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  authorId  String   @map("author_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author    User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@map("post_replies")
 }
