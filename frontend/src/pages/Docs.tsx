@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Header } from '@/components/layouts/Header';
 import {
   BookOpen, Zap, Shield, Users, GraduationCap, Flag,
   Trophy, MessageSquare, Code, ExternalLink, Menu, X,
-  ChevronRight, Bell, Star, Target, Hash,
+  ChevronRight, Bell, Hash,
 } from 'lucide-react';
 
 const API_URL = 'https://api-auri.caiots.dev';
@@ -158,7 +157,7 @@ const Section = ({ id, title, children }: { id: string; title: string; children:
 
 const SubSection = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => (
   <div id={id} className="scroll-mt-24 mb-10">
-    <h3 className="font-display font-semibold text-lg text-brand-800 mb-3">{title}</h3>
+    <h3 className="font-display font-bold text-lg text-brand-800 mb-3">{title}</h3>
     {children}
   </div>
 );
@@ -171,7 +170,7 @@ const Callout = ({ type = 'info', children }: { type?: 'info' | 'warning' | 'tip
   };
   const icons = { info: 'ℹ️', warning: '⚠️', tip: '💡' };
   return (
-    <div className={`flex gap-3 rounded-lg border px-4 py-3 text-sm my-4 ${styles[type]}`}>
+    <div className={`flex gap-3 rounded-lg border px-4 py-3 text-sm font-sans my-4 ${styles[type]}`}>
       <span className="text-base leading-snug">{icons[type]}</span>
       <span>{children}</span>
     </div>
@@ -309,7 +308,7 @@ export const Docs = () => {
           {/* ── Visão Geral ── */}
           <Section id="visao-geral" title="Visão Geral">
             <SubSection id="o-que-e" title="O que é a AURI">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 A <strong className="text-brand-900">AURI</strong> é uma plataforma de ensino de programação gamificada,
                 desenvolvida para tornar o aprendizado mais engajante e eficaz. Professores criam turmas e
                 acompanham o progresso dos alunos, enquanto alunos acumulam XP, sobem de nível, mantêm
@@ -323,8 +322,8 @@ export const Docs = () => {
                 ].map((c) => (
                   <div key={c.title} className="bg-white rounded-xl border border-slate-200 p-5">
                     <span className="text-2xl">{c.icon}</span>
-                    <p className="mt-2 font-semibold text-brand-900">{c.title}</p>
-                    <p className="mt-1 text-sm text-slate-500 leading-relaxed">{c.desc}</p>
+                    <p className="mt-2 font-sans font-semibold text-brand-900">{c.title}</p>
+                    <p className="mt-1 font-serif text-sm text-slate-500 leading-relaxed">{c.desc}</p>
                   </div>
                 ))}
               </div>
@@ -344,8 +343,8 @@ export const Docs = () => {
                       {item.step}
                     </span>
                     <div>
-                      <p className="font-semibold text-slate-800">{item.title}</p>
-                      <p className="text-sm text-slate-500 mt-0.5">{item.desc}</p>
+                      <p className="font-sans font-semibold text-slate-800">{item.title}</p>
+                      <p className="font-serif text-sm text-slate-500 mt-0.5">{item.desc}</p>
                     </div>
                   </li>
                 ))}
@@ -356,7 +355,7 @@ export const Docs = () => {
           {/* ── Primeiros Passos ── */}
           <Section id="primeiros-passos" title="Primeiros Passos">
             <SubSection id="criar-conta" title="Criando sua conta">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Acesse a plataforma e clique em <strong>Criar Conta</strong>. Preencha seu nome, e-mail e senha.
                 Após o cadastro, você será redirecionado automaticamente para o painel.
               </p>
@@ -377,16 +376,16 @@ export const Docs = () => {
             </SubSection>
 
             <SubSection id="papeis" title="Perfis: Aluno e Professor">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Ao criar a conta, você escolhe entre dois perfis com experiências distintas:
               </p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="rounded-xl border border-slate-200 bg-white p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <Users className="h-5 w-5 text-brand-600" />
-                    <span className="font-semibold text-brand-900">Aluno</span>
+                    <span className="font-sans font-semibold text-brand-900">Aluno</span>
                   </div>
-                  <ul className="text-sm text-slate-600 space-y-1.5">
+                  <ul className="font-sans text-sm text-slate-600 space-y-1.5">
                     {['Entra em turmas por código', 'Responde quizzes diários', 'Acumula XP e sobe de nível', 'Acompanha ranking e conquistas', 'Visualiza postagens da turma'].map((i) => (
                       <li key={i} className="flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span>{i}</li>
                     ))}
@@ -395,9 +394,9 @@ export const Docs = () => {
                 <div className="rounded-xl border border-slate-200 bg-white p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <GraduationCap className="h-5 w-5 text-brand-600" />
-                    <span className="font-semibold text-brand-900">Professor</span>
+                    <span className="font-sans font-semibold text-brand-900">Professor</span>
                   </div>
-                  <ul className="text-sm text-slate-600 space-y-1.5">
+                  <ul className="font-sans text-sm text-slate-600 space-y-1.5">
                     {['Cria e gerencia turmas', 'Visualiza progresso dos alunos', 'Acessa ranking da turma', 'Publica postagens', 'Acompanha missões completadas'].map((i) => (
                       <li key={i} className="flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span>{i}</li>
                     ))}
@@ -410,7 +409,7 @@ export const Docs = () => {
           {/* ── Autenticação ── */}
           <Section id="autenticacao" title="Autenticação">
             <SubSection id="jwt" title="Tokens JWT">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 A AURI utiliza <strong>JWT (JSON Web Token)</strong> para autenticação. Após o login,
                 você recebe um token que deve ser enviado no header <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-brand-800">Authorization</code> de todas as requisições protegidas.
               </p>
@@ -455,7 +454,7 @@ export const Docs = () => {
           {/* ── Alunos ── */}
           <Section id="alunos" title="Para Alunos">
             <SubSection id="dashboard-aluno" title="Dashboard do Aluno">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 O painel principal exibe um resumo completo da sua jornada: nível atual, XP acumulado,
                 progresso para o próximo nível, sequência diária, conquistas recentes, posição no ranking e missões.
               </p>
@@ -465,7 +464,7 @@ export const Docs = () => {
             </SubSection>
 
             <SubSection id="entrar-turma" title="Entrar em uma turma">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Para entrar em uma turma, solicite o <strong>código de acesso</strong> ao seu professor.
                 No dashboard, acesse <em>Minhas Turmas → Entrar em turma</em> e insira o código.
               </p>
@@ -479,7 +478,7 @@ export const Docs = () => {
             </SubSection>
 
             <SubSection id="missoes-aluno" title="Missões diárias">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Todo dia a plataforma gera automaticamente um quiz de programação personalizado.
                 Responder corretamente concede XP e mantém sua sequência ativa.
               </p>
@@ -492,7 +491,7 @@ export const Docs = () => {
           {/* ── Professores ── */}
           <Section id="professores" title="Para Professores">
             <SubSection id="criar-turma" title="Criando uma turma">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 No painel do professor, acesse <em>Gerenciar Turmas → Nova Turma</em>. Informe o nome
                 da turma e configure as opções desejadas. Um código único será gerado automaticamente
                 para compartilhar com os alunos.
@@ -506,7 +505,7 @@ export const Docs = () => {
             </SubSection>
 
             <SubSection id="gerenciar-turma" title="Gerenciando alunos">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Na página da turma, você visualiza todos os alunos inscritos, seus níveis, XP total,
                 missões completadas e posição no ranking. É possível remover um aluno da turma se necessário.
               </p>
@@ -521,7 +520,7 @@ export const Docs = () => {
           {/* ── Turmas ── */}
           <Section id="turmas" title="Turmas">
             <SubSection id="codigo-turma" title="Código de acesso">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Cada turma possui um código alfanumérico único gerado automaticamente. Este código
                 pode ser compartilhado diretamente com os alunos. Não há limite de alunos por padrão.
               </p>
@@ -531,7 +530,7 @@ export const Docs = () => {
             </SubSection>
 
             <SubSection id="postagens" title="Postagens da turma">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Professores e alunos podem publicar postagens dentro de cada turma, criando um espaço
                 de discussão e comunicação contextualizado.
               </p>
@@ -546,7 +545,7 @@ export const Docs = () => {
           {/* ── Missões ── */}
           <Section id="missoes" title="Missões">
             <SubSection id="quiz-diario" title="Quiz diário">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Um quiz de múltipla escolha é gerado por IA todos os dias para cada aluno. As perguntas
                 são focadas em programação e adaptadas ao nível da turma.
               </p>
@@ -569,7 +568,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
             </SubSection>
 
             <SubSection id="historico" title="Histórico de missões">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Todas as missões respondidas ficam registradas e podem ser consultadas no histórico.
                 O sistema calcula automaticamente a taxa de acerto e o total de XP acumulado por missões.
               </p>
@@ -583,7 +582,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
           {/* ── Gamificação ── */}
           <Section id="gamificacao" title="Gamificação">
             <SubSection id="xp-nivel" title="XP e Níveis">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Cada ação dentro da plataforma concede pontos de experiência (XP). Ao acumular XP
                 suficiente, o aluno avança de nível. A quantidade necessária aumenta progressivamente.
               </p>
@@ -595,7 +594,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
                   { action: 'Streak milestone', xp: 'bônus' },
                 ].map((r) => (
                   <div key={r.action} className="flex items-center justify-between bg-white rounded-lg border border-slate-200 px-4 py-3">
-                    <span className="text-sm text-slate-600">{r.action}</span>
+                    <span className="font-sans text-sm text-slate-600">{r.action}</span>
                     <span className="text-sm font-bold text-accent-600">{r.xp}</span>
                   </div>
                 ))}
@@ -606,7 +605,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
             </SubSection>
 
             <SubSection id="streak" title="Sequências (Streak)">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 O <strong>streak</strong> mede quantos dias consecutivos o aluno participou da plataforma.
                 Ao atingir marcos específicos, bônus e reconhecimentos são concedidos.
               </p>
@@ -623,7 +622,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
             </SubSection>
 
             <SubSection id="conquistas" title="Conquistas">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Conquistas são desbloqueadas automaticamente ao cumprir critérios pré-definidos,
                 como atingir um nível, manter uma sequência ou completar missões. Cada conquista
                 concede XP adicional.
@@ -634,7 +633,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
             </SubSection>
 
             <SubSection id="ranking" title="Ranking">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Há dois rankings: <strong>global</strong> (todos os alunos da plataforma) e
                 <strong> por turma</strong>. A posição é calculada com base no total de XP acumulado.
               </p>
@@ -648,7 +647,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
           {/* ── Notificações ── */}
           <Section id="notificacoes" title="Notificações">
             <SubSection id="realtime" title="Tempo real (WebSocket)">
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 A AURI utiliza <strong>Socket.IO</strong> para entrega de notificações em tempo real.
                 Quando um evento relevante ocorre (nova conquista, atualização de ranking, aviso do professor),
                 o aluno é notificado instantaneamente sem precisar recarregar a página.
@@ -711,26 +710,13 @@ socket.on('notification', (payload) => {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Convenções</p>
-                  <ul className="text-sm text-slate-600 space-y-2">
+                  <ul className="font-sans text-sm text-slate-600 space-y-2">
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">JSON</span>Todas as requisições e respostas usam <code className="bg-slate-100 px-1 rounded text-xs">application/json</code>.</li>
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Auth</span>Endpoints protegidos exigem <code className="bg-slate-100 px-1 rounded text-xs">Authorization: Bearer token</code>.</li>
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Erros</span>Respostas de erro seguem o padrão <code className="bg-slate-100 px-1 rounded text-xs">{'{ "message": "..." }'}</code>.</li>
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Paginação</span>Listas paginadas aceitam <code className="bg-slate-100 px-1 rounded text-xs">?page=1&limit=10</code>.</li>
                   </ul>
                 </div>
-              </div>
-
-              <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-brand-900 to-brand-800 text-white text-center">
-                <Star className="h-8 w-8 text-accent-400 mx-auto mb-3" />
-                <p className="font-display font-bold text-lg mb-1">Pronto para começar?</p>
-                <p className="text-brand-200 text-sm mb-4">Crie sua conta e comece a aprender programação de forma épica.</p>
-                <Link
-                  to="/register"
-                  className="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-400 text-brand-950 font-bold text-sm px-5 py-2.5 rounded-lg transition-colors"
-                >
-                  Criar conta grátis
-                  <Target className="h-4 w-4" />
-                </Link>
               </div>
             </SubSection>
           </Section>
