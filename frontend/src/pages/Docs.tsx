@@ -309,10 +309,9 @@ export const Docs = () => {
           <Section id="visao-geral" title="Visão Geral">
             <SubSection id="o-que-e" title="O que é a AURI">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                A <strong className="text-brand-900">AURI</strong> é uma plataforma de ensino de programação gamificada,
-                desenvolvida para tornar o aprendizado mais engajante e eficaz. Professores criam turmas e
-                acompanham o progresso dos alunos, enquanto alunos acumulam XP, sobem de nível, mantêm
-                sequências diárias e desbloqueiam conquistas.
+                Somos uma plataforma de ensino de programação gamificada, criada para tornar o aprendizado
+                mais engajante e eficaz. Professores criam turmas e acompanham o progresso dos alunos,
+                enquanto alunos acumulam XP, sobem de nível, mantêm sequências diárias e desbloqueiam conquistas.
               </p>
               <div className="grid sm:grid-cols-3 gap-4 mt-6">
                 {[
@@ -410,7 +409,7 @@ export const Docs = () => {
           <Section id="autenticacao" title="Autenticação">
             <SubSection id="jwt" title="Tokens JWT">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                A AURI utiliza <strong>JWT (JSON Web Token)</strong> para autenticação. Após o login,
+                Utilizamos <strong>JWT (JSON Web Token)</strong> para autenticação. Após o login,
                 você recebe um token que deve ser enviado no header <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-brand-800">Authorization</code> de todas as requisições protegidas.
               </p>
               <CodeBlock
@@ -648,9 +647,9 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
           <Section id="notificacoes" title="Notificações">
             <SubSection id="realtime" title="Tempo real (WebSocket)">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                A AURI utiliza <strong>Socket.IO</strong> para entrega de notificações em tempo real.
+                Utilizamos <strong>Socket.IO</strong> para entrega de notificações em tempo real.
                 Quando um evento relevante ocorre (nova conquista, atualização de ranking, aviso do professor),
-                o aluno é notificado instantaneamente sem precisar recarregar a página.
+                você é notificado instantaneamente sem precisar recarregar a página.
               </p>
               <CodeBlock
                 language="javascript"
@@ -681,7 +680,7 @@ socket.on('notification', (payload) => {
           <Section id="api" title="Referência da API">
             <SubSection id="swagger" title="Swagger / OpenAPI">
               <p className="text-slate-600 leading-relaxed mb-6">
-                Toda a API da AURI é documentada com <strong>Swagger (OpenAPI 3.0)</strong>.
+                Nossa API é documentada com <strong>Swagger (OpenAPI 3.0)</strong>.
                 Você pode explorar os endpoints, testar requisições e ver os schemas de resposta
                 diretamente pelo navegador.
               </p>
