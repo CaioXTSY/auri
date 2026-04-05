@@ -45,6 +45,5 @@ lerna-debug.log*
 uploads/
 temp/
 
-# Prisma
-prisma/migrations/*
-!prisma/migrations/.gitkeep
+# Prisma - migrations are tracked
+
