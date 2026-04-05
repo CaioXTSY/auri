@@ -11,6 +11,95 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
+interface SidebarContentProps {
+  userRole: string | undefined;
+  firstName: string;
+  initials: string;
+  isActive: (path: string) => string;
+  logout: () => void;
+  onNavClick: () => void;
+}
+
+const SidebarContent = ({ userRole, firstName, initials, isActive, logout, onNavClick }: SidebarContentProps) => (
+  <>
+    <div className="h-20 px-6 flex items-center border-b border-brand-900">
+      <Link to="/" className="flex items-center gap-3" onClick={onNavClick}>
+        <div className="h-11 w-9 flex items-center justify-center bg-accent-600 text-brand-950 rounded-b-full shadow-sm">
+          <span className="font-display font-bold text-xl">A</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="font-display font-bold text-xl tracking-wide">AURI</span>
+          <span className="font-serif text-[10px] italic text-slate-400 tracking-widest">PLATAFORMA</span>
+        </div>
+      </Link>
+      <button
+        type="button"
+        className="ml-auto md:hidden p-1.5 rounded-md text-slate-400 hover:text-white"
+        onClick={onNavClick}
+      >
+        <X className="h-5 w-5" />
+      </button>
+    </div>
+
+    <nav className="flex-1 px-3 py-6 space-y-1 text-sm font-medium overflow-y-auto">
+      {userRole === 'PROFESSOR' ? (
+        <>
+          <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} onClick={onNavClick}>
+            <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
+          </Link>
+          <Link to="/dashboard/teacher/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/teacher/classes')}`} onClick={onNavClick}>
+            <BookOpen className="h-4 w-4" /><span>Gerenciar Turmas</span>
+          </Link>
+          <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} onClick={onNavClick}>
+            <MessageSquare className="h-4 w-4" /><span>Postagens</span>
+          </Link>
+        </>
+      ) : (
+        <>
+          <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} onClick={onNavClick}>
+            <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
+          </Link>
+          <Link to="/dashboard/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/classes')}`} onClick={onNavClick}>
+            <BookOpen className="h-4 w-4" /><span>Minhas Turmas</span>
+          </Link>
+          <Link to="/dashboard/missions" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/missions')}`} onClick={onNavClick}>
+            <Flag className="h-4 w-4" /><span>Missões</span>
+          </Link>
+          <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} onClick={onNavClick}>
+            <MessageSquare className="h-4 w-4" /><span>Postagens</span>
+          </Link>
+        </>
+      )}
+      <Link to="/dashboard/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/achievements')}`} onClick={onNavClick}>
+        <Trophy className="h-4 w-4" /><span>Gamificação</span>
+      </Link>
+      <Link to="/dashboard/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/settings')}`} onClick={onNavClick}>
+        <Settings className="h-4 w-4" /><span>Configurações</span>
+      </Link>
+    </nav>
+
+    <div className="px-4 py-4 border-t border-brand-900 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-accent-600 text-brand-950 flex items-center justify-center text-sm font-bold uppercase">
+          {initials}
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold">{firstName}</span>
+          <span className="text-[11px] text-slate-400 uppercase tracking-wide">
+            {userRole === 'PROFESSOR' ? 'Professor' : 'Aluno'}
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={logout}
+        className="p-2 rounded-md text-slate-400 hover:text-accent-400 hover:bg-brand-900 transition-colors"
+      >
+        <LogOut className="h-4 w-4" />
+      </button>
+    </div>
+  </>
+);
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const user = useAuthStore((state) => state.user);
@@ -173,88 +262,14 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       : 'text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors';
   };
 
-  const navLinkProps = { onClick: () => setMobileMenuOpen(false) };
-
-  const SidebarContent = () => (
-    <>
-      <div className="h-20 px-6 flex items-center border-b border-brand-900">
-        <Link to="/" className="flex items-center gap-3" {...navLinkProps}>
-          <div className="h-11 w-9 flex items-center justify-center bg-accent-600 text-brand-950 rounded-b-full shadow-sm">
-            <span className="font-display font-bold text-xl">A</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-display font-bold text-xl tracking-wide">AURI</span>
-            <span className="font-serif text-[10px] italic text-slate-400 tracking-widest">PLATAFORMA</span>
-          </div>
-        </Link>
-        <button
-          type="button"
-          className="ml-auto md:hidden p-1.5 rounded-md text-slate-400 hover:text-white"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <nav className="flex-1 px-3 py-6 space-y-1 text-sm font-medium overflow-y-auto">
-        {user?.role === 'PROFESSOR' ? (
-          <>
-            <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} {...navLinkProps}>
-              <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
-            </Link>
-            <Link to="/dashboard/teacher/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/teacher/classes')}`} {...navLinkProps}>
-              <BookOpen className="h-4 w-4" /><span>Gerenciar Turmas</span>
-            </Link>
-            <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} {...navLinkProps}>
-              <MessageSquare className="h-4 w-4" /><span>Postagens</span>
-            </Link>
-          </>
-        ) : (
-          <>
-            <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} {...navLinkProps}>
-              <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
-            </Link>
-            <Link to="/dashboard/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/classes')}`} {...navLinkProps}>
-              <BookOpen className="h-4 w-4" /><span>Minhas Turmas</span>
-            </Link>
-            <Link to="/dashboard/missions" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/missions')}`} {...navLinkProps}>
-              <Flag className="h-4 w-4" /><span>Missões</span>
-            </Link>
-            <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} {...navLinkProps}>
-              <MessageSquare className="h-4 w-4" /><span>Postagens</span>
-            </Link>
-          </>
-        )}
-        <Link to="/dashboard/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/achievements')}`} {...navLinkProps}>
-          <Trophy className="h-4 w-4" /><span>Gamificação</span>
-        </Link>
-        <Link to="/dashboard/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/settings')}`} {...navLinkProps}>
-          <Settings className="h-4 w-4" /><span>Configurações</span>
-        </Link>
-      </nav>
-
-      <div className="px-4 py-4 border-t border-brand-900 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-accent-600 text-brand-950 flex items-center justify-center text-sm font-bold uppercase">
-            {initials}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">{firstName}</span>
-            <span className="text-[11px] text-slate-400 uppercase tracking-wide">
-              {user?.role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
-            </span>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={logout}
-          className="p-2 rounded-md text-slate-400 hover:text-accent-400 hover:bg-brand-900 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
-      </div>
-    </>
-  );
+  const sidebarProps = {
+    userRole: user?.role,
+    firstName,
+    initials,
+    isActive,
+    logout,
+    onNavClick: () => setMobileMenuOpen(false),
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-100 text-slate-900">
@@ -283,12 +298,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Mobile drawer */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-brand-950 text-slate-100 border-r border-brand-900 transform transition-transform duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <SidebarContent />
+        <SidebarContent {...sidebarProps} />
       </aside>
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-64 bg-brand-950 text-slate-100 border-r border-brand-900">
-        <SidebarContent />
+        <SidebarContent {...sidebarProps} />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
