@@ -242,6 +242,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         const stats = await gamificationService.getMyStats();
         setUserStats(stats);
       } catch {
+        setUserStats(null);
       }
     }
   };
