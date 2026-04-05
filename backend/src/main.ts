@@ -21,9 +21,16 @@ async function bootstrap() {
   app.setGlobalPrefix(apiPrefix);
 
   // CORS
-  const allowedOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
+  const corsEnv = process.env.CORS_ORIGINS || process.env.FRONTEND_URL || '';
+  const allowedOrigins = corsEnv
+    ? corsEnv.split(',').map((o) => o.trim())
     : ['http://localhost:5173', 'http://localhost:3000'];
+
+  const backendUrl = process.env.BACKEND_URL || '';
+  if (backendUrl && !allowedOrigins.includes(backendUrl)) {
+    allowedOrigins.push(backendUrl);
+  }
+
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) {
