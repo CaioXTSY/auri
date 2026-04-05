@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Sparkles, Trophy, Medal, Target } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -6,35 +6,23 @@ import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/stores/auth-store';
-import { dashboardService, type StudentDashboard } from '@/services/dashboard-service';
+import { dashboardService } from '@/services/dashboard-service';
 import { STREAK_MILESTONES } from '@/constants/app';
 
 export const DashboardHome = () => {
   const user = useAuthStore((state) => state.user);
-
-  const [dashboardData, setDashboardData] = useState<StudentDashboard | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
 
-  const loadDashboardData = useCallback(async () => {
-    if (user?.role === 'PROFESSOR') return;
-    setIsLoading(true);
-    setLoadError(false);
-    try {
-      const dashboardResponse = await dashboardService.getStudentDashboard();
-      setDashboardData(dashboardResponse);
-    } catch {
-      setLoadError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.role]);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+  const {
+    data: dashboardData,
+    isLoading,
+    isError: loadError,
+    refetch: loadDashboardData,
+  } = useQuery({
+    queryKey: ['student-dashboard'],
+    queryFn: () => dashboardService.getStudentDashboard(),
+    enabled: user?.role !== 'PROFESSOR',
+  });
 
   const levelInfo = dashboardData?.level ?? null;
   const level = levelInfo?.currentLevel ?? 0;
@@ -79,7 +67,7 @@ export const DashboardHome = () => {
             <span>Não foi possível carregar os dados do dashboard.</span>
             <button
               type="button"
-              onClick={loadDashboardData}
+              onClick={() => loadDashboardData()}
               className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:text-red-800"
             >
               Tentar novamente
