@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 const API_URL = 'https://api-auri.caiots.dev';
+const SWAGGER_URL = 'https://api-auri.caiots.dev/api/v1/docs';
 
 // ─── Sidebar nav ────────────────────────────────────────────────────────────
 
@@ -290,7 +291,7 @@ export const Docs = () => {
                 Explore os endpoints no Swagger.
               </p>
               <a
-                href={API_URL}
+                href={SWAGGER_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-400 hover:text-accent-300 transition-colors"
@@ -685,7 +686,7 @@ socket.on('notification', (payload) => {
                 diretamente pelo navegador.
               </p>
               <a
-                href={API_URL}
+                href={SWAGGER_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 bg-brand-900 hover:bg-brand-800 text-white px-6 py-4 rounded-xl font-semibold transition-colors group"
@@ -693,7 +694,7 @@ socket.on('notification', (payload) => {
                 <Code className="h-5 w-5 text-accent-400" />
                 <div className="text-left">
                   <p className="text-sm font-bold">Abrir Swagger UI</p>
-                  <p className="text-xs text-brand-300 font-normal">{API_URL}</p>
+                  <p className="text-xs text-brand-300 font-normal">{SWAGGER_URL}</p>
                 </div>
                 <ExternalLink className="h-4 w-4 ml-auto text-brand-400 group-hover:text-accent-400 transition-colors" />
               </a>
