@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
 import { MISSIONS_PAGE_SIZE } from '@/constants/app';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -32,16 +33,39 @@ const getStatusStyle = (status: MissionStatus) => {
 };
 
 export const MissionsPage = () => {
-  const [tab, setTab] = useState<MissionsTab>('available');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get('tab') as MissionsTab) ?? 'available';
+  const searchTerm = searchParams.get('search') ?? '';
+  const typeFilter = (searchParams.get('type') as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') ?? 'ALL';
+  const statusFilter = (searchParams.get('status') as 'ALL' | MissionStatus) ?? 'ALL';
+
+  const setTab = (value: MissionsTab) =>
+    setSearchParams((prev) => { prev.set('tab', value); return prev; }, { replace: true });
+
+  const setSearchTerm = (value: string) =>
+    setSearchParams((prev) => {
+      if (value) prev.set('search', value); else prev.delete('search');
+      return prev;
+    }, { replace: true });
+
+  const setTypeFilter = (value: 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') =>
+    setSearchParams((prev) => {
+      if (value !== 'ALL') prev.set('type', value); else prev.delete('type');
+      return prev;
+    }, { replace: true });
+
+  const setStatusFilter = (value: 'ALL' | MissionStatus) =>
+    setSearchParams((prev) => {
+      if (value !== 'ALL') prev.set('status', value); else prev.delete('status');
+      return prev;
+    }, { replace: true });
+
   const [available, setAvailable] = useState<Mission[]>([]);
   const [history, setHistory] = useState<UserMission[]>([]);
   const [stats, setStats] = useState<MissionStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA'>('ALL');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | MissionStatus>('ALL');
   const [availablePage, setAvailablePage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
   const pageSize = MISSIONS_PAGE_SIZE;
