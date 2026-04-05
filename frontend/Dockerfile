@@ -3,24 +3,26 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# VITE_API_URL é necessário em build time (Vite bake na bundle)
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-# O Coolify usa o repo inteiro como build context,
-# entao copiamos apenas a pasta frontend/
-COPY frontend/ .
+COPY frontend/package*.json ./
 
 RUN npm install
 
+COPY frontend/ .
+
 RUN npm run build
 
-# ---- Stage 2: Serve com nginx ----
-FROM nginx:alpine AS production
+# ---- Stage 2: Serve ----
+FROM node:20-alpine AS production
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+RUN npm install -g serve
 
-EXPOSE 80
+WORKDIR /app
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3010
+
+CMD ["serve", "-s", "dist", "-p", "3010"]
