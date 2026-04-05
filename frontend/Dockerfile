@@ -7,11 +7,11 @@ WORKDIR /app
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-COPY package*.json ./
+# O Coolify usa o repo inteiro como build context,
+# entao copiamos apenas a pasta frontend/
+COPY frontend/ .
 
-RUN npm ci
-
-COPY . .
+RUN npm install
 
 RUN npm run build
 
@@ -19,7 +19,7 @@ RUN npm run build
 FROM nginx:alpine AS production
 
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

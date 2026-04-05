@@ -3,7 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY . .
+# O Coolify usa o repo inteiro como build context,
+# entao copiamos apenas a pasta backend/
+COPY backend/ .
 
 RUN npm install
 
@@ -16,7 +18,7 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-COPY . .
+COPY backend/ .
 
 RUN npm install --omit=dev
 
