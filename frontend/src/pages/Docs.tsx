@@ -1,17 +1,741 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Header } from '@/components/layouts/Header';
+import {
+  BookOpen, Zap, Shield, Users, GraduationCap, Flag,
+  Trophy, MessageSquare, Code, ExternalLink, Menu, X,
+  ChevronRight, Bell, Star, Target, Hash,
+} from 'lucide-react';
+
+const API_URL = 'https://api-auri.caiots.dev';
+
+// ─── Sidebar nav ────────────────────────────────────────────────────────────
+
+interface NavSection {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  items: { id: string; label: string }[];
+}
+
+const nav: NavSection[] = [
+  {
+    id: 'visao-geral',
+    label: 'Visão Geral',
+    icon: BookOpen,
+    items: [
+      { id: 'o-que-e', label: 'O que é a AURI' },
+      { id: 'como-funciona', label: 'Como funciona' },
+    ],
+  },
+  {
+    id: 'primeiros-passos',
+    label: 'Primeiros Passos',
+    icon: Zap,
+    items: [
+      { id: 'criar-conta', label: 'Criando sua conta' },
+      { id: 'papeis', label: 'Perfis: Aluno e Professor' },
+    ],
+  },
+  {
+    id: 'autenticacao',
+    label: 'Autenticação',
+    icon: Shield,
+    items: [
+      { id: 'jwt', label: 'Tokens JWT' },
+      { id: 'endpoints-auth', label: 'Endpoints' },
+    ],
+  },
+  {
+    id: 'alunos',
+    label: 'Para Alunos',
+    icon: Users,
+    items: [
+      { id: 'dashboard-aluno', label: 'Dashboard' },
+      { id: 'entrar-turma', label: 'Entrar em uma turma' },
+      { id: 'missoes-aluno', label: 'Missões diárias' },
+    ],
+  },
+  {
+    id: 'professores',
+    label: 'Para Professores',
+    icon: GraduationCap,
+    items: [
+      { id: 'criar-turma', label: 'Criando uma turma' },
+      { id: 'gerenciar-turma', label: 'Gerenciando alunos' },
+    ],
+  },
+  {
+    id: 'turmas',
+    label: 'Turmas',
+    icon: Hash,
+    items: [
+      { id: 'codigo-turma', label: 'Código de acesso' },
+      { id: 'postagens', label: 'Postagens da turma' },
+    ],
+  },
+  {
+    id: 'missoes',
+    label: 'Missões',
+    icon: Flag,
+    items: [
+      { id: 'quiz-diario', label: 'Quiz diário' },
+      { id: 'historico', label: 'Histórico de missões' },
+    ],
+  },
+  {
+    id: 'gamificacao',
+    label: 'Gamificação',
+    icon: Trophy,
+    items: [
+      { id: 'xp-nivel', label: 'XP e Níveis' },
+      { id: 'streak', label: 'Sequências (Streak)' },
+      { id: 'conquistas', label: 'Conquistas' },
+      { id: 'ranking', label: 'Ranking' },
+    ],
+  },
+  {
+    id: 'notificacoes',
+    label: 'Notificações',
+    icon: Bell,
+    items: [{ id: 'realtime', label: 'Tempo real (WebSocket)' }],
+  },
+  {
+    id: 'api',
+    label: 'Referência da API',
+    icon: Code,
+    items: [
+      { id: 'swagger', label: 'Swagger / OpenAPI' },
+      { id: 'base-url', label: 'Base URL' },
+    ],
+  },
+];
+
+// ─── Small components ────────────────────────────────────────────────────────
+
+const Badge = ({ method }: { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' }) => {
+  const colors: Record<string, string> = {
+    GET: 'bg-emerald-100 text-emerald-700',
+    POST: 'bg-blue-100 text-blue-700',
+    PUT: 'bg-amber-100 text-amber-700',
+    PATCH: 'bg-orange-100 text-orange-700',
+    DELETE: 'bg-red-100 text-red-700',
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold font-mono uppercase tracking-wide ${colors[method]}`}>
+      {method}
+    </span>
+  );
+};
+
+const Endpoint = ({ method, path, description }: { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; path: string; description: string }) => (
+  <div className="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
+    <Badge method={method} />
+    <code className="text-sm text-brand-900 font-mono flex-1">{path}</code>
+    <span className="text-xs text-slate-500 hidden sm:block">{description}</span>
+  </div>
+);
+
+const CodeBlock = ({ code, language = 'bash' }: { code: string; language?: string }) => (
+  <div className="relative rounded-lg overflow-hidden border border-slate-200 my-4">
+    <div className="flex items-center justify-between bg-slate-800 px-4 py-2">
+      <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">{language}</span>
+    </div>
+    <pre className="bg-slate-900 text-slate-100 text-sm font-mono p-4 overflow-x-auto leading-relaxed whitespace-pre">
+      {code}
+    </pre>
+  </div>
+);
+
+const Section = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => (
+  <section id={id} className="scroll-mt-24 mb-16">
+    <h2 className="font-display font-bold text-2xl text-brand-900 mb-6 pb-3 border-b border-slate-200">
+      {title}
+    </h2>
+    {children}
+  </section>
+);
+
+const SubSection = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => (
+  <div id={id} className="scroll-mt-24 mb-10">
+    <h3 className="font-display font-semibold text-lg text-brand-800 mb-3">{title}</h3>
+    {children}
+  </div>
+);
+
+const Callout = ({ type = 'info', children }: { type?: 'info' | 'warning' | 'tip'; children: React.ReactNode }) => {
+  const styles = {
+    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    warning: 'bg-amber-50 border-amber-200 text-amber-800',
+    tip: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+  };
+  const icons = { info: 'ℹ️', warning: '⚠️', tip: '💡' };
+  return (
+    <div className={`flex gap-3 rounded-lg border px-4 py-3 text-sm my-4 ${styles[type]}`}>
+      <span className="text-base leading-snug">{icons[type]}</span>
+      <span>{children}</span>
+    </div>
+  );
+};
+
+// ─── Main page ───────────────────────────────────────────────────────────────
 
 export const Docs = () => {
+  const [activeSection, setActiveSection] = useState('visao-geral');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const sectionId = nav.find((s) =>
+              s.items.some((i) => i.id === entry.target.id),
+            )?.id ?? entry.target.id;
+            setActiveSection(sectionId);
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -70% 0px' },
+    );
+
+    const allIds = nav.flatMap((s) => [s.id, ...s.items.map((i) => i.id)]);
+    for (const id of allIds) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setSidebarOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <Header />
-      <main className="pt-32 md:pt-40 px-6 lg:px-12">
-        <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-          <h1 className="text-3xl font-display font-bold text-brand-900">Documentação</h1>
-          <p className="mt-3 text-slate-600">
-            Esta seção está em construção. Em breve você verá guias, APIs e exemplos completos.
-          </p>
-        </div>
-      </main>
+
+      <div className="pt-[112px] md:pt-[136px] flex max-w-[1400px] mx-auto">
+        {/* Mobile sidebar toggle */}
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((o) => !o)}
+          className="fixed bottom-6 right-6 z-50 lg:hidden bg-brand-900 text-white p-3 rounded-full shadow-xl"
+        >
+          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar flutuante */}
+        <aside
+          className={`
+            fixed z-50 inset-y-0 left-0 w-72 overflow-y-auto
+            transform transition-transform duration-300 pt-[112px] md:pt-[136px] pb-6 px-3
+            lg:sticky lg:top-[136px] lg:h-[calc(100vh-136px)] lg:translate-x-0 lg:pt-4 lg:flex-shrink-0
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}
+        >
+          <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/10 px-3 py-4 flex flex-col gap-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-3 mb-2">
+              Documentação
+            </p>
+            <nav className="space-y-0.5">
+              {nav.map((section) => {
+                const Icon = section.icon;
+                const isActive = activeSection === section.id;
+                return (
+                  <div key={section.id}>
+                    <button
+                      type="button"
+                      onClick={() => scrollTo(section.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all text-left ${
+                        isActive
+                          ? 'bg-brand-900 text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-brand-900'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      {section.label}
+                    </button>
+                    {isActive && (
+                      <div className="ml-6 mt-0.5 space-y-0.5">
+                        {section.items.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => scrollTo(item.id)}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-brand-900 hover:bg-slate-50 transition-colors text-left"
+                          >
+                            <ChevronRight className="h-3 w-3 flex-shrink-0" />
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+
+            <div className="mt-3 mx-1 p-3 rounded-xl bg-brand-900 text-white">
+              <p className="text-xs font-bold uppercase tracking-widest text-accent-400 mb-1">API Reference</p>
+              <p className="text-xs text-brand-300 mb-2 leading-relaxed">
+                Explore os endpoints no Swagger.
+              </p>
+              <a
+                href={API_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-400 hover:text-accent-300 transition-colors"
+              >
+                Abrir Swagger
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main content */}
+        <main className="flex-1 min-w-0 px-6 lg:px-16 py-12 lg:py-16 max-w-4xl">
+
+          {/* ── Visão Geral ── */}
+          <Section id="visao-geral" title="Visão Geral">
+            <SubSection id="o-que-e" title="O que é a AURI">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                A <strong className="text-brand-900">AURI</strong> é uma plataforma de ensino de programação gamificada,
+                desenvolvida para tornar o aprendizado mais engajante e eficaz. Professores criam turmas e
+                acompanham o progresso dos alunos, enquanto alunos acumulam XP, sobem de nível, mantêm
+                sequências diárias e desbloqueiam conquistas.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-4 mt-6">
+                {[
+                  { icon: '🎓', title: 'Educacional', desc: 'Focada no ensino de programação com metodologia ativa.' },
+                  { icon: '🎮', title: 'Gamificada', desc: 'XP, níveis, streaks, conquistas e rankings motivam a continuidade.' },
+                  { icon: '⚡', title: 'IA integrada', desc: 'Quizzes diários gerados por inteligência artificial.' },
+                ].map((c) => (
+                  <div key={c.title} className="bg-white rounded-xl border border-slate-200 p-5">
+                    <span className="text-2xl">{c.icon}</span>
+                    <p className="mt-2 font-semibold text-brand-900">{c.title}</p>
+                    <p className="mt-1 text-sm text-slate-500 leading-relaxed">{c.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </SubSection>
+
+            <SubSection id="como-funciona" title="Como funciona">
+              <ol className="space-y-4 mt-2">
+                {[
+                  { step: '01', title: 'Professor cria uma turma', desc: 'Um código único é gerado para que alunos possam ingressar.' },
+                  { step: '02', title: 'Aluno entra na turma', desc: 'Com o código da turma, o aluno se associa e começa a participar.' },
+                  { step: '03', title: 'Missões e quizzes diários', desc: 'Todo dia, a IA gera perguntas de programação para os alunos responderem.' },
+                  { step: '04', title: 'Acúmulo de XP e progressão', desc: 'Respostas corretas geram XP, sobem o nível e alimentam a sequência diária.' },
+                  { step: '05', title: 'Conquistas e ranking', desc: 'Marcos são recompensados com conquistas e visibilidade no ranking.' },
+                ].map((item) => (
+                  <li key={item.step} className="flex gap-4 items-start">
+                    <span className="flex-shrink-0 h-8 w-8 rounded-full bg-brand-900 text-accent-400 font-display font-bold text-sm flex items-center justify-center">
+                      {item.step}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-slate-800">{item.title}</p>
+                      <p className="text-sm text-slate-500 mt-0.5">{item.desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </SubSection>
+          </Section>
+
+          {/* ── Primeiros Passos ── */}
+          <Section id="primeiros-passos" title="Primeiros Passos">
+            <SubSection id="criar-conta" title="Criando sua conta">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Acesse a plataforma e clique em <strong>Criar Conta</strong>. Preencha seu nome, e-mail e senha.
+                Após o cadastro, você será redirecionado automaticamente para o painel.
+              </p>
+              <Callout type="tip">
+                Use um e-mail institucional para facilitar a identificação pelo professor da turma.
+              </Callout>
+              <CodeBlock
+                language="curl"
+                code={`curl -X POST ${API_URL}/auth/register \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "João Silva",
+    "email": "joao@escola.edu.br",
+    "password": "senhaSegura123",
+    "role": "ALUNO"
+  }'`}
+              />
+            </SubSection>
+
+            <SubSection id="papeis" title="Perfis: Aluno e Professor">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Ao criar a conta, você escolhe entre dois perfis com experiências distintas:
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users className="h-5 w-5 text-brand-600" />
+                    <span className="font-semibold text-brand-900">Aluno</span>
+                  </div>
+                  <ul className="text-sm text-slate-600 space-y-1.5">
+                    {['Entra em turmas por código', 'Responde quizzes diários', 'Acumula XP e sobe de nível', 'Acompanha ranking e conquistas', 'Visualiza postagens da turma'].map((i) => (
+                      <li key={i} className="flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span>{i}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <GraduationCap className="h-5 w-5 text-brand-600" />
+                    <span className="font-semibold text-brand-900">Professor</span>
+                  </div>
+                  <ul className="text-sm text-slate-600 space-y-1.5">
+                    {['Cria e gerencia turmas', 'Visualiza progresso dos alunos', 'Acessa ranking da turma', 'Publica postagens', 'Acompanha missões completadas'].map((i) => (
+                      <li key={i} className="flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span>{i}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </SubSection>
+          </Section>
+
+          {/* ── Autenticação ── */}
+          <Section id="autenticacao" title="Autenticação">
+            <SubSection id="jwt" title="Tokens JWT">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                A AURI utiliza <strong>JWT (JSON Web Token)</strong> para autenticação. Após o login,
+                você recebe um token que deve ser enviado no header <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-brand-800">Authorization</code> de todas as requisições protegidas.
+              </p>
+              <CodeBlock
+                language="http"
+                code={`Authorization: Bearer <seu_token_jwt>`}
+              />
+              <Callout type="warning">
+                O token expira após um período definido. Implemente renovação automática no seu cliente ou redirecione o usuário para o login.
+              </Callout>
+            </SubSection>
+
+            <SubSection id="endpoints-auth" title="Endpoints de autenticação">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="POST" path="/auth/register" description="Criar nova conta" />
+                <Endpoint method="POST" path="/auth/login" description="Fazer login e obter token" />
+                <Endpoint method="GET" path="/auth/me" description="Dados do usuário autenticado" />
+              </div>
+              <CodeBlock
+                language="curl"
+                code={`curl -X POST ${API_URL}/auth/login \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "email": "joao@escola.edu.br",
+    "password": "senhaSegura123"
+  }'
+
+# Resposta
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "clx...",
+    "name": "João Silva",
+    "email": "joao@escola.edu.br",
+    "role": "ALUNO"
+  }
+}`}
+              />
+            </SubSection>
+          </Section>
+
+          {/* ── Alunos ── */}
+          <Section id="alunos" title="Para Alunos">
+            <SubSection id="dashboard-aluno" title="Dashboard do Aluno">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                O painel principal exibe um resumo completo da sua jornada: nível atual, XP acumulado,
+                progresso para o próximo nível, sequência diária, conquistas recentes, posição no ranking e missões.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/dashboard/student" description="Dados completos do painel do aluno" />
+              </div>
+            </SubSection>
+
+            <SubSection id="entrar-turma" title="Entrar em uma turma">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Para entrar em uma turma, solicite o <strong>código de acesso</strong> ao seu professor.
+                No dashboard, acesse <em>Minhas Turmas → Entrar em turma</em> e insira o código.
+              </p>
+              <CodeBlock
+                language="curl"
+                code={`curl -X POST ${API_URL}/classes/join \\
+  -H "Authorization: Bearer <token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "code": "ABC123" }'`}
+              />
+            </SubSection>
+
+            <SubSection id="missoes-aluno" title="Missões diárias">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Todo dia a plataforma gera automaticamente um quiz de programação personalizado.
+                Responder corretamente concede XP e mantém sua sequência ativa.
+              </p>
+              <Callout type="tip">
+                Responda o quiz diário mesmo que erre — a participação já conta para manter a sequência em algumas configurações de turma.
+              </Callout>
+            </SubSection>
+          </Section>
+
+          {/* ── Professores ── */}
+          <Section id="professores" title="Para Professores">
+            <SubSection id="criar-turma" title="Criando uma turma">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                No painel do professor, acesse <em>Gerenciar Turmas → Nova Turma</em>. Informe o nome
+                da turma e configure as opções desejadas. Um código único será gerado automaticamente
+                para compartilhar com os alunos.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="POST" path="/classes" description="Criar nova turma" />
+                <Endpoint method="GET" path="/classes/teacher" description="Listar turmas do professor" />
+                <Endpoint method="GET" path="/classes/:id" description="Detalhes de uma turma" />
+                <Endpoint method="DELETE" path="/classes/:id" description="Encerrar turma" />
+              </div>
+            </SubSection>
+
+            <SubSection id="gerenciar-turma" title="Gerenciando alunos">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Na página da turma, você visualiza todos os alunos inscritos, seus níveis, XP total,
+                missões completadas e posição no ranking. É possível remover um aluno da turma se necessário.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/classes/:id/members" description="Alunos da turma" />
+                <Endpoint method="DELETE" path="/classes/:id/members/:userId" description="Remover aluno" />
+                <Endpoint method="GET" path="/classes/:id/leaderboard" description="Ranking da turma" />
+              </div>
+            </SubSection>
+          </Section>
+
+          {/* ── Turmas ── */}
+          <Section id="turmas" title="Turmas">
+            <SubSection id="codigo-turma" title="Código de acesso">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Cada turma possui um código alfanumérico único gerado automaticamente. Este código
+                pode ser compartilhado diretamente com os alunos. Não há limite de alunos por padrão.
+              </p>
+              <Callout type="info">
+                O código de uma turma não expira. Para "fechar" uma turma, o professor pode encerrá-la pelo painel.
+              </Callout>
+            </SubSection>
+
+            <SubSection id="postagens" title="Postagens da turma">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Professores e alunos podem publicar postagens dentro de cada turma, criando um espaço
+                de discussão e comunicação contextualizado.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/posts" description="Listar postagens (por turma)" />
+                <Endpoint method="POST" path="/posts" description="Criar postagem" />
+                <Endpoint method="DELETE" path="/posts/:id" description="Excluir postagem" />
+              </div>
+            </SubSection>
+          </Section>
+
+          {/* ── Missões ── */}
+          <Section id="missoes" title="Missões">
+            <SubSection id="quiz-diario" title="Quiz diário">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Um quiz de múltipla escolha é gerado por IA todos os dias para cada aluno. As perguntas
+                são focadas em programação e adaptadas ao nível da turma.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/daily-quiz" description="Quiz do dia atual" />
+                <Endpoint method="POST" path="/daily-quiz/:id/answer" description="Responder quiz" />
+              </div>
+              <CodeBlock
+                language="curl"
+                code={`# Buscar o quiz do dia
+curl -X GET ${API_URL}/daily-quiz \\
+  -H "Authorization: Bearer <token>"
+
+# Responder
+curl -X POST ${API_URL}/daily-quiz/:id/answer \\
+  -H "Authorization: Bearer <token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "answer": "B" }'`}
+              />
+            </SubSection>
+
+            <SubSection id="historico" title="Histórico de missões">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Todas as missões respondidas ficam registradas e podem ser consultadas no histórico.
+                O sistema calcula automaticamente a taxa de acerto e o total de XP acumulado por missões.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/missions" description="Histórico paginado de missões" />
+                <Endpoint method="GET" path="/missions/:id" description="Detalhes de uma missão" />
+              </div>
+            </SubSection>
+          </Section>
+
+          {/* ── Gamificação ── */}
+          <Section id="gamificacao" title="Gamificação">
+            <SubSection id="xp-nivel" title="XP e Níveis">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Cada ação dentro da plataforma concede pontos de experiência (XP). Ao acumular XP
+                suficiente, o aluno avança de nível. A quantidade necessária aumenta progressivamente.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3 my-4">
+                {[
+                  { action: 'Quiz diário correto', xp: '+50 XP' },
+                  { action: 'Conquista desbloqueada', xp: 'variável' },
+                  { action: 'Participação em turma', xp: '+10 XP' },
+                  { action: 'Streak milestone', xp: 'bônus' },
+                ].map((r) => (
+                  <div key={r.action} className="flex items-center justify-between bg-white rounded-lg border border-slate-200 px-4 py-3">
+                    <span className="text-sm text-slate-600">{r.action}</span>
+                    <span className="text-sm font-bold text-accent-600">{r.xp}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mt-4">
+                <Endpoint method="GET" path="/gamification/stats" description="XP, nível e progresso" />
+              </div>
+            </SubSection>
+
+            <SubSection id="streak" title="Sequências (Streak)">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                O <strong>streak</strong> mede quantos dias consecutivos o aluno participou da plataforma.
+                Ao atingir marcos específicos, bônus e reconhecimentos são concedidos.
+              </p>
+              <div className="flex flex-wrap gap-2 my-4">
+                {[3, 7, 14, 30, 100].map((days) => (
+                  <div key={days} className="flex items-center gap-1.5 bg-brand-900 text-accent-400 rounded-full px-3 py-1.5 text-sm font-bold">
+                    🔥 {days} dias
+                  </div>
+                ))}
+              </div>
+              <Callout type="warning">
+                O streak é zerado se o aluno ficar mais de 1 dia sem acessar a plataforma. Mantenha o hábito diário!
+              </Callout>
+            </SubSection>
+
+            <SubSection id="conquistas" title="Conquistas">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Conquistas são desbloqueadas automaticamente ao cumprir critérios pré-definidos,
+                como atingir um nível, manter uma sequência ou completar missões. Cada conquista
+                concede XP adicional.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/gamification/achievements" description="Todas as conquistas e status" />
+              </div>
+            </SubSection>
+
+            <SubSection id="ranking" title="Ranking">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                Há dois rankings: <strong>global</strong> (todos os alunos da plataforma) e
+                <strong> por turma</strong>. A posição é calculada com base no total de XP acumulado.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/gamification/leaderboard" description="Ranking global" />
+                <Endpoint method="GET" path="/classes/:id/leaderboard" description="Ranking da turma" />
+              </div>
+            </SubSection>
+          </Section>
+
+          {/* ── Notificações ── */}
+          <Section id="notificacoes" title="Notificações">
+            <SubSection id="realtime" title="Tempo real (WebSocket)">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                A AURI utiliza <strong>Socket.IO</strong> para entrega de notificações em tempo real.
+                Quando um evento relevante ocorre (nova conquista, atualização de ranking, aviso do professor),
+                o aluno é notificado instantaneamente sem precisar recarregar a página.
+              </p>
+              <CodeBlock
+                language="javascript"
+                code={`import { io } from 'socket.io-client';
+
+const socket = io('${API_URL}', {
+  auth: {
+    userId: user.id,
+    token: jwtToken,
+  },
+});
+
+socket.on('notification', (payload) => {
+  console.log('Nova notificação:', payload);
+  // { id, title, message, read, createdAt }
+});`}
+              />
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mt-4">
+                <Endpoint method="GET" path="/notifications" description="Listar notificações (paginado)" />
+                <Endpoint method="GET" path="/notifications/unread-count" description="Total não lidas" />
+                <Endpoint method="PATCH" path="/notifications/:id/read" description="Marcar como lida" />
+                <Endpoint method="PATCH" path="/notifications/read-all" description="Marcar todas como lidas" />
+              </div>
+            </SubSection>
+          </Section>
+
+          {/* ── API Reference ── */}
+          <Section id="api" title="Referência da API">
+            <SubSection id="swagger" title="Swagger / OpenAPI">
+              <p className="text-slate-600 leading-relaxed mb-6">
+                Toda a API da AURI é documentada com <strong>Swagger (OpenAPI 3.0)</strong>.
+                Você pode explorar os endpoints, testar requisições e ver os schemas de resposta
+                diretamente pelo navegador.
+              </p>
+              <a
+                href={API_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 bg-brand-900 hover:bg-brand-800 text-white px-6 py-4 rounded-xl font-semibold transition-colors group"
+              >
+                <Code className="h-5 w-5 text-accent-400" />
+                <div className="text-left">
+                  <p className="text-sm font-bold">Abrir Swagger UI</p>
+                  <p className="text-xs text-brand-300 font-normal">{API_URL}</p>
+                </div>
+                <ExternalLink className="h-4 w-4 ml-auto text-brand-400 group-hover:text-accent-400 transition-colors" />
+              </a>
+            </SubSection>
+
+            <SubSection id="base-url" title="Base URL e convenções">
+              <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Base URL</p>
+                  <code className="text-sm font-mono text-brand-900 bg-slate-50 px-3 py-2 rounded-lg block">
+                    {API_URL}
+                  </code>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Convenções</p>
+                  <ul className="text-sm text-slate-600 space-y-2">
+                    <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">JSON</span>Todas as requisições e respostas usam <code className="bg-slate-100 px-1 rounded text-xs">application/json</code>.</li>
+                    <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Auth</span>Endpoints protegidos exigem <code className="bg-slate-100 px-1 rounded text-xs">Authorization: Bearer token</code>.</li>
+                    <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Erros</span>Respostas de erro seguem o padrão <code className="bg-slate-100 px-1 rounded text-xs">{'{ "message": "..." }'}</code>.</li>
+                    <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Paginação</span>Listas paginadas aceitam <code className="bg-slate-100 px-1 rounded text-xs">?page=1&limit=10</code>.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-brand-900 to-brand-800 text-white text-center">
+                <Star className="h-8 w-8 text-accent-400 mx-auto mb-3" />
+                <p className="font-display font-bold text-lg mb-1">Pronto para começar?</p>
+                <p className="text-brand-200 text-sm mb-4">Crie sua conta e comece a aprender programação de forma épica.</p>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-400 text-brand-950 font-bold text-sm px-5 py-2.5 rounded-lg transition-colors"
+                >
+                  Criar conta grátis
+                  <Target className="h-4 w-4" />
+                </Link>
+              </div>
+            </SubSection>
+          </Section>
+        </main>
+      </div>
     </div>
   );
 };

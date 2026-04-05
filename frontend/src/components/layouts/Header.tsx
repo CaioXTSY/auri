@@ -33,13 +33,13 @@ export const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex flex-col font-sans">
-      {/* Top Bar - Utilitária (Estilo Universitário) */}
+      {/* Top Bar */}
       <div className="bg-brand-900 text-white py-2 px-6 lg:px-12 hidden md:block border-b border-brand-800">
         <div className="container mx-auto flex justify-between items-center text-xs tracking-wide uppercase font-medium">
           <div className="flex gap-6">
             {topNavItems.map((item) => (
-              <Link 
-                key={item.label} 
+              <Link
+                key={item.label}
                 to={item.href}
                 className="hover:text-accent-400 transition-colors"
               >
@@ -52,7 +52,6 @@ export const Header = () => {
               <Globe className="h-3 w-3" />
               <span>PT-BR</span>
             </div>
-            
             {isAuthenticated ? (
               <Link to="/dashboard" className="flex items-center gap-2 bg-brand-800 px-3 py-1 rounded-sm hover:bg-brand-700 transition-colors font-bold text-accent-400">
                 <User className="h-3 w-3" />
@@ -68,15 +67,19 @@ export const Header = () => {
       </div>
 
       {/* Main Navigation */}
-      <div 
+      <div
         className={cn(
           "bg-white transition-all duration-300 border-b border-slate-200",
-          scrolled ? "py-2 shadow-md" : "py-6"
+          scrolled ? "py-1 shadow-md" : "py-3"
         )}
       >
         <div className="container mx-auto px-6 lg:px-12 flex items-center justify-between">
           <Link to="/" className="group">
-            <img src="/auri_logo.webp" alt="AURI" className="h-14 w-auto opacity-100 group-hover:opacity-80 transition-opacity [filter:brightness(0)_saturate(100%)_invert(16%)_sepia(28%)_saturate(745%)_hue-rotate(178deg)_brightness(95%)_contrast(94%)]" />
+            <img
+              src="/auri_logo.webp"
+              alt="AURI"
+              className="h-14 w-auto opacity-100 group-hover:opacity-80 transition-opacity [filter:brightness(0)_saturate(100%)_invert(16%)_sepia(28%)_saturate(745%)_hue-rotate(178deg)_brightness(95%)_contrast(94%)]"
+            />
           </Link>
 
           {/* Desktop Nav */}
@@ -94,17 +97,15 @@ export const Header = () => {
             <button className="text-brand-900 hover:text-accent-700 transition-colors">
               <Search className="h-5 w-5" />
             </button>
-            
-            {/* Mobile/Tablet Auth Button (if TopBar is hidden or just extra redundancy) */}
             {isAuthenticated ? (
-               <Link to="/dashboard" className="hidden lg:flex items-center gap-2 bg-brand-900 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors font-bold text-xs uppercase tracking-widest">
-                 <LayoutDashboard className="h-4 w-4" />
-                 Painel
-               </Link>
+              <Link to="/dashboard" className="hidden lg:flex items-center gap-2 bg-brand-900 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors font-bold text-xs uppercase tracking-widest">
+                <LayoutDashboard className="h-4 w-4" />
+                Painel
+              </Link>
             ) : (
-               <Link to="/register" className="hidden lg:flex items-center gap-2 bg-brand-900 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors font-bold text-xs uppercase tracking-widest">
-                 Criar Conta
-               </Link>
+              <Link to="/register" className="hidden lg:flex items-center gap-2 bg-brand-900 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors font-bold text-xs uppercase tracking-widest">
+                Criar Conta
+              </Link>
             )}
           </nav>
 
@@ -144,7 +145,6 @@ export const Header = () => {
                 <ChevronDown className="-rotate-90 h-4 w-4 text-slate-400" />
               </a>
             ))}
-
             <div className="px-6 py-6 bg-slate-50 space-y-4">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Acesso Rápido</p>
               <div className="grid grid-cols-2 gap-3">
@@ -159,11 +159,10 @@ export const Header = () => {
                   </Link>
                 ))}
               </div>
-              
               <div className="pt-4 border-t border-slate-200">
                 {isAuthenticated ? (
-                  <Link 
-                    to="/dashboard" 
+                  <Link
+                    to="/dashboard"
                     className="w-full flex items-center justify-center gap-2 bg-brand-900 text-white py-3 rounded-md font-bold text-sm uppercase tracking-wider"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -171,22 +170,22 @@ export const Header = () => {
                     Acessar Meu Painel
                   </Link>
                 ) : (
-                   <div className="flex flex-col gap-3">
-                     <Link 
-                        to="/login"
-                        className="w-full flex items-center justify-center gap-2 border border-brand-900 text-brand-900 py-3 rounded-md font-bold text-sm uppercase tracking-wider hover:bg-brand-50"
-                        onClick={() => setIsMenuOpen(false)}
-                     >
-                        Fazer Login
-                     </Link>
-                     <Link 
-                        to="/register"
-                        className="w-full flex items-center justify-center gap-2 bg-brand-900 text-white py-3 rounded-md font-bold text-sm uppercase tracking-wider hover:bg-brand-800"
-                        onClick={() => setIsMenuOpen(false)}
-                     >
-                        Criar Conta
-                     </Link>
-                   </div>
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      to="/login"
+                      className="w-full flex items-center justify-center gap-2 border border-brand-900 text-brand-900 py-3 rounded-md font-bold text-sm uppercase tracking-wider hover:bg-brand-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Fazer Login
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="w-full flex items-center justify-center gap-2 bg-brand-900 text-white py-3 rounded-md font-bold text-sm uppercase tracking-wider hover:bg-brand-800"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Criar Conta
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
