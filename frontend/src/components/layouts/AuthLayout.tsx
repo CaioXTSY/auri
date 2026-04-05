@@ -23,11 +23,8 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
         <div className="absolute inset-0 bg-gradient-to-b from-brand-950/80 to-brand-900/90 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col justify-between h-full p-12">
-          <Link to="/" className="flex items-center gap-3 w-fit hover:opacity-80 transition-opacity">
-            <div className="h-10 w-8 flex items-center justify-center bg-white text-brand-900 rounded-b-full pt-1 pb-2 shadow-sm">
-               <span className="font-display font-bold text-xl">A</span>
-            </div>
-            <span className="font-display font-bold text-2xl tracking-wide">AURI</span>
+          <Link to="/" className="flex justify-center hover:opacity-80 transition-opacity">
+            <img src="/auri_logo.webp" alt="AURI" className="h-14 w-auto" />
           </Link>
 
           <div className="space-y-6 max-w-lg">

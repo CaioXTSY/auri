@@ -21,19 +21,13 @@ interface SidebarContentProps {
 
 const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, onNavClick }: SidebarContentProps) => (
   <>
-    <div className="h-20 px-6 flex items-center border-b border-brand-900">
-      <Link to="/" className="flex items-center gap-3" onClick={onNavClick}>
-        <div className="h-11 w-9 flex items-center justify-center bg-accent-600 text-brand-950 rounded-b-full shadow-sm">
-          <span className="font-display font-bold text-xl">A</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="font-display font-bold text-xl tracking-wide">AURI</span>
-          <span className="font-serif text-[10px] italic text-slate-400 tracking-widest">PLATAFORMA</span>
-        </div>
+    <div className="h-20 px-6 flex items-center justify-center relative border-b border-brand-900">
+      <Link to="/" onClick={onNavClick}>
+        <img src="/auri_logo.webp" alt="AURI" className="h-14 w-auto" />
       </Link>
       <button
         type="button"
-        className="ml-auto md:hidden p-1.5 rounded-md text-slate-400 hover:text-white"
+        className="absolute right-4 md:hidden p-1.5 rounded-md text-slate-400 hover:text-white"
         onClick={onNavClick}
       >
         <X className="h-5 w-5" />

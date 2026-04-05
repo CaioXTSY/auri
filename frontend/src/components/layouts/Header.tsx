@@ -76,9 +76,7 @@ export const Header = () => {
       >
         <div className="container mx-auto px-6 lg:px-12 flex items-center justify-between">
           <Link to="/" className="group">
-            <span className="font-display font-bold text-2xl text-brand-900 leading-none tracking-wide group-hover:text-brand-800 transition-colors">
-              AURI
-            </span>
+            <img src="/auri_logo.webp" alt="AURI" className="h-14 w-auto opacity-100 group-hover:opacity-80 transition-opacity" />
           </Link>
 
           {/* Desktop Nav */}
