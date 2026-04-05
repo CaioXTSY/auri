@@ -5,13 +5,15 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# O Coolify usa o repo inteiro como build context,
-# entao copiamos apenas a pasta backend/
-COPY backend/ .
+# O Coolify usa o repo inteiro como build context
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma/
 
 RUN npm install
 
 RUN npx prisma generate
+
+COPY backend/ .
 
 RUN npm run build
 
@@ -22,17 +24,12 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-COPY backend/ .
-
-RUN npm install --omit=dev
-
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-RUN npx prisma generate
-
-RUN mkdir -p uploads
-
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
+
+RUN mkdir -p /app/uploads
 
 EXPOSE 3001
 
