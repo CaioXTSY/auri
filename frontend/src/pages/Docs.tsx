@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/layouts/Header';
 import {
   BookOpen, Zap, Shield, Users, GraduationCap, Flag,
-  Trophy, MessageSquare, Code, ExternalLink, Menu, X,
+  Trophy, Code, ExternalLink, Menu, X,
   ChevronRight, Bell, Hash,
 } from 'lucide-react';
 
