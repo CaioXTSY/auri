@@ -3,11 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-
-RUN npm ci
-
 COPY . .
+
+RUN npm install
 
 RUN npx prisma generate
 
@@ -18,12 +16,13 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY . .
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
-COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+RUN npx prisma generate
 
 RUN mkdir -p uploads
 
