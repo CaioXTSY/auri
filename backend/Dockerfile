@@ -9,7 +9,8 @@ WORKDIR /app
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma/
 
-RUN npm install
+# Força instalação de devDependencies no build (NODE_ENV pode ser production no Coolify)
+RUN npm install --include=dev
 
 RUN npx prisma generate
 
