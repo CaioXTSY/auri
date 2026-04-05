@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu } from 'lucide-react';
-import { io } from 'socket.io-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
@@ -20,7 +19,7 @@ interface SidebarContentProps {
   onNavClick: () => void;
 }
 
-const SidebarContent = ({ userRole, firstName, initials, isActive, logout, onNavClick }: SidebarContentProps) => (
+const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, onNavClick }: SidebarContentProps) => (
   <>
     <div className="h-20 px-6 flex items-center border-b border-brand-900">
       <Link to="/" className="flex items-center gap-3" onClick={onNavClick}>
@@ -99,7 +98,7 @@ const SidebarContent = ({ userRole, firstName, initials, isActive, logout, onNav
       </button>
     </div>
   </>
-);
+));
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const user = useAuthStore((state) => state.user);
@@ -177,15 +176,24 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   useEffect(() => {
     if (!user?.id) return;
-    const socket = io(import.meta.env.VITE_API_URL ?? 'http://localhost:3001', {
-      auth: { userId: user.id, token },
+    let disconnected = false;
+    let socketRef: { disconnect: () => void } | null = null;
+
+    import('socket.io-client').then(({ io }) => {
+      if (disconnected) return;
+      const socket = io(import.meta.env.VITE_API_URL ?? 'http://localhost:3001', {
+        auth: { userId: user.id, token },
+      });
+      socketRef = socket;
+      socket.on('notification', (payload: NotificationItem) => {
+        setNotifications((current) => [payload, ...current].slice(0, 5));
+        setUnreadCount((current) => current + 1);
+      });
     });
-    socket.on('notification', (payload: NotificationItem) => {
-      setNotifications((current) => [payload, ...current].slice(0, 5));
-      setUnreadCount((current) => current + 1);
-    });
+
     return () => {
-      socket.disconnect();
+      disconnected = true;
+      socketRef?.disconnect();
     };
   }, [token, user?.id]);
 
@@ -257,11 +265,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         .join('')
     : 'AU';
 
-  const isActive = (path: string) => {
+  const isActive = useCallback((path: string) => {
     return location.pathname === path
       ? 'bg-brand-900 text-accent-400'
       : 'text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors';
-  };
+  }, [location.pathname]);
+
+  const onNavClick = useCallback(() => setMobileMenuOpen(false), []);
 
   const sidebarProps = {
     userRole: user?.role,
@@ -269,7 +279,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     initials,
     isActive,
     logout,
-    onNavClick: () => setMobileMenuOpen(false),
+    onNavClick,
   };
 
   return (

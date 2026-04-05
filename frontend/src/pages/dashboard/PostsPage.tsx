@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Editor from '@monaco-editor/react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const Editor = lazy(() => import('@monaco-editor/react'));
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { MarkdownContent } from '@/components/ui/markdown-content';
@@ -340,22 +341,24 @@ export const PostsPage = () => {
                 <div className="space-y-1.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Editor</p>
                   <div className="overflow-hidden rounded-lg border border-slate-200">
-                    <Editor
-                      height="300px"
-                      language="markdown"
-                      theme="vs"
-                      value={postContent}
-                      onChange={(value) => setPostContent(value || '')}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: 'off',
-                        wordWrap: 'on',
-                        automaticLayout: true,
-                        padding: { top: 12, bottom: 12 },
-                        scrollBeyondLastLine: false,
-                      }}
-                    />
+                    <Suspense fallback={<div className="h-[300px] flex items-center justify-center text-sm text-slate-400">Carregando editor…</div>}>
+                      <Editor
+                        height="300px"
+                        language="markdown"
+                        theme="vs"
+                        value={postContent}
+                        onChange={(value) => setPostContent(value || '')}
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 14,
+                          lineNumbers: 'off',
+                          wordWrap: 'on',
+                          automaticLayout: true,
+                          padding: { top: 12, bottom: 12 },
+                          scrollBeyondLastLine: false,
+                        }}
+                      />
+                    </Suspense>
                   </div>
                 </div>
                 <div className="space-y-1.5">

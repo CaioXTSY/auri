@@ -1,123 +1,132 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Home } from '@/pages/Home';
-import { Docs } from '@/pages/Docs';
-import { Login } from '@/pages/auth/Login';
-import { Register } from '@/pages/auth/Register';
-import { DashboardHome } from '@/pages/dashboard/DashboardHome';
-import { MyClasses } from '@/pages/dashboard/MyClasses';
-import { ClassDetails } from '@/pages/dashboard/ClassDetails';
-import { MissionsPage } from '@/pages/dashboard/MissionsPage';
-import { SettingsPage } from '@/pages/dashboard/SettingsPage';
-import { TeacherClasses } from '@/pages/teacher/TeacherClasses';
-import { CreateClass } from '@/pages/teacher/CreateClass';
-import { TeacherClassDetails } from '@/pages/teacher/TeacherClassDetails';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 
-import { JoinClass } from '@/pages/dashboard/JoinClass';
-import { AchievementsPage } from '@/pages/dashboard/AchievementsPage';
-import { PostsPage } from '@/pages/dashboard/PostsPage';
+const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.Home })));
+const Docs = lazy(() => import('@/pages/Docs').then(m => ({ default: m.Docs })));
+const Login = lazy(() => import('@/pages/auth/Login').then(m => ({ default: m.Login })));
+const Register = lazy(() => import('@/pages/auth/Register').then(m => ({ default: m.Register })));
+const DashboardHome = lazy(() => import('@/pages/dashboard/DashboardHome').then(m => ({ default: m.DashboardHome })));
+const MyClasses = lazy(() => import('@/pages/dashboard/MyClasses').then(m => ({ default: m.MyClasses })));
+const ClassDetails = lazy(() => import('@/pages/dashboard/ClassDetails').then(m => ({ default: m.ClassDetails })));
+const MissionsPage = lazy(() => import('@/pages/dashboard/MissionsPage').then(m => ({ default: m.MissionsPage })));
+const SettingsPage = lazy(() => import('@/pages/dashboard/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const JoinClass = lazy(() => import('@/pages/dashboard/JoinClass').then(m => ({ default: m.JoinClass })));
+const AchievementsPage = lazy(() => import('@/pages/dashboard/AchievementsPage').then(m => ({ default: m.AchievementsPage })));
+const PostsPage = lazy(() => import('@/pages/dashboard/PostsPage').then(m => ({ default: m.PostsPage })));
+const TeacherClasses = lazy(() => import('@/pages/teacher/TeacherClasses').then(m => ({ default: m.TeacherClasses })));
+const CreateClass = lazy(() => import('@/pages/teacher/CreateClass').then(m => ({ default: m.CreateClass })));
+const TeacherClassDetails = lazy(() => import('@/pages/teacher/TeacherClassDetails').then(m => ({ default: m.TeacherClassDetails })));
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-100">
+    <div className="h-8 w-8 rounded-full border-4 border-accent-600 border-t-transparent animate-spin" />
+  </div>
+);
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/docs" element={<Docs />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* Rotas Comuns / Aluno */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardHome />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/achievements"
-          element={
-            <ProtectedRoute>
-              <AchievementsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/posts"
-          element={
-            <ProtectedRoute>
-              <PostsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/classes"
-          element={
-            <ProtectedRoute>
-              <MyClasses />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/classes/join"
-          element={
-            <ProtectedRoute>
-              <JoinClass />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/classes/:id"
-          element={
-            <ProtectedRoute>
-              <ClassDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/missions"
-          element={
-            <ProtectedRoute>
-              <MissionsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* Rotas do Professor */}
-        <Route
-          path="/dashboard/teacher/classes"
-          element={
-            <ProtectedRoute>
-              <TeacherClasses />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/teacher/classes/new"
-          element={
-            <ProtectedRoute>
-              <CreateClass />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/teacher/classes/:id"
-          element={
-            <ProtectedRoute>
-              <TeacherClassDetails />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+          {/* Rotas Comuns / Aluno */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardHome />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/achievements"
+            element={
+              <ProtectedRoute>
+                <AchievementsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/posts"
+            element={
+              <ProtectedRoute>
+                <PostsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes"
+            element={
+              <ProtectedRoute>
+                <MyClasses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes/join"
+            element={
+              <ProtectedRoute>
+                <JoinClass />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes/:id"
+            element={
+              <ProtectedRoute>
+                <ClassDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/missions"
+            element={
+              <ProtectedRoute>
+                <MissionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rotas do Professor */}
+          <Route
+            path="/dashboard/teacher/classes"
+            element={
+              <ProtectedRoute>
+                <TeacherClasses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teacher/classes/new"
+            element={
+              <ProtectedRoute>
+                <CreateClass />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teacher/classes/:id"
+            element={
+              <ProtectedRoute>
+                <TeacherClassDetails />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
