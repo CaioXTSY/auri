@@ -37,7 +37,7 @@ export class ClassesController {
 
   @Post('join')
   @Roles(Role.ALUNO)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Entrar em uma turma pelo código',
     description: 'Permite que um aluno entre em uma turma usando o código de acesso.'
   })
@@ -53,18 +53,9 @@ export class ClassesController {
       required: ['code']
     }
   })
-  @ApiResponse({
-    status: 201,
-    description: 'Aluno matriculado com sucesso',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Turma não encontrada',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Aluno já matriculado',
-  })
+  @ApiResponse({ status: 201, description: 'Aluno matriculado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
+  @ApiResponse({ status: 409, description: 'Aluno já matriculado' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Aluno)' })
   joinClass(@Body('code') code: string, @Request() req) {
@@ -73,289 +64,125 @@ export class ClassesController {
 
   @Post()
   @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Criar nova turma',
-    description: 'Cria uma turma para organizar alunos. Turmas são opcionais - usuários podem usar a plataforma sem estar em turmas.'
+    description: 'Cria uma turma para organizar alunos.'
   })
-  @ApiBody({
-    type: CreateClassDto,
-    examples: {
-      turma: {
-        summary: 'Criar turma',
-        value: {
-          name: 'Turma A - Manhã',
-          semester: '2024.1',
-          year: 2024
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Turma criada com sucesso',
-    schema: {
-      example: {
-        id: 'uuid-here',
-        name: 'Turma A - Manhã',
-        semester: '2024.1',
-        year: 2024,
-        status: 'ATIVA',
-        createdAt: '2024-01-26T00:00:00.000Z',
-        updatedAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
-  })
+  @ApiBody({ type: CreateClassDto })
+  @ApiResponse({ status: 201, description: 'Turma criada com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  create(@Body() createClassDto: CreateClassDto) {
-    return this.classesService.create(createClassDto);
+  create(@Body() createClassDto: CreateClassDto, @Request() req) {
+    return this.classesService.create(createClassDto, req.user.id);
   }
 
   @Get()
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
-  @ApiOperation({ 
-    summary: 'Listar todas as turmas com paginação',
-    description: 'Retorna lista paginada de turmas com filtros opcionais'
+  @ApiOperation({
+    summary: 'Listar turmas com paginação',
+    description: 'Professores veem apenas suas próprias turmas. Admins veem todas.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de turmas retornada com sucesso',
-    schema: {
-      example: {
-        data: [
-          {
-            id: 'uuid-here',
-            name: 'Turma A - Manhã',
-            semester: '2024.1',
-            year: 2024,
-            status: 'ATIVA',
-            _count: {
-              students: 25,
-              activities: 12
-            },
-            createdAt: '2024-01-26T00:00:00.000Z'
-          }
-        ],
-        meta: {
-          page: 1,
-          limit: 10,
-          total: 15,
-          totalPages: 2
-        }
-      }
-    }
-  })
+  @ApiResponse({ status: 200, description: 'Lista de turmas retornada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  findAll(@Query() query: QueryClassesDto) {
-    return this.classesService.findAll(query);
+  findAll(@Query() query: QueryClassesDto, @Request() req) {
+    return this.classesService.findAll(query, req.user.id, req.user.role);
   }
 
   @Get('my-classes')
   @Roles(Role.ALUNO)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Listar minhas turmas (aluno)',
     description: 'Retorna todas as turmas em que o aluno está matriculado'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de turmas do aluno',
-    schema: {
-      example: [
-        {
-          id: 'uuid-here',
-          name: 'Turma A - Manhã',
-          semester: '2024.1',
-          year: 2024,
-          status: 'ATIVA',
-          enrolledAt: '2024-01-26T00:00:00.000Z'
-        }
-      ]
-    }
-  })
+  @ApiResponse({ status: 200, description: 'Lista de turmas do aluno' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Aluno)' })
   getMyClasses(@Request() req) {
     return this.classesService.getMyClasses(req.user.id);
   }
 
+  @Get('my-created-classes')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({
+    summary: 'Listar turmas criadas pelo professor',
+    description: 'Retorna todas as turmas criadas pelo professor logado'
+  })
+  @ApiResponse({ status: 200, description: 'Lista de turmas criadas' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Professor/Admin)' })
+  getMyCreatedClasses(@Request() req) {
+    return this.classesService.getMyCreatedClasses(req.user.id);
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Buscar turma por ID',
-    description: 'Retorna detalhes completos de uma turma, incluindo alunos e contadores'
+    description: 'Professores só podem acessar as próprias turmas.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Turma encontrada',
-    schema: {
-      example: {
-        id: 'uuid-here',
-        name: 'Turma A - Manhã',
-        semester: '2024.1',
-        year: 2024,
-        status: 'ATIVA',
-        students: [
-          {
-            userId: 'uuid-aluno',
-            enrolledAt: '2024-01-26T00:00:00.000Z',
-            user: {
-              id: 'uuid-aluno',
-              name: 'João Silva',
-              email: 'joao@example.com'
-            }
-          }
-        ],
-        _count: {
-          students: 25,
-          activities: 12
-        },
-        createdAt: '2024-01-26T00:00:00.000Z',
-        updatedAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Turma não encontrada',
-  })
+  @ApiResponse({ status: 200, description: 'Turma encontrada' })
+  @ApiResponse({ status: 403, description: 'Sem acesso a esta turma' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  findOne(@Param('id') id: string) {
-    return this.classesService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.classesService.findOne(id, req.user.id, req.user.role);
   }
 
   @Get(':id/students')
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Listar alunos da turma',
-    description: 'Retorna lista de todos os alunos matriculados na turma'
+    description: 'Professores só podem acessar alunos das próprias turmas.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de alunos retornada',
-    schema: {
-      example: [
-        {
-          userId: 'uuid-aluno',
-          enrolledAt: '2024-01-26T00:00:00.000Z',
-          user: {
-            id: 'uuid-aluno',
-            name: 'João Silva',
-            email: 'joao@example.com',
-            role: 'ALUNO',
-            avatar: '/uploads/avatars/avatar.jpg'
-          }
-        }
-      ]
-    }
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Turma não encontrada',
-  })
+  @ApiResponse({ status: 200, description: 'Lista de alunos retornada' })
+  @ApiResponse({ status: 403, description: 'Sem acesso a esta turma' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  findStudents(@Param('id') id: string) {
-    return this.classesService.findStudentsByClass(id);
+  findStudents(@Param('id') id: string, @Request() req) {
+    return this.classesService.findStudentsByClass(id, req.user.id, req.user.role);
   }
 
   @Delete(':id/students/:userId')
   @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Remover aluno da turma',
-    description: 'Remove a matrícula de um aluno da turma'
+    description: 'Professores só podem remover alunos das próprias turmas.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Aluno removido com sucesso',
-    schema: {
-      example: {
-        message: 'Student successfully unenrolled'
-      }
-    }
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Turma ou matrícula não encontrada',
-  })
+  @ApiResponse({ status: 200, description: 'Aluno removido com sucesso' })
+  @ApiResponse({ status: 403, description: 'Sem acesso a esta turma' })
+  @ApiResponse({ status: 404, description: 'Turma ou matrícula não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  unenrollStudent(@Param('id') id: string, @Param('userId') userId: string) {
-    return this.classesService.unenrollStudent(id, userId);
+  unenrollStudent(@Param('id') id: string, @Param('userId') userId: string, @Request() req) {
+    return this.classesService.unenrollStudent(id, userId, req.user.id, req.user.role);
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Atualizar turma',
-    description: 'Atualiza informações da turma. Pode alterar status para ENCERRADA.'
+    description: 'Professores só podem editar as próprias turmas.'
   })
-  @ApiBody({
-    type: UpdateClassDto,
-    examples: {
-      update: {
-        summary: 'Atualizar nome',
-        value: {
-          name: 'Turma A - Tarde',
-          semester: '2024.2'
-        }
-      },
-      close: {
-        summary: 'Encerrar turma',
-        value: {
-          status: 'ENCERRADA'
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Turma atualizada com sucesso',
-    schema: {
-      example: {
-        id: 'uuid-here',
-        name: 'Turma A - Tarde',
-        semester: '2024.2',
-        year: 2024,
-        status: 'ATIVA',
-        updatedAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Turma não encontrada',
-  })
+  @ApiBody({ type: UpdateClassDto })
+  @ApiResponse({ status: 200, description: 'Turma atualizada com sucesso' })
+  @ApiResponse({ status: 403, description: 'Sem acesso a esta turma' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  update(@Param('id') id: string, @Body() updateClassDto: UpdateClassDto) {
-    return this.classesService.update(id, updateClassDto);
+  update(@Param('id') id: string, @Body() updateClassDto: UpdateClassDto, @Request() req) {
+    return this.classesService.update(id, updateClassDto, req.user.id, req.user.role);
   }
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Remover turma',
-    description: 'Remove permanentemente uma turma. Apenas Admin pode remover. Não permite remover se houver atividades associadas.'
+    description: 'Remove permanentemente uma turma. Apenas Admin pode remover.'
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Turma removida com sucesso',
-    schema: {
-      example: {
-        message: 'Class successfully deleted'
-      }
-    }
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Turma não encontrada',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Não é possível remover turma com atividades associadas',
-  })
+  @ApiResponse({ status: 200, description: 'Turma removida com sucesso' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin)' })
   remove(@Param('id') id: string) {

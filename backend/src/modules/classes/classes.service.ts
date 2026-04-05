@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamificationService } from '../gamification/gamification.service';
@@ -13,7 +14,7 @@ import {
   QueryClassesDto,
   PaginatedClassesDto,
 } from './dto';
-import { Class } from '@prisma/client';
+import { Class, Role } from '@prisma/client';
 
 @Injectable()
 export class ClassesService {
@@ -85,9 +86,12 @@ export class ClassesService {
     return enrollment;
   }
 
-  async create(createClassDto: CreateClassDto): Promise<Class> {
+  async create(createClassDto: CreateClassDto, createdById: string): Promise<Class> {
     return this.prisma.class.create({
-      data: createClassDto,
+      data: {
+        ...createClassDto,
+        createdById,
+      },
       include: {
         _count: {
           select: {
@@ -100,6 +104,8 @@ export class ClassesService {
 
   async findAll(
     query?: QueryClassesDto,
+    userId?: string,
+    userRole?: Role,
   ): Promise<PaginatedClassesDto<Class>> {
     const {
       page = 1,
@@ -136,6 +142,11 @@ export class ClassesService {
       where.status = status;
     }
 
+    // Professor só vê as próprias turmas
+    if (userRole === Role.PROFESSOR && userId) {
+      where.createdById = userId;
+    }
+
     const [classes, total] = await Promise.all([
       this.prisma.class.findMany({
         where,
@@ -158,7 +169,7 @@ export class ClassesService {
     return new PaginatedClassesDto(classes, total, pageNum, limitNum);
   }
 
-  async findOne(id: string): Promise<Class> {
+  async findOne(id: string, userId?: string, userRole?: Role): Promise<Class> {
     const classEntity = await this.prisma.class.findUnique({
       where: { id },
       include: {
@@ -185,16 +196,24 @@ export class ClassesService {
       throw new NotFoundException('Turma não encontrada');
     }
 
+    if (userRole === Role.PROFESSOR && userId && classEntity.createdById !== userId) {
+      throw new ForbiddenException('Você não tem acesso a esta turma');
+    }
+
     return classEntity;
   }
 
-  async findStudentsByClass(classId: string) {
+  async findStudentsByClass(classId: string, userId?: string, userRole?: Role) {
     const classEntity = await this.prisma.class.findUnique({
       where: { id: classId },
     });
 
     if (!classEntity) {
       throw new NotFoundException('Turma não encontrada');
+    }
+
+    if (userRole === Role.PROFESSOR && userId && classEntity.createdById !== userId) {
+      throw new ForbiddenException('Você não tem acesso a esta turma');
     }
 
     const students = await this.prisma.classStudent.findMany({
@@ -218,8 +237,15 @@ export class ClassesService {
     return students;
   }
 
-  async update(id: string, updateClassDto: UpdateClassDto): Promise<Class> {
-    await this.findOne(id);
+  async update(id: string, updateClassDto: UpdateClassDto, userId?: string, userRole?: Role): Promise<Class> {
+    const classEntity = await this.prisma.class.findUnique({ where: { id } });
+    if (!classEntity) {
+      throw new NotFoundException('Turma não encontrada');
+    }
+
+    if (userRole === Role.PROFESSOR && userId && classEntity.createdById !== userId) {
+      throw new ForbiddenException('Você não pode editar esta turma');
+    }
 
     return this.prisma.class.update({
       where: { id },
@@ -235,7 +261,10 @@ export class ClassesService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.findOne(id);
+    const classEntity = await this.prisma.class.findUnique({ where: { id } });
+    if (!classEntity) {
+      throw new NotFoundException('Turma não encontrada');
+    }
 
     await this.prisma.class.delete({
       where: { id },
@@ -245,8 +274,9 @@ export class ClassesService {
   async enrollStudent(
     classId: string,
     enrollStudentDto: EnrollStudentDto,
+    userId?: string,
+    userRole?: Role,
   ): Promise<any> {
-    // Verificar se a turma existe
     const classEntity = await this.prisma.class.findUnique({
       where: { id: classId },
     });
@@ -255,14 +285,16 @@ export class ClassesService {
       throw new NotFoundException('Turma não encontrada');
     }
 
-    // Verificar se a turma está ativa
+    if (userRole === Role.PROFESSOR && userId && classEntity.createdById !== userId) {
+      throw new ForbiddenException('Você não pode matricular alunos nesta turma');
+    }
+
     if (classEntity.status !== 'ATIVA') {
       throw new BadRequestException(
         'Não é possível matricular aluno em turma encerrada',
       );
     }
 
-    // Verificar se o usuário existe e é aluno
     const user = await this.prisma.user.findUnique({
       where: { id: enrollStudentDto.userId },
     });
@@ -277,7 +309,6 @@ export class ClassesService {
       );
     }
 
-    // Verificar se já está matriculado
     const existingEnrollment = await this.prisma.classStudent.findUnique({
       where: {
         classId_userId: {
@@ -291,7 +322,6 @@ export class ClassesService {
       throw new ConflictException('Aluno já matriculado nesta turma');
     }
 
-    // Matricular o aluno
     const enrollment = await this.prisma.classStudent.create({
       data: {
         classId,
@@ -320,8 +350,7 @@ export class ClassesService {
     return enrollment;
   }
 
-  async unenrollStudent(classId: string, userId: string): Promise<void> {
-    // Verificar se a turma existe
+  async unenrollStudent(classId: string, studentUserId: string, userId?: string, userRole?: Role): Promise<void> {
     const classEntity = await this.prisma.class.findUnique({
       where: { id: classId },
     });
@@ -330,12 +359,15 @@ export class ClassesService {
       throw new NotFoundException('Turma não encontrada');
     }
 
-    // Verificar se a matrícula existe
+    if (userRole === Role.PROFESSOR && userId && classEntity.createdById !== userId) {
+      throw new ForbiddenException('Você não pode remover alunos desta turma');
+    }
+
     const enrollment = await this.prisma.classStudent.findUnique({
       where: {
         classId_userId: {
           classId,
-          userId,
+          userId: studentUserId,
         },
       },
     });
@@ -344,12 +376,11 @@ export class ClassesService {
       throw new NotFoundException('Aluno não está matriculado nesta turma');
     }
 
-    // Remover matrícula
     await this.prisma.classStudent.delete({
       where: {
         classId_userId: {
           classId,
-          userId,
+          userId: studentUserId,
         },
       },
     });
@@ -378,5 +409,17 @@ export class ClassesService {
       ...enrollment.class,
       enrolledAt: enrollment.enrolledAt,
     }));
+  }
+
+  async getMyCreatedClasses(userId: string): Promise<any[]> {
+    return this.prisma.class.findMany({
+      where: { createdById: userId },
+      include: {
+        _count: {
+          select: { students: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }

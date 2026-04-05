@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
@@ -68,7 +68,7 @@ export class MissionsService {
     classId?: string;
     type?: MissionType;
     active?: boolean;
-  }) {
+  }, userId?: string, userRole?: string) {
     const where: any = {};
 
     if (filters?.classId) {
@@ -83,6 +83,11 @@ export class MissionsService {
       const now = new Date();
       where.startDate = { lte: now };
       where.endDate = { gte: now };
+    }
+
+    // Professor só vê as próprias missões
+    if (userRole === 'PROFESSOR' && userId) {
+      where.createdById = userId;
     }
 
     return this.prisma.mission.findMany({
@@ -117,8 +122,12 @@ export class MissionsService {
     return mission;
   }
 
-  async update(id: string, updateMissionDto: UpdateMissionDto) {
-    await this.findOne(id);
+  async update(id: string, updateMissionDto: UpdateMissionDto, userId?: string, userRole?: string) {
+    const mission = await this.findOne(id);
+
+    if (userRole === 'PROFESSOR' && userId && mission.createdById !== userId) {
+      throw new ForbiddenException('Você não pode editar esta missão');
+    }
 
     const { startDate, endDate, ...rest } = updateMissionDto;
     const data: any = { ...rest };
@@ -142,8 +151,13 @@ export class MissionsService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, userId?: string, userRole?: string) {
+    const mission = await this.findOne(id);
+
+    if (userRole === 'PROFESSOR' && userId && mission.createdById !== userId) {
+      throw new ForbiddenException('Você não pode remover esta missão');
+    }
+
     return this.prisma.mission.delete({ where: { id } });
   }
 

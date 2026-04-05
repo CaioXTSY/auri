@@ -55,8 +55,8 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Lista de missões retornada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  findAll(@Query() query: QueryMissionsDto) {
-    return this.missionsService.findAll(query);
+  findAll(@Query() query: QueryMissionsDto, @Request() req) {
+    return this.missionsService.findAll(query, req.user.id, req.user.role);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -145,8 +145,8 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  update(@Param('id') id: string, @Body() updateMissionDto: UpdateMissionDto) {
-    return this.missionsService.update(id, updateMissionDto);
+  update(@Param('id') id: string, @Body() updateMissionDto: UpdateMissionDto, @Request() req) {
+    return this.missionsService.update(id, updateMissionDto, req.user.id, req.user.role);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -159,8 +159,8 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  remove(@Param('id') id: string) {
-    return this.missionsService.remove(id);
+  remove(@Param('id') id: string, @Request() req) {
+    return this.missionsService.remove(id, req.user.id, req.user.role);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

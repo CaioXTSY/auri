@@ -65,23 +65,26 @@ model User {
   notifications       Notification[]
   posts               Post[]
   postReplies         PostReply[]
+  createdClasses      Class[]
 
   @@map("users")
 }
 
 model Class {
-  id        String   @id @default(uuid())
-  name      String
-  semester  String
-  year      Int
-  code      String   @unique @default(cuid())
-  status    String   @default("ATIVA")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  name        String
+  semester    String
+  year        Int
+  code        String   @unique @default(cuid())
+  status      String   @default("ATIVA")
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  students ClassStudent[]
-  missions Mission[]
-  posts    Post[]
+  createdBy User?          @relation(fields: [createdById], references: [id])
+  students  ClassStudent[]
+  missions  Mission[]
+  posts     Post[]
 
   @@map("classes")
 }

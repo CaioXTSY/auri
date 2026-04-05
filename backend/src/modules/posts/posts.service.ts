@@ -49,10 +49,20 @@ export class PostsService {
     userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
     classId?: string | null,
   ) {
-    if (userRole === 'ADMIN' || userRole === 'PROFESSOR') {
+    if (userRole === 'ADMIN') {
       return;
     }
     if (!classId) {
+      return;
+    }
+    if (userRole === 'PROFESSOR') {
+      const ownClass = await this.prisma.class.findFirst({
+        where: { id: classId, createdById: userId },
+        select: { id: true },
+      });
+      if (!ownClass) {
+        throw new ForbiddenException('Você não tem acesso a este post');
+      }
       return;
     }
     const enrolled = await this.isStudentEnrolled(userId, classId);
@@ -102,6 +112,14 @@ export class PostsService {
         if (!enrolled) {
           throw new ForbiddenException('Você não tem acesso aos posts desta turma');
         }
+      } else if (userRole === 'PROFESSOR') {
+        const ownClass = await this.prisma.class.findFirst({
+          where: { id: query.classId, createdById: userId },
+          select: { id: true },
+        });
+        if (!ownClass) {
+          throw new ForbiddenException('Você não tem acesso aos posts desta turma');
+        }
       }
     } else if (userRole === 'ALUNO') {
       const enrollments = await this.prisma.classStudent.findMany({
@@ -109,6 +127,13 @@ export class PostsService {
         select: { classId: true },
       });
       const classIds = enrollments.map((enrollment) => enrollment.classId);
+      where.OR = [{ classId: null }, { classId: { in: classIds } }];
+    } else if (userRole === 'PROFESSOR') {
+      const ownClasses = await this.prisma.class.findMany({
+        where: { createdById: userId },
+        select: { id: true },
+      });
+      const classIds = ownClasses.map((c) => c.id);
       where.OR = [{ classId: null }, { classId: { in: classIds } }];
     }
 
