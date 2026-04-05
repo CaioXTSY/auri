@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
+import { MISSIONS_PAGE_SIZE } from '@/constants/app';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ export const MissionsPage = () => {
   const [statusFilter, setStatusFilter] = useState<'ALL' | MissionStatus>('ALL');
   const [availablePage, setAvailablePage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
-  const pageSize = 6;
+  const pageSize = MISSIONS_PAGE_SIZE;
   const { notify } = useToast();
 
   const loadData = useCallback(async () => {

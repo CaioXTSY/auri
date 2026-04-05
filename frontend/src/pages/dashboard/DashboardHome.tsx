@@ -7,6 +7,7 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/stores/auth-store';
 import { dashboardService, type StudentDashboard } from '@/services/dashboard-service';
+import { STREAK_MILESTONES } from '@/constants/app';
 
 export const DashboardHome = () => {
   const user = useAuthStore((state) => state.user);
@@ -266,8 +267,7 @@ export const DashboardHome = () => {
                   </button>
                 );
               }
-              const milestones = [3, 7, 14, 30, 100];
-              const nextMilestone = milestones.find((m) => m > current);
+              const nextMilestone = STREAK_MILESTONES.find((m) => m > current);
               if (!nextMilestone) {
                 return (
                   <p className="text-xs text-amber-300 font-semibold">
@@ -275,7 +275,7 @@ export const DashboardHome = () => {
                   </p>
                 );
               }
-              const prevMilestone = milestones[milestones.indexOf(nextMilestone) - 1] ?? 0;
+              const prevMilestone = STREAK_MILESTONES[STREAK_MILESTONES.indexOf(nextMilestone) - 1] ?? 0;
               const segmentProgress = Math.round(((current - prevMilestone) / (nextMilestone - prevMilestone)) * 100);
               const daysLeft = nextMilestone - current;
               return (
