@@ -98,7 +98,7 @@ export class RankingService {
     }
 
     return this.prisma.ranking.findMany({
-      where,
+      where: { ...where, user: { role: 'ALUNO' } },
       include: {
         user: {
           select: { id: true, name: true, email: true, avatar: true },

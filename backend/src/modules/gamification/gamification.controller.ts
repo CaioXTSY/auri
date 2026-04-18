@@ -35,7 +35,7 @@ export class GamificationController {
    */
 
   @Get('level/me')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
+  @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Obter meu nível atual' })
   @ApiResponse({
     status: 200,
@@ -61,7 +61,7 @@ export class GamificationController {
    */
 
   @Get('achievements/me')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
+  @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Obter minhas conquistas (paginado)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -159,7 +159,7 @@ export class GamificationController {
    */
 
   @Get('stats/me')
-  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
+  @Roles(Role.ALUNO)
   @ApiOperation({
     summary: 'Obter estatísticas completas de gamificação',
     description:
