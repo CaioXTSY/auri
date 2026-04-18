@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
+import { RoleRoute } from '@/components/layouts/RoleRoute';
 
 const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.Home })));
 const Docs = lazy(() => import('@/pages/Docs').then(m => ({ default: m.Docs })));
@@ -46,9 +47,9 @@ function App() {
           <Route
             path="/dashboard/achievements"
             element={
-              <ProtectedRoute>
+              <RoleRoute allow={['ALUNO']}>
                 <AchievementsPage />
-              </ProtectedRoute>
+              </RoleRoute>
             }
           />
           <Route
@@ -86,9 +87,9 @@ function App() {
           <Route
             path="/dashboard/missions"
             element={
-              <ProtectedRoute>
+              <RoleRoute allow={['ALUNO']}>
                 <MissionsPage />
-              </ProtectedRoute>
+              </RoleRoute>
             }
           />
           <Route
@@ -104,25 +105,25 @@ function App() {
           <Route
             path="/dashboard/teacher/classes"
             element={
-              <ProtectedRoute>
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
                 <TeacherClasses />
-              </ProtectedRoute>
+              </RoleRoute>
             }
           />
           <Route
             path="/dashboard/teacher/classes/new"
             element={
-              <ProtectedRoute>
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
                 <CreateClass />
-              </ProtectedRoute>
+              </RoleRoute>
             }
           />
           <Route
             path="/dashboard/teacher/classes/:id"
             element={
-              <ProtectedRoute>
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
                 <TeacherClassDetails />
-              </ProtectedRoute>
+              </RoleRoute>
             }
           />
         </Routes>
