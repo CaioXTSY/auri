@@ -5,8 +5,7 @@ Plataforma web gamificada para apoio ao ensino de programação.
 ```
 auri/
 ├── backend/    # NestJS + Prisma + MySQL
-├── frontend/   # React + Vite + TypeScript
-└── docs/       # Análise de status e issues
+└── frontend/   # React + Vite + TypeScript
 ```
 
 ---
