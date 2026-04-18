@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsIn } from 'class-validator';
 import { Role } from '@prisma/client';
+
+const ALLOWED_ROLES = [Role.ALUNO, Role.PROFESSOR] as const;
+type AllowedRole = (typeof ALLOWED_ROLES)[number];
 
 export class RegisterDto {
   @ApiProperty({ example: 'usuario@example.com' })
@@ -19,8 +22,8 @@ export class RegisterDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ enum: Role, example: Role.ALUNO })
-  @IsEnum(Role)
+  @ApiProperty({ enum: ALLOWED_ROLES, example: Role.ALUNO })
+  @IsIn(ALLOWED_ROLES)
   @IsNotEmpty()
-  role: Role;
+  role: AllowedRole;
 }
