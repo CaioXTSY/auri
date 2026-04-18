@@ -61,11 +61,11 @@ const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, 
           <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} onClick={onNavClick}>
             <MessageSquare className="h-4 w-4" /><span>Postagens</span>
           </Link>
+          <Link to="/dashboard/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/achievements')}`} onClick={onNavClick}>
+            <Trophy className="h-4 w-4" /><span>Gamificação</span>
+          </Link>
         </>
       )}
-      <Link to="/dashboard/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/achievements')}`} onClick={onNavClick}>
-        <Trophy className="h-4 w-4" /><span>Gamificação</span>
-      </Link>
       <Link to="/dashboard/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/settings')}`} onClick={onNavClick}>
         <Settings className="h-4 w-4" /><span>Configurações</span>
       </Link>
@@ -115,6 +115,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }, [user?.id]);
 
   useEffect(() => {
+    if (user?.role !== 'ALUNO') return;
     if (!dailyQuizKey) return;
     if (localStorage.getItem(dailyQuizKey)) return;
     const timeoutId = window.setTimeout(() => setShowDailyQuiz(true), 0);
@@ -122,9 +123,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [dailyQuizKey]);
+  }, [dailyQuizKey, user?.role]);
 
   useEffect(() => {
+    if (user?.role !== 'ALUNO') return;
     const handleOpenDailyQuiz = () => {
       setShowDailyQuiz(true);
     };
@@ -132,7 +134,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return () => {
       window.removeEventListener('open-daily-quiz', handleOpenDailyQuiz);
     };
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     let isMounted = true;
