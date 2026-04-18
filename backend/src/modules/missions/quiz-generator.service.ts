@@ -53,15 +53,48 @@ export class QuizGeneratorService {
     }
 
     const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
-    const targetDifficulty = await this.getTargetDailyDifficulty();
+    const [targetDifficulty, recentQuizzes] = await Promise.all([
+      this.getTargetDailyDifficulty(),
+      this.getRecentQuizSummaries(14),
+    ]);
+
+    const LANGUAGES = ['Python', 'JavaScript', 'Java', 'C', 'C++'];
+    const TOPICS = [
+      'escopo de variáveis', 'closures', 'herança e polimorfismo', 'estruturas de dados (lista, pilha, fila, árvore)',
+      'complexidade de algoritmos (Big-O)', 'ponteiros e gerenciamento de memória', 'concorrência e threads',
+      'expressões regulares', 'recursão com memoização', 'manipulação de strings', 'operadores bit a bit',
+      'tratamento de exceções', 'programação funcional (map/filter/reduce)', 'generics e tipos parametrizados',
+      'algoritmos de ordenação', 'busca binária', 'grafos (BFS/DFS)', 'hashing e colisões',
+    ];
+
+    const usedLanguages = recentQuizzes.map((q) => q.language).filter(Boolean);
+    const preferredLanguages = LANGUAGES.filter((l) => !usedLanguages.slice(0, 3).includes(l));
+    const languageHint = preferredLanguages.length > 0
+      ? preferredLanguages.slice(0, 3).join(', ')
+      : LANGUAGES.join(', ');
+
+    const recentTopicsBlock = recentQuizzes.length > 0
+      ? [
+          'QUESTÕES RECENTES (NÃO REPITA estes temas, títulos ou estruturas de código):',
+          ...recentQuizzes.map((q, i) => `  ${i + 1}. [${q.language ?? '?'}] ${q.title} — ${q.topic}`),
+          '',
+        ].join('\n')
+      : '';
+
+    const randomTopic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+
     const prompt = [
       'Gere um quiz diário de programação em português para alunos de graduação em computação.',
       `Nível alvo: ${targetDifficulty}.`,
-      'FOCO: Raciocínio lógico, análise de fluxo de execução, depuração e semântica de linguagens (Python, JavaScript, Java, C/C++).',
+      `LINGUAGEM PREFERIDA para esta questão (escolha uma): ${languageHint}.`,
+      `TÓPICO SUGERIDO (use este ou algo igualmente distinto dos recentes): ${randomTopic}.`,
+      '',
+      recentTopicsBlock,
+      'FOCO: Raciocínio lógico, análise de fluxo de execução, depuração e semântica de linguagens.',
       'REGRAS TÉCNICAS CRÍTICAS:',
       '1. PRECISÃO SEMÂNTICA: Se o código fornecido resultar em erro (TypeError, SyntaxError, ReferenceError, etc.), a resposta correta DEVE ser o erro correspondente.',
       '2. SEM ALUCINAÇÃO: Não invente saídas para códigos que falham. Analise rigorosamente os tipos e a sintaxe.',
-      '3. CÓDIGO REALISTA: Use trechos de código que testem conceitos como escopo, tipos, closures, referências, recursão ou estruturas de dados.',
+      '3. VARIEDADE OBRIGATÓRIA: A questão DEVE ser sobre um tópico diferente de todos os listados acima. Não use fatorial, soma de tipos mistos nem qualquer exemplo já citado.',
       '4. FORMATO: Retorne apenas JSON válido no formato exato:',
       '{',
       '"title": "Título curto e instigante",',
@@ -222,6 +255,31 @@ export class QuizGeneratorService {
       throw new BadRequestException('Resposta inválida da IA');
     }
     return JSON.parse(match[0]);
+  }
+
+  private async getRecentQuizSummaries(days: number): Promise<{ title: string; topic: string; language: string | null }[]> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const quizzes = await this.prisma.missionQuiz.findMany({
+      where: {
+        mission: {
+          type: 'DIARIA',
+          startDate: { gte: cutoff },
+        },
+      },
+      select: { title: true, question: true },
+      orderBy: { id: 'desc' },
+      take: days,
+    });
+
+    return quizzes.map((q) => {
+      const languageMatch = q.question.match(/\b(Python|JavaScript|Java|C\+\+|C(?!#|\+))\b/i);
+      const language = languageMatch ? languageMatch[1] : null;
+      const topicMatch = q.question.match(/(?:def |function |class |public |void |int |str |let |const )?(\w[\w\s]{3,40}?)(?:\(|:|\n|\.)/);
+      const topic = topicMatch ? topicMatch[1].trim() : q.title;
+      return { title: q.title, topic, language };
+    });
   }
 
   private async getTargetDailyDifficulty(): Promise<Difficulty> {
