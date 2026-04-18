@@ -7,6 +7,8 @@ const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.Home })))
 const Docs = lazy(() => import('@/pages/Docs').then(m => ({ default: m.Docs })));
 const Login = lazy(() => import('@/pages/auth/Login').then(m => ({ default: m.Login })));
 const Register = lazy(() => import('@/pages/auth/Register').then(m => ({ default: m.Register })));
+const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
+const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const DashboardHome = lazy(() => import('@/pages/dashboard/DashboardHome').then(m => ({ default: m.DashboardHome })));
 const MyClasses = lazy(() => import('@/pages/dashboard/MyClasses').then(m => ({ default: m.MyClasses })));
 const ClassDetails = lazy(() => import('@/pages/dashboard/ClassDetails').then(m => ({ default: m.ClassDetails })));
@@ -34,6 +36,8 @@ function App() {
           <Route path="/docs" element={<Docs />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Rotas Comuns / Aluno */}
           <Route
