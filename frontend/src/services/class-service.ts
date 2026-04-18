@@ -20,6 +20,19 @@ export interface CreateClassDto {
   year: number;
 }
 
+export interface StudentInClass {
+  classId: string;
+  studentId: string;
+  enrolledAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    role: string;
+  };
+}
+
 export const classService = {
   getAllClasses: async (): Promise<Class[]> => {
     const response = await api.get<{ data: Class[] }>('/classes');
@@ -44,5 +57,14 @@ export const classService = {
   joinClass: async (code: string): Promise<{ class: Class }> => {
     const response = await api.post<{ class: Class }>('/classes/join', { code });
     return response.data;
+  },
+
+  getStudents: async (classId: string): Promise<StudentInClass[]> => {
+    const response = await api.get<StudentInClass[]>(`/classes/${classId}/students`);
+    return response.data;
+  },
+
+  removeStudent: async (classId: string, userId: string): Promise<void> => {
+    await api.delete(`/classes/${classId}/students/${userId}`);
   },
 };
