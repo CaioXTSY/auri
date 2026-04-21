@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Role } from '@prisma/client';
 import { NotificationsGateway } from './notifications.gateway';
 
 @Injectable()
@@ -98,5 +98,44 @@ export class NotificationsService {
     this.gateway.emitToUser(input.userId, notification);
 
     return notification;
+  }
+
+  async createBroadcast(input: {
+    type: NotificationType;
+    title: string;
+    message: string;
+    targetRole?: Role;
+  }) {
+    const users = await this.prisma.user.findMany({
+      where: input.targetRole ? { role: input.targetRole } : undefined,
+      select: { id: true },
+    });
+
+    if (users.length === 0) {
+      return { count: 0 };
+    }
+
+    const now = new Date();
+    await this.prisma.notification.createMany({
+      data: users.map((u) => ({
+        userId: u.id,
+        type: input.type,
+        title: input.title,
+        message: input.message,
+        createdAt: now,
+      })),
+    });
+
+    for (const u of users) {
+      this.gateway.emitToUser(u.id, {
+        type: input.type,
+        title: input.title,
+        message: input.message,
+        createdAt: now,
+        read: false,
+      });
+    }
+
+    return { count: users.length };
   }
 }

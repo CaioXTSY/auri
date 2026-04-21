@@ -11,6 +11,7 @@ import { MissionsModule } from './modules/missions/missions.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PostsModule } from './modules/posts/posts.module';
     DashboardModule,
     NotificationsModule,
     PostsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
