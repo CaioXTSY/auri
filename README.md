@@ -73,20 +73,3 @@ Swagger: `http://localhost:3001/api/v1/docs`
 Rotas: `/auth` `/users` `/classes` `/gamification` `/missions` `/notifications` `/posts` `/dashboard`
 
 ---
-
-## Estado atual
-
-**Implementado**
-- Auth completo: registro, login, refresh token, forgot/reset password
-- Turmas: CRUD, matrícula, remoção de alunos
-- Gamificação: XP, níveis, conquistas, ranking global/turma
-- Missões diárias/semanais com quiz gerado por IA (CRON + OpenAI)
-- Notificações em tempo real (WebSocket)
-- Posts/fórum por turma (com editor Monaco)
-- Dashboard do aluno e dashboard do professor
-
-**Pendente**
-- Módulo de Atividades e Submissões — sem model no banco, sem endpoints, sem UI
-- Criação de missões personalizadas pelo professor via UI
-- Painel admin
-- Autenticação JWT no WebSocket de notificações (aceita `userId` sem verificar token)
