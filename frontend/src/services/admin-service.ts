@@ -1,12 +1,27 @@
 import api from '@/lib/api';
 
 export interface AdminStats {
-  users: { total: number; byRole: Record<string, number>; newLast7d: number };
+  users: { total: number; byRole: Record<string, number>; newLast7d: number; activeLast7d: number };
   classes: { total: number };
   missions: { byType: Record<string, number>; createdToday: number };
   posts: { total: number };
   achievements: { total: number };
   aiGenerations: { last7d: number };
+  quiz: { totalAttempts: number; correctAttempts: number; accuracy: number };
+  streaks: { averageCurrent: number };
+}
+
+export interface TimeseriesPoint {
+  date: string;
+  users: number;
+  missions: number;
+  correct: number;
+  wrong: number;
+}
+
+export interface TopLists {
+  topClasses: Array<{ id: string; name: string; label: string; students: number }>;
+  topAchievements: Array<{ id: string; name: string; category: string; points: number; unlocks: number }>;
 }
 
 export interface Achievement {
@@ -92,6 +107,16 @@ export interface BroadcastPayload {
 export const adminService = {
   getStats: async (): Promise<AdminStats> => {
     const { data } = await api.get<AdminStats>('/admin/stats');
+    return data;
+  },
+
+  getTimeseries: async (): Promise<TimeseriesPoint[]> => {
+    const { data } = await api.get<TimeseriesPoint[]>('/admin/stats/timeseries');
+    return data;
+  },
+
+  getTopLists: async (): Promise<TopLists> => {
+    const { data } = await api.get<TopLists>('/admin/stats/top');
     return data;
   },
 

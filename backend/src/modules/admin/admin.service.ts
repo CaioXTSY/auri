@@ -23,6 +23,10 @@ export class AdminService {
       aiGenerationsLast7d,
       newUsersLast7d,
       missionsCreatedToday,
+      quizAttemptsTotal,
+      quizAttemptsCorrect,
+      activeUsersLast7d,
+      streakAgg,
     ] = await Promise.all([
       this.prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
       this.prisma.class.count(),
@@ -32,15 +36,30 @@ export class AdminService {
       this.prisma.aIGeneration.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
       this.prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
       this.prisma.mission.count({ where: { createdAt: { gte: startOfToday } } }),
+      this.prisma.missionQuizAttempt.count(),
+      this.prisma.missionQuizAttempt.count({ where: { isCorrect: true } }),
+      this.prisma.missionQuizAttempt
+        .findMany({
+          where: { answeredAt: { gte: sevenDaysAgo } },
+          distinct: ['userId'],
+          select: { userId: true },
+        })
+        .then((rows) => rows.length),
+      this.prisma.user.aggregate({
+        where: { role: 'ALUNO' },
+        _avg: { currentStreak: true },
+      }),
     ]);
 
     const usersTotal = usersByRole.reduce((acc, u) => acc + u._count._all, 0);
+    const quizAccuracy = quizAttemptsTotal > 0 ? quizAttemptsCorrect / quizAttemptsTotal : 0;
 
     return {
       users: {
         total: usersTotal,
         byRole: Object.fromEntries(usersByRole.map((u) => [u.role, u._count._all])),
         newLast7d: newUsersLast7d,
+        activeLast7d: activeUsersLast7d,
       },
       classes: { total: classesCount },
       missions: {
@@ -50,6 +69,104 @@ export class AdminService {
       posts: { total: postsCount },
       achievements: { total: achievementsCount },
       aiGenerations: { last7d: aiGenerationsLast7d },
+      quiz: {
+        totalAttempts: quizAttemptsTotal,
+        correctAttempts: quizAttemptsCorrect,
+        accuracy: Number(quizAccuracy.toFixed(4)),
+      },
+      streaks: {
+        averageCurrent: Number((streakAgg._avg.currentStreak ?? 0).toFixed(2)),
+      },
+    };
+  }
+
+  async getTimeseries(days = 30) {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    start.setDate(start.getDate() - (days - 1));
+
+    const [users, missions, attempts] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { createdAt: { gte: start } },
+        select: { createdAt: true },
+      }),
+      this.prisma.mission.findMany({
+        where: { createdAt: { gte: start } },
+        select: { createdAt: true },
+      }),
+      this.prisma.missionQuizAttempt.findMany({
+        where: { answeredAt: { gte: start } },
+        select: { answeredAt: true, isCorrect: true },
+      }),
+    ]);
+
+    const toKey = (d: Date) => d.toISOString().slice(0, 10);
+    const buckets: Record<string, { users: number; missions: number; correct: number; wrong: number }> = {};
+
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      buckets[toKey(d)] = { users: 0, missions: 0, correct: 0, wrong: 0 };
+    }
+
+    for (const u of users) {
+      const key = toKey(u.createdAt);
+      if (buckets[key]) buckets[key].users++;
+    }
+    for (const m of missions) {
+      const key = toKey(m.createdAt);
+      if (buckets[key]) buckets[key].missions++;
+    }
+    for (const a of attempts) {
+      const key = toKey(a.answeredAt);
+      if (!buckets[key]) continue;
+      if (a.isCorrect) buckets[key].correct++;
+      else buckets[key].wrong++;
+    }
+
+    return Object.entries(buckets).map(([date, v]) => ({ date, ...v }));
+  }
+
+  async getTopLists() {
+    const [classes, achievements] = await Promise.all([
+      this.prisma.class.findMany({
+        take: 5,
+        orderBy: { students: { _count: 'desc' } },
+        select: {
+          id: true,
+          name: true,
+          semester: true,
+          year: true,
+          _count: { select: { students: true } },
+        },
+      }),
+      this.prisma.achievement.findMany({
+        take: 5,
+        orderBy: { userAchievements: { _count: 'desc' } },
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          points: true,
+          _count: { select: { userAchievements: true } },
+        },
+      }),
+    ]);
+
+    return {
+      topClasses: classes.map((c) => ({
+        id: c.id,
+        name: c.name,
+        label: `${c.semester} / ${c.year}`,
+        students: c._count.students,
+      })),
+      topAchievements: achievements.map((a) => ({
+        id: a.id,
+        name: a.name,
+        category: a.category,
+        points: a.points,
+        unlocks: a._count.userAchievements,
+      })),
     };
   }
 

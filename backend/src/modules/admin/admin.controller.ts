@@ -38,6 +38,18 @@ export class AdminController {
     return this.adminService.getStats();
   }
 
+  @Get('stats/timeseries')
+  @ApiOperation({ summary: 'Séries diárias (usuários, missões, quiz) dos últimos 30 dias' })
+  getTimeseries() {
+    return this.adminService.getTimeseries(30);
+  }
+
+  @Get('stats/top')
+  @ApiOperation({ summary: 'Top 5 turmas e conquistas' })
+  getTopLists() {
+    return this.adminService.getTopLists();
+  }
+
   @Get('ai-generations')
   @ApiOperation({ summary: 'Listar gerações de IA (auditoria)' })
   listAIGenerations(@Query() query: ListAIGenerationsDto) {
