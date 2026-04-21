@@ -20,6 +20,13 @@ const PostsPage = lazy(() => import('@/pages/dashboard/PostsPage').then(m => ({ 
 const TeacherClasses = lazy(() => import('@/pages/teacher/TeacherClasses').then(m => ({ default: m.TeacherClasses })));
 const CreateClass = lazy(() => import('@/pages/teacher/CreateClass').then(m => ({ default: m.CreateClass })));
 const TeacherClassDetails = lazy(() => import('@/pages/teacher/TeacherClassDetails').then(m => ({ default: m.TeacherClassDetails })));
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
+const AdminClasses = lazy(() => import('@/pages/admin/AdminClasses').then(m => ({ default: m.AdminClasses })));
+const AdminMissions = lazy(() => import('@/pages/admin/AdminMissions').then(m => ({ default: m.AdminMissions })));
+const AdminAchievements = lazy(() => import('@/pages/admin/AdminAchievements').then(m => ({ default: m.AdminAchievements })));
+const AdminAIGenerations = lazy(() => import('@/pages/admin/AdminAIGenerations').then(m => ({ default: m.AdminAIGenerations })));
+const AdminNotifications = lazy(() => import('@/pages/admin/AdminNotifications').then(m => ({ default: m.AdminNotifications })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-100">
@@ -130,6 +137,15 @@ function App() {
               </RoleRoute>
             }
           />
+
+          {/* Rotas do Admin */}
+          <Route path="/admin" element={<RoleRoute allow={['ADMIN']}><AdminDashboard /></RoleRoute>} />
+          <Route path="/admin/users" element={<RoleRoute allow={['ADMIN']}><AdminUsers /></RoleRoute>} />
+          <Route path="/admin/classes" element={<RoleRoute allow={['ADMIN']}><AdminClasses /></RoleRoute>} />
+          <Route path="/admin/missions" element={<RoleRoute allow={['ADMIN']}><AdminMissions /></RoleRoute>} />
+          <Route path="/admin/achievements" element={<RoleRoute allow={['ADMIN']}><AdminAchievements /></RoleRoute>} />
+          <Route path="/admin/ai-generations" element={<RoleRoute allow={['ADMIN']}><AdminAIGenerations /></RoleRoute>} />
+          <Route path="/admin/notifications" element={<RoleRoute allow={['ADMIN']}><AdminNotifications /></RoleRoute>} />
         </Routes>
       </Suspense>
     </Router>

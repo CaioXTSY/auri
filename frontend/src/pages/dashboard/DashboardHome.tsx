@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Sparkles, Trophy, Medal, Target, BookOpen, Plus, Users, MessageSquare } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -171,7 +171,7 @@ export const DashboardHome = () => {
   } = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: () => dashboardService.getStudentDashboard(),
-    enabled: user?.role !== 'PROFESSOR',
+    enabled: user?.role === 'ALUNO',
   });
 
   const levelInfo = dashboardData?.level ?? null;
@@ -191,6 +191,10 @@ export const DashboardHome = () => {
   const openDailyQuiz = () => {
     window.dispatchEvent(new Event('open-daily-quiz'));
   };
+
+  if (user?.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
+  }
 
   if (user?.role === 'PROFESSOR') {
     return <ProfessorDashboard firstName={firstName} />;

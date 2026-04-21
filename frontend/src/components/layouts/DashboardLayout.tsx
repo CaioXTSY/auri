@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu, Users, GraduationCap, Target, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
@@ -35,7 +35,31 @@ const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, 
     </div>
 
     <nav className="flex-1 px-3 py-6 space-y-1 text-sm font-medium overflow-y-auto">
-      {userRole === 'PROFESSOR' ? (
+      {userRole === 'ADMIN' ? (
+        <>
+          <Link to="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin')}`} onClick={onNavClick}>
+            <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
+          </Link>
+          <Link to="/admin/users" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/users')}`} onClick={onNavClick}>
+            <Users className="h-4 w-4" /><span>Usuários</span>
+          </Link>
+          <Link to="/admin/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/classes')}`} onClick={onNavClick}>
+            <GraduationCap className="h-4 w-4" /><span>Turmas</span>
+          </Link>
+          <Link to="/admin/missions" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/missions')}`} onClick={onNavClick}>
+            <Target className="h-4 w-4" /><span>Missões</span>
+          </Link>
+          <Link to="/admin/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/achievements')}`} onClick={onNavClick}>
+            <Trophy className="h-4 w-4" /><span>Conquistas</span>
+          </Link>
+          <Link to="/admin/ai-generations" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/ai-generations')}`} onClick={onNavClick}>
+            <Sparkles className="h-4 w-4" /><span>Gerações IA</span>
+          </Link>
+          <Link to="/admin/notifications" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/notifications')}`} onClick={onNavClick}>
+            <Bell className="h-4 w-4" /><span>Broadcast</span>
+          </Link>
+        </>
+      ) : userRole === 'PROFESSOR' ? (
         <>
           <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} onClick={onNavClick}>
             <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
@@ -79,7 +103,7 @@ const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, 
         <div className="flex flex-col">
           <span className="text-sm font-semibold">{firstName}</span>
           <span className="text-[11px] text-slate-400 uppercase tracking-wide">
-            {userRole === 'PROFESSOR' ? 'Professor' : 'Aluno'}
+            {userRole === 'ADMIN' ? 'Admin' : userRole === 'PROFESSOR' ? 'Professor' : 'Aluno'}
           </span>
         </div>
       </div>
@@ -318,7 +342,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
-                {user?.role === 'PROFESSOR' ? 'Painel do Professor' : 'Painel do Aluno'}
+                {user?.role === 'ADMIN' ? 'Painel Admin' : user?.role === 'PROFESSOR' ? 'Painel do Professor' : 'Painel do Aluno'}
               </span>
               <span className="text-lg md:text-xl font-display font-bold text-brand-900">
                 Olá, {firstName}
@@ -330,7 +354,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="hidden sm:flex flex-col items-end text-xs text-slate-500">
               <span className="font-semibold text-slate-700">{user?.email}</span>
               <span className="uppercase tracking-widest">
-                {user?.role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
+                {user?.role === 'ADMIN' ? 'Admin' : user?.role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
               </span>
               {user?.role === 'ALUNO' && userStats && (
                 <span className="mt-1 text-[11px] text-slate-500 flex items-center gap-1">
