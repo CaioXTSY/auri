@@ -21,10 +21,23 @@ async function bootstrap() {
   app.setGlobalPrefix(apiPrefix);
 
   // CORS
-  const corsEnv = process.env.CORS_ORIGINS || process.env.FRONTEND_URL || '';
+  const corsEnv =
+    process.env.CORS_ORIGINS ||
+    process.env.CORS_ORIGIN ||
+    process.env.FRONTEND_URL ||
+    '';
   const allowedOrigins = corsEnv
-    ? corsEnv.split(',').map((o) => o.trim())
+    ? corsEnv
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:3000'];
+
+  const port = process.env.PORT || '3001';
+  const localBackendOrigin = `http://localhost:${port}`;
+  if (!allowedOrigins.includes(localBackendOrigin)) {
+    allowedOrigins.push(localBackendOrigin);
+  }
 
   const backendUrl = process.env.BACKEND_URL || '';
   if (backendUrl && !allowedOrigins.includes(backendUrl)) {
@@ -73,8 +86,8 @@ async function bootstrap() {
   // Enable shutdown hooks
   app.enableShutdownHooks();
 
-  const port = process.env.PORT || 3001;
-  await app.listen(port);
+  const numericPort = Number(port);
+  await app.listen(numericPort);
 
   console.log(`\n🚀 Application is running on: http://localhost:${port}`);
   console.log(`📚 Swagger docs: http://localhost:${port}/${apiPrefix}/docs\n`);
