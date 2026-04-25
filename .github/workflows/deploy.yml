@@ -13,28 +13,22 @@ jobs:
       - name: Extrair configurações
         run: |
           echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
-          echo "SSH_HOST=$(echo '${{ secrets.SSH_CONFIG }}' | jq -r '.host')" >> $GITHUB_ENV
-          echo "SSH_USER=$(echo '${{ secrets.SSH_CONFIG }}' | jq -r '.username')" >> $GITHUB_ENV
-          echo "SSH_PASS=$(echo '${{ secrets.SSH_CONFIG }}' | jq -r '.password')" >> $GITHUB_ENV
-          echo "SSH_PORT=$(echo '${{ secrets.SSH_CONFIG }}' | jq -r '.port')" >> $GITHUB_ENV
-          echo "SSH_PATH=$(echo '${{ secrets.SSH_CONFIG }}' | jq -r '.path')" >> $GITHUB_ENV
-          echo "TOKEN_GITHUB=$(echo '${{ secrets.SSH_CONFIG }}' | jq -r '.tokengithub')" >> $GITHUB_ENV
-      
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          TOKEN_GITHUB: ${{ env.TOKEN_GITHUB }}
-          COMMIT_HASH: ${{ github.sha }}
-          REPO_NAME: ${{ env.REPO_NAME }}
-          SSH_PATH: ${{ env.SSH_PATH }}
         with:
-          host: ${{ env.SSH_HOST }}
-          username: ${{ env.SSH_USER }}
-          password: ${{ env.SSH_PASS }}
-          port: ${{ env.SSH_PORT }}
-          envs: TOKEN_GITHUB,COMMIT_HASH,REPO_NAME,SSH_PATH
+          host: ${{ fromJSON(secrets.SSH_CONFIG).host }}
+          username: ${{ fromJSON(secrets.SSH_CONFIG).username }}
+          password: ${{ fromJSON(secrets.SSH_CONFIG).password }}
+          port: ${{ fromJSON(secrets.SSH_CONFIG).port || 22 }}
           script: |
+            TOKEN_GITHUB="${{ fromJSON(secrets.SSH_CONFIG).tokengithub }}"
+            SSH_PATH="${{ fromJSON(secrets.SSH_CONFIG).path }}"
+            COMMIT_HASH="${{ github.sha }}"
+            REPO_NAME="${{ env.REPO_NAME }}"
             AMBIENTE="prod"
-            cd ${SSH_PATH}${AMBIENTE}
-            # Executa usando 'bash' para ignorar problemas de permissão
-            bash ${REPO_NAME}.sh "$COMMIT_HASH" "$REPO_NAME" "main" "$AMBIENTE" "$TOKEN_GITHUB"
+            
+            cd ${SSH_PATH}
+            bash auri_deploy.sh "$COMMIT_HASH" "$REPO_NAME" "main" "$AMBIENTE" "$TOKEN_GITHUB"
+        env:
+          REPO_NAME: ${{ env.REPO_NAME }}
