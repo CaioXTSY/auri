@@ -44,9 +44,11 @@ async function bootstrap() {
     allowedOrigins.push(backendUrl);
   }
 
+  const allowAllOrigins = allowedOrigins.includes('*');
+
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowAllOrigins || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`Origin not allowed: ${origin}`));
