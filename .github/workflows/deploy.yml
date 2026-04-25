@@ -1,0 +1,28 @@
+name: Auri Deploy
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Remote Deploy Script
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ json(secrets.SSH_CONFIG).host }}
+          username: ${{ json(secrets.SSH_CONFIG).username }}
+          password: ${{ json(secrets.SSH_CONFIG).password }}
+          port: ${{ json(secrets.SSH_CONFIG).port }}
+          script: |
+            bash ${{ json(secrets.SSH_CONFIG).path }}auri_deploy.sh \
+            ${{ github.sha }} \
+            ${{ github.event.repository.name }} \
+            ${{ github.ref_name }} \
+            prod \
+            ${{ json(secrets.SSH_CONFIG).tokengithub }}
