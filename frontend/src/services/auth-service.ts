@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { LoginResponse, RegisterResponse } from '@/types/api';
+import type { AuthTokens, LoginResponse, RegisterResponse } from '@/types/api';
 import type { LoginDto, RegisterDto } from '@/types/auth';
 
 export const authService = {
@@ -15,6 +15,11 @@ export const authService = {
 
   me: async () => {
     const response = await api.get('/users/me');
+    return response.data;
+  },
+
+  refresh: async (): Promise<AuthTokens> => {
+    const response = await api.post<AuthTokens>('/auth/refresh');
     return response.data;
   },
 

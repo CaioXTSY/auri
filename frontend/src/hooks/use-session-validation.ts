@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/auth-store';
 
 export const useSessionValidation = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const token = useAuthStore((state) => state.token);
   const logout = useAuthStore((state) => state.logout);
   const updateUser = useAuthStore((state) => state.updateUser);
   const [isValidating, setIsValidating] = useState(isAuthenticated);
@@ -18,8 +17,17 @@ export const useSessionValidation = () => {
       };
     }
 
-    authService
-      .me()
+    const validateSession = async () => {
+      const currentToken = useAuthStore.getState().token;
+      if (!currentToken) {
+        const tokens = await authService.refresh();
+        useAuthStore.getState().setToken(tokens.access_token);
+      }
+
+      return authService.me();
+    };
+
+    validateSession()
       .then((user) => {
         if (!cancelled) {
           updateUser(user);
@@ -39,7 +47,7 @@ export const useSessionValidation = () => {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, logout, token, updateUser]);
+  }, [isAuthenticated, logout, updateUser]);
 
   return isAuthenticated && isValidating;
 };
