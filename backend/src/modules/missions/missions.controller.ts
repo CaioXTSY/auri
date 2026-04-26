@@ -126,12 +126,13 @@ export class MissionsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Get(':id')
+  @Roles('ADMIN', 'PROFESSOR')
   @ApiOperation({ summary: 'Buscar missão por ID' })
   @ApiResponse({ status: 200, description: 'Missão retornada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  findOne(@Param('id') id: string) {
-    return this.missionsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.missionsService.findOne(id, req.user.id, req.user.role);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

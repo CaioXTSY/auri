@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationType, Role } from '@prisma/client';
 import { NotificationsGateway } from './notifications.gateway';
@@ -85,7 +85,14 @@ export class NotificationsService {
     type: NotificationType;
     title: string;
     message: string;
+  }, actor?: {
+    id: string;
+    role: Role;
   }) {
+    if (actor) {
+      await this.ensureCanCreateNotification(actor, input.userId);
+    }
+
     const notification = await this.prisma.notification.create({
       data: {
         userId: input.userId,
@@ -98,6 +105,42 @@ export class NotificationsService {
     this.gateway.emitToUser(input.userId, notification);
 
     return notification;
+  }
+
+  private async ensureCanCreateNotification(
+    actor: { id: string; role: Role },
+    recipientUserId: string,
+  ) {
+    if (actor.role === Role.ADMIN) {
+      const recipient = await this.prisma.user.findUnique({
+        where: { id: recipientUserId },
+        select: { id: true },
+      });
+
+      if (!recipient) {
+        throw new NotFoundException('Usuário destinatário não encontrado');
+      }
+      return;
+    }
+
+    if (actor.role !== Role.PROFESSOR) {
+      throw new ForbiddenException('Sem permissão para criar notificação');
+    }
+
+    const enrollmentInOwnClass = await this.prisma.classStudent.findFirst({
+      where: {
+        userId: recipientUserId,
+        user: { role: Role.ALUNO },
+        class: { createdById: actor.id },
+      },
+      select: { userId: true },
+    });
+
+    if (!enrollmentInOwnClass) {
+      throw new ForbiddenException(
+        'Professor só pode notificar alunos matriculados em suas turmas',
+      );
+    }
   }
 
   async createBroadcast(input: {

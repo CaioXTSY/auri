@@ -102,7 +102,7 @@ export class MissionsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string, userRole?: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id },
       include: {
@@ -119,11 +119,15 @@ export class MissionsService {
       throw new NotFoundException(`Missão com ID ${id} não encontrada`);
     }
 
+    if (userRole === 'PROFESSOR' && userId && mission.createdById !== userId) {
+      throw new ForbiddenException('Você não tem acesso a esta missão');
+    }
+
     return mission;
   }
 
   async update(id: string, updateMissionDto: UpdateMissionDto, userId?: string, userRole?: string) {
-    const mission = await this.findOne(id);
+    const mission = await this.findOne(id, userId, userRole);
 
     if (userRole === 'PROFESSOR' && userId && mission.createdById !== userId) {
       throw new ForbiddenException('Você não pode editar esta missão');
@@ -152,7 +156,7 @@ export class MissionsService {
   }
 
   async remove(id: string, userId?: string, userRole?: string) {
-    const mission = await this.findOne(id);
+    const mission = await this.findOne(id, userId, userRole);
 
     if (userRole === 'PROFESSOR' && userId && mission.createdById !== userId) {
       throw new ForbiddenException('Você não pode remover esta missão');

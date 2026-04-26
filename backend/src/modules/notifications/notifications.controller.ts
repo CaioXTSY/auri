@@ -181,7 +181,7 @@ export class NotificationsController {
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  create(@Body() body: CreateNotificationDto) {
-    return this.notificationsService.createNotification(body);
+  create(@Body() body: CreateNotificationDto, @Request() req) {
+    return this.notificationsService.createNotification(body, req.user);
   }
 }

@@ -147,6 +147,12 @@ export class ClassesService {
       where.createdById = userId;
     }
 
+    if (userRole === Role.ALUNO && userId) {
+      where.students = {
+        some: { userId },
+      };
+    }
+
     const [classes, total] = await Promise.all([
       this.prisma.class.findMany({
         where,
@@ -200,6 +206,14 @@ export class ClassesService {
       throw new ForbiddenException('Você não tem acesso a esta turma');
     }
 
+    if (
+      userRole === Role.ALUNO &&
+      userId &&
+      !classEntity.students.some((student) => student.user.id === userId)
+    ) {
+      throw new ForbiddenException('Você não tem acesso a esta turma');
+    }
+
     return classEntity;
   }
 
@@ -214,6 +228,22 @@ export class ClassesService {
 
     if (userRole === Role.PROFESSOR && userId && classEntity.createdById !== userId) {
       throw new ForbiddenException('Você não tem acesso a esta turma');
+    }
+
+    if (userRole === Role.ALUNO && userId) {
+      const enrollment = await this.prisma.classStudent.findUnique({
+        where: {
+          classId_userId: {
+            classId,
+            userId,
+          },
+        },
+        select: { classId: true },
+      });
+
+      if (!enrollment) {
+        throw new ForbiddenException('Você não tem acesso a esta turma');
+      }
     }
 
     const students = await this.prisma.classStudent.findMany({
