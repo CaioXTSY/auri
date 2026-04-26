@@ -1,8 +1,9 @@
 import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu, Users, GraduationCap, Target, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
+import { authService } from '@/services/auth-service';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
 import { notificationsService, type NotificationItem } from '@/services/notifications-service';
 
@@ -15,7 +16,7 @@ interface SidebarContentProps {
   firstName: string;
   initials: string;
   isActive: (path: string) => string;
-  logout: () => void;
+  logout: () => void | Promise<void>;
   onNavClick: () => void;
 }
 
@@ -122,6 +123,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const location = useLocation();
+  const navigate = useNavigate();
   const [showDailyQuiz, setShowDailyQuiz] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
@@ -292,13 +294,23 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }, [location.pathname]);
 
   const onNavClick = useCallback(() => setMobileMenuOpen(false), []);
+  const handleLogout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // Local cleanup must happen even if the remote session is already invalid.
+    } finally {
+      logout();
+      navigate('/login', { replace: true });
+    }
+  }, [logout, navigate]);
 
   const sidebarProps = {
     userRole: user?.role,
     firstName,
     initials,
     isActive,
-    logout,
+    logout: handleLogout,
     onNavClick,
   };
 
