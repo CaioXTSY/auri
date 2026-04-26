@@ -8,6 +8,7 @@ import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquare } from 'lucide-react';
+import { getAssetUrl } from '@/lib/assets';
 
 const getUserInitials = (name?: string) => {
   if (!name) return 'U';
@@ -186,7 +187,7 @@ export const ClassDetails = () => {
                   <div className="mt-3 text-xs text-slate-500 flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden text-[10px] font-bold text-slate-600">
                       {post.author.avatar ? (
-                        <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
+                        <img src={getAssetUrl(post.author.avatar) ?? ''} alt={post.author.name} className="w-full h-full object-cover" />
                       ) : (
                         getUserInitials(post.author.name)
                       )}

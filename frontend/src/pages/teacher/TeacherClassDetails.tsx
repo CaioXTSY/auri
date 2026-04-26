@@ -6,6 +6,7 @@ import { postsService, type PostItem } from '@/services/posts-service';
 import { Button } from '@/components/ui/button';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { ChevronLeft, Calendar, Users, Loader2, Copy, Check, MessageSquare, X, Trash2 } from 'lucide-react';
+import { getAssetUrl } from '@/lib/assets';
 
 const getUserInitials = (name?: string) => {
   if (!name) return 'U';
@@ -84,7 +85,7 @@ const ManageStudentsModal = ({
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-9 w-9 shrink-0 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold uppercase overflow-hidden">
                       {student.user.avatar ? (
-                        <img src={student.user.avatar} alt={student.user.name} className="w-full h-full object-cover" />
+                        <img src={getAssetUrl(student.user.avatar) ?? ''} alt={student.user.name} className="w-full h-full object-cover" />
                       ) : (
                         getUserInitials(student.user.name)
                       )}
@@ -290,7 +291,7 @@ export const TeacherClassDetails = () => {
                   <div className="mt-3 text-xs text-slate-500 flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden text-[10px] font-bold text-slate-600">
                       {post.author.avatar ? (
-                        <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
+                        <img src={getAssetUrl(post.author.avatar) ?? ''} alt={post.author.name} className="w-full h-full object-cover" />
                       ) : (
                         getUserInitials(post.author.name)
                       )}

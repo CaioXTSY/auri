@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthStore } from '@/stores/auth-store';
 import { userService, type UpdateProfilePayload } from '@/services/user-service';
+import { getAssetUrl } from '@/lib/assets';
 
 const profileSchema = z.object({
   name: z.string().trim().min(3, 'Informe seu nome completo'),
@@ -67,7 +68,7 @@ export const SettingsPage = () => {
   });
 
   const initials = useMemo(() => getInitials(user?.name), [user?.name]);
-  const avatarSrc = avatarPreview ?? user?.avatar ?? null;
+  const avatarSrc = avatarPreview ?? getAssetUrl(user?.avatar);
 
   useEffect(() => {
     profileForm.reset({

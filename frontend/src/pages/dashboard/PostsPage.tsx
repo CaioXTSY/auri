@@ -14,6 +14,7 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, ChevronUp, Eye, Loader2, MessageSquare, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
+import { getAssetUrl } from '@/lib/assets';
 
 const getUserInitials = (name?: string) => {
   if (!name) return 'U';
@@ -285,7 +286,7 @@ export const PostsPage = () => {
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">
                     {user?.avatar
-                      ? <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                      ? <img src={getAssetUrl(user.avatar) ?? ''} alt={user.name} className="h-full w-full object-cover" />
                       : getUserInitials(user?.name)}
                   </div>
                   <div>
@@ -443,7 +444,7 @@ export const PostsPage = () => {
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-10 w-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">
                           {post.author.avatar
-                            ? <img src={post.author.avatar} alt={post.author.name} className="h-full w-full object-cover" />
+                            ? <img src={getAssetUrl(post.author.avatar) ?? ''} alt={post.author.name} className="h-full w-full object-cover" />
                             : getUserInitials(post.author.name)}
                         </div>
                         <div className="min-w-0">
@@ -536,7 +537,7 @@ export const PostsPage = () => {
                                   <div key={reply.id} className="flex gap-3">
                                     <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold overflow-hidden flex-shrink-0 mt-0.5">
                                       {reply.author.avatar
-                                        ? <img src={reply.author.avatar} alt={reply.author.name} className="h-full w-full object-cover" />
+                                        ? <img src={getAssetUrl(reply.author.avatar) ?? ''} alt={reply.author.name} className="h-full w-full object-cover" />
                                         : getUserInitials(reply.author.name)}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -575,7 +576,7 @@ export const PostsPage = () => {
                           <div className="flex gap-3 pt-1">
                             <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold overflow-hidden flex-shrink-0 mt-1">
                               {user?.avatar
-                                ? <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                                ? <img src={getAssetUrl(user.avatar) ?? ''} alt={user.name} className="h-full w-full object-cover" />
                                 : getUserInitials(user?.name)}
                             </div>
                             <div className="flex-1 flex items-start gap-2">

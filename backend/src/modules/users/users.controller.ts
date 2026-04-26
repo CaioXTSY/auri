@@ -17,6 +17,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiResponse, ApiBody
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -207,7 +208,13 @@ export class UsersController {
   @UseInterceptors(
     FileInterceptor('avatar', {
       storage: diskStorage({
-        destination: './uploads/avatars',
+        destination: (req, file, cb) => {
+          const uploadPath = './uploads/avatars';
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
         filename: (req, file, cb) => {
           const randomName = Array(32)
             .fill(null)
@@ -217,7 +224,10 @@ export class UsersController {
         },
       }),
       fileFilter: (req, file, cb) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        const allowedExtensions = /\.(jpg|jpeg|png|gif|webp)$/i;
+
+        if (!allowedMimeTypes.includes(file.mimetype) || !file.originalname.match(allowedExtensions)) {
           return cb(new BadRequestException('Apenas imagens são permitidas'), false);
         }
         cb(null, true);
@@ -229,7 +239,7 @@ export class UsersController {
   )
   @ApiOperation({ 
     summary: 'Upload de avatar do usuário logado',
-    description: 'Faz upload da foto de perfil do usuário. Tamanho máximo: 5MB. Formatos: jpg, jpeg, png, gif'
+    description: 'Faz upload da foto de perfil do usuário. Tamanho máximo: 5MB. Formatos: jpg, jpeg, png, gif, webp'
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -239,7 +249,7 @@ export class UsersController {
         avatar: {
           type: 'string',
           format: 'binary',
-          description: 'Arquivo de imagem (jpg, jpeg, png, gif)'
+          description: 'Arquivo de imagem (jpg, jpeg, png, gif, webp)'
         }
       }
     }

@@ -2,6 +2,7 @@ import { Medal, Trophy, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RankingEntry } from '@/services/gamification-service';
 import { useAuthStore } from '@/stores/auth-store';
+import { getAssetUrl } from '@/lib/assets';
 
 interface LeaderboardProps {
   entries: RankingEntry[];
@@ -84,7 +85,7 @@ export const Leaderboard = ({
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300 text-xs font-bold text-slate-600">
                   {entry.user.avatar ? (
-                    <img src={entry.user.avatar} alt={entry.user.name} className="w-full h-full object-cover" />
+                    <img src={getAssetUrl(entry.user.avatar) ?? ''} alt={entry.user.name} className="w-full h-full object-cover" />
                   ) : (
                     entry.user.name.substring(0, 2).toUpperCase()
                   )}

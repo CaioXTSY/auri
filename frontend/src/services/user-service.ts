@@ -21,9 +21,7 @@ export const userService = {
   uploadAvatar: async (file: File): Promise<User> => {
     const formData = new FormData();
     formData.append('avatar', file);
-    const response = await api.post<User>('/users/me/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await api.post<User>('/users/me/avatar', formData);
     return response.data;
   },
 };
