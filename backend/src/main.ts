@@ -31,7 +31,20 @@ async function bootstrap() {
         .split(',')
         .map((o) => o.trim())
         .filter(Boolean)
-    : ['http://localhost:5173', 'http://localhost:3000'];
+    : [];
+
+  if (process.env.NODE_ENV !== 'production') {
+    for (const developmentOrigin of [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ]) {
+      if (!allowedOrigins.includes(developmentOrigin)) {
+        allowedOrigins.push(developmentOrigin);
+      }
+    }
+  }
 
   const port = process.env.PORT || '3001';
   const localBackendOrigin = `http://localhost:${port}`;
