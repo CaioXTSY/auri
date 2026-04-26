@@ -202,7 +202,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     import('socket.io-client').then(({ io }) => {
       if (disconnected) return;
       const socket = io(import.meta.env.VITE_API_URL ?? 'http://localhost:3001', {
-        auth: { userId: user.id, token },
+        auth: { token },
       });
       socketRef = socket;
       socket.on('notification', (payload: NotificationItem) => {
