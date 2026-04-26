@@ -2,16 +2,31 @@ import { useEffect, useState } from 'react';
 import { authService } from '@/services/auth-service';
 import { useAuthStore } from '@/stores/auth-store';
 
+let sessionValidationPromise: Promise<void> | null = null;
+let hasValidatedSession = false;
+
 export const useSessionValidation = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const logout = useAuthStore((state) => state.logout);
   const updateUser = useAuthStore((state) => state.updateUser);
-  const [isValidating, setIsValidating] = useState(isAuthenticated);
+  const [isValidating, setIsValidating] = useState(
+    isAuthenticated && !hasValidatedSession,
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     if (!isAuthenticated) {
+      hasValidatedSession = false;
+      sessionValidationPromise = null;
+      setIsValidating(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (hasValidatedSession) {
+      setIsValidating(false);
       return () => {
         cancelled = true;
       };
@@ -24,16 +39,19 @@ export const useSessionValidation = () => {
         useAuthStore.getState().setToken(tokens.access_token);
       }
 
-      return authService.me();
+      const user = await authService.me();
+      updateUser(user);
+      hasValidatedSession = true;
     };
 
-    validateSession()
-      .then((user) => {
-        if (!cancelled) {
-          updateUser(user);
-        }
-      })
+    setIsValidating(true);
+    sessionValidationPromise ??= validateSession().finally(() => {
+      sessionValidationPromise = null;
+    });
+
+    sessionValidationPromise
       .catch(() => {
+        hasValidatedSession = false;
         if (!cancelled) {
           logout();
         }
