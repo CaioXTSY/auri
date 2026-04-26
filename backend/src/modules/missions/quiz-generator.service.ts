@@ -1,13 +1,14 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { Difficulty } from '@prisma/client';
+import { Difficulty, Prisma } from '@prisma/client';
 import {
   buildDailyQuizUserPrompt,
   DAILY_QUIZ_LANGUAGES,
   DAILY_QUIZ_SYSTEM_PROMPT,
   DAILY_QUIZ_TOPICS,
 } from './prompts/daily-quiz.prompt';
+import { getDailyQuizDateWindow } from './daily-quiz-date';
 
 @Injectable()
 export class QuizGeneratorService {
@@ -31,22 +32,36 @@ export class QuizGeneratorService {
       return null;
     }
     this.generationLock = true;
+    const dayKey = getDailyQuizDateWindow(
+      new Date(),
+      this.configService.get<string>('APP_TIME_ZONE'),
+    ).dayKey;
+    const lockName = `auri:daily-quiz:${dayKey}`;
 
     try {
+      const lockAcquired = await this.acquireGenerationLock(lockName);
+      if (!lockAcquired) {
+        this.logger.log(`Geração de quiz diário já está bloqueada por outra instância (${dayKey})`);
+        return null;
+      }
+
       return await this.doGenerate(apiKey);
     } finally {
+      await this.releaseGenerationLock(lockName);
       this.generationLock = false;
     }
   }
 
   private async doGenerate(apiKey: string) {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const { startOfDay, endOfDay } = getDailyQuizDateWindow(
+      new Date(),
+      this.configService.get<string>('APP_TIME_ZONE'),
+    );
 
     const existing = await this.prisma.mission.findFirst({
       where: {
         type: 'DIARIA',
+        classId: null,
         startDate: { gte: startOfDay },
         endDate: { lte: endOfDay },
         quiz: { isNot: null },
@@ -222,6 +237,26 @@ export class QuizGeneratorService {
       throw new BadRequestException('Resposta inválida da IA');
     }
     return JSON.parse(match[0]);
+  }
+
+  private async acquireGenerationLock(lockName: string) {
+    try {
+      const rows = await this.prisma.$queryRaw<{ acquired: number | bigint | null }[]>(
+        Prisma.sql`SELECT GET_LOCK(${lockName}, 5) AS acquired`,
+      );
+      return Number(rows[0]?.acquired ?? 0) === 1;
+    } catch (error) {
+      this.logger.warn(`Não foi possível adquirir lock distribuído do quiz diário: ${error}`);
+      return true;
+    }
+  }
+
+  private async releaseGenerationLock(lockName: string) {
+    try {
+      await this.prisma.$queryRaw(Prisma.sql`SELECT RELEASE_LOCK(${lockName})`);
+    } catch (error) {
+      this.logger.warn(`Não foi possível liberar lock distribuído do quiz diário: ${error}`);
+    }
   }
 
   private async getRecentQuizSummaries(days: number): Promise<{ title: string; topic: string; language: string | null }[]> {

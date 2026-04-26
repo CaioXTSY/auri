@@ -4,6 +4,8 @@ import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { GamificationService } from '../gamification/gamification.service';
 import { MissionType, MissionStatus } from '@prisma/client';
 import { QuizGeneratorService } from './quiz-generator.service';
+import { ConfigService } from '@nestjs/config';
+import { getDailyQuizDateWindow } from './daily-quiz-date';
 
 @Injectable()
 export class MissionQuizService {
@@ -11,6 +13,7 @@ export class MissionQuizService {
     private prisma: PrismaService,
     private gamificationService: GamificationService,
     private quizGeneratorService: QuizGeneratorService,
+    private configService: ConfigService,
   ) {}
 
   async startMission(missionId: string, userId: string) {
@@ -357,9 +360,10 @@ export class MissionQuizService {
   }
 
   private async getTodayDailyQuizMission() {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const { startOfDay, endOfDay } = getDailyQuizDateWindow(
+      new Date(),
+      this.configService.get<string>('APP_TIME_ZONE'),
+    );
 
     return this.prisma.mission.findFirst({
       where: {
