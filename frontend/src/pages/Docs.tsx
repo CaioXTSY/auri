@@ -6,7 +6,8 @@ import {
   ChevronRight, Bell, Hash,
 } from 'lucide-react';
 
-const API_URL = 'https://api-auri.caiots.dev';
+const API_URL = 'https://api-auri.caiots.dev/api/v1';
+const SOCKET_URL = 'https://api-auri.caiots.dev';
 const SWAGGER_URL = 'https://api-auri.caiots.dev/api/v1/docs';
 
 // ─── Sidebar nav ────────────────────────────────────────────────────────────
@@ -411,14 +412,14 @@ export const Docs = () => {
             <SubSection id="jwt" title="Tokens JWT">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Utilizamos <strong>JWT (JSON Web Token)</strong> para autenticação. Após o login,
-                você recebe um token que deve ser enviado no header <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-brand-800">Authorization</code> de todas as requisições protegidas.
+                você recebe um <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-brand-800">access_token</code> para enviar no header <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-brand-800">Authorization</code>. O refresh token fica em cookie HttpOnly.
               </p>
               <CodeBlock
                 language="http"
                 code={`Authorization: Bearer <seu_token_jwt>`}
               />
               <Callout type="warning">
-                O token expira após um período definido. Implemente renovação automática no seu cliente ou redirecione o usuário para o login.
+                Quando o access token expirar, renove a sessão com <code className="bg-slate-100 px-1 rounded text-xs">POST /auth/refresh</code>. O navegador envia o cookie automaticamente.
               </Callout>
             </SubSection>
 
@@ -426,7 +427,9 @@ export const Docs = () => {
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Endpoint method="POST" path="/auth/register" description="Criar nova conta" />
                 <Endpoint method="POST" path="/auth/login" description="Fazer login e obter token" />
-                <Endpoint method="GET" path="/auth/me" description="Dados do usuário autenticado" />
+                <Endpoint method="POST" path="/auth/refresh" description="Renovar access token pelo cookie" />
+                <Endpoint method="POST" path="/auth/logout" description="Encerrar sessão" />
+                <Endpoint method="GET" path="/users/me" description="Dados do usuário autenticado" />
               </div>
               <CodeBlock
                 language="curl"
@@ -439,7 +442,7 @@ export const Docs = () => {
 
 # Resposta
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": "clx...",
     "name": "João Silva",
@@ -483,7 +486,7 @@ export const Docs = () => {
                 Responder corretamente concede XP e mantém sua sequência ativa.
               </p>
               <Callout type="tip">
-                Responda o quiz diário mesmo que erre — a participação já conta para manter a sequência em algumas configurações de turma.
+                Para manter a sequência diária, responda corretamente o quiz do dia.
               </Callout>
             </SubSection>
           </Section>
@@ -498,9 +501,9 @@ export const Docs = () => {
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Endpoint method="POST" path="/classes" description="Criar nova turma" />
-                <Endpoint method="GET" path="/classes/teacher" description="Listar turmas do professor" />
+                <Endpoint method="GET" path="/classes/my-created-classes" description="Listar turmas do professor" />
                 <Endpoint method="GET" path="/classes/:id" description="Detalhes de uma turma" />
-                <Endpoint method="DELETE" path="/classes/:id" description="Encerrar turma" />
+                <Endpoint method="PATCH" path="/classes/:id" description="Atualizar turma" />
               </div>
             </SubSection>
 
@@ -510,9 +513,9 @@ export const Docs = () => {
                 missões completadas e posição no ranking. É possível remover um aluno da turma se necessário.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <Endpoint method="GET" path="/classes/:id/members" description="Alunos da turma" />
-                <Endpoint method="DELETE" path="/classes/:id/members/:userId" description="Remover aluno" />
-                <Endpoint method="GET" path="/classes/:id/leaderboard" description="Ranking da turma" />
+                <Endpoint method="GET" path="/classes/:id/students" description="Alunos da turma" />
+                <Endpoint method="DELETE" path="/classes/:id/students/:userId" description="Remover aluno" />
+                <Endpoint method="GET" path="/gamification/ranking?type=TURMA&referenceId=:id" description="Ranking da turma" />
               </div>
             </SubSection>
           </Section>
@@ -531,12 +534,13 @@ export const Docs = () => {
 
             <SubSection id="postagens" title="Postagens da turma">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                Professores e alunos podem publicar postagens dentro de cada turma, criando um espaço
-                de discussão e comunicação contextualizado.
+                Professores podem publicar postagens dentro de cada turma. Alunos, professores e admins
+                podem visualizar e responder, criando um espaço de discussão contextualizado.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Endpoint method="GET" path="/posts" description="Listar postagens (por turma)" />
-                <Endpoint method="POST" path="/posts" description="Criar postagem" />
+                <Endpoint method="POST" path="/posts" description="Criar postagem (Professor/Admin)" />
+                <Endpoint method="POST" path="/posts/:id/replies" description="Responder postagem" />
                 <Endpoint method="DELETE" path="/posts/:id" description="Excluir postagem" />
               </div>
             </SubSection>
@@ -546,24 +550,25 @@ export const Docs = () => {
           <Section id="missoes" title="Missões">
             <SubSection id="quiz-diario" title="Quiz diário">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                Um quiz de múltipla escolha é gerado por IA todos os dias para cada aluno. As perguntas
-                são focadas em programação e adaptadas ao nível da turma.
+                Um quiz de múltipla escolha é gerado por IA todos os dias para a plataforma. As perguntas
+                são focadas em programação e variam por dificuldade.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <Endpoint method="GET" path="/daily-quiz" description="Quiz do dia atual" />
-                <Endpoint method="POST" path="/daily-quiz/:id/answer" description="Responder quiz" />
+                <Endpoint method="GET" path="/missions/daily-quiz" description="Quiz do dia atual" />
+                <Endpoint method="GET" path="/missions/daily-quiz/me" description="Quiz do dia com sua tentativa" />
+                <Endpoint method="POST" path="/missions/:id/quiz/answer" description="Responder quiz" />
               </div>
               <CodeBlock
                 language="curl"
                 code={`# Buscar o quiz do dia
-curl -X GET ${API_URL}/daily-quiz \\
+curl -X GET ${API_URL}/missions/daily-quiz/me \\
   -H "Authorization: Bearer <token>"
 
 # Responder
-curl -X POST ${API_URL}/daily-quiz/:id/answer \\
+curl -X POST ${API_URL}/missions/:id/quiz/answer \\
   -H "Authorization: Bearer <token>" \\
   -H "Content-Type: application/json" \\
-  -d '{ "answer": "B" }'`}
+  -d '{ "selectedIndex": 1 }'`}
               />
             </SubSection>
 
@@ -573,8 +578,9 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
                 O sistema calcula automaticamente a taxa de acerto e o total de XP acumulado por missões.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <Endpoint method="GET" path="/missions" description="Histórico paginado de missões" />
-                <Endpoint method="GET" path="/missions/:id" description="Detalhes de uma missão" />
+                <Endpoint method="GET" path="/missions/available" description="Missões disponíveis para o aluno" />
+                <Endpoint method="GET" path="/missions/my-missions" description="Histórico paginado do aluno" />
+                <Endpoint method="GET" path="/missions/my-stats" description="Estatísticas de missões do aluno" />
               </div>
             </SubSection>
           </Section>
@@ -583,15 +589,15 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
           <Section id="gamificacao" title="Gamificação">
             <SubSection id="xp-nivel" title="XP e Níveis">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                Cada ação dentro da plataforma concede pontos de experiência (XP). Ao acumular XP
-                suficiente, o aluno avança de nível. A quantidade necessária aumenta progressivamente.
+                XP é concedido por missões concluídas, conquistas desbloqueadas e bônus de sequência.
+                Ao acumular XP suficiente, o aluno avança de nível.
               </p>
               <div className="grid sm:grid-cols-2 gap-3 my-4">
                 {[
-                  { action: 'Quiz diário correto', xp: '+50 XP' },
+                  { action: 'Quiz diário correto', xp: '40-140 XP' },
                   { action: 'Conquista desbloqueada', xp: 'variável' },
-                  { action: 'Participação em turma', xp: '+10 XP' },
-                  { action: 'Streak milestone', xp: 'bônus' },
+                  { action: 'Missão personalizada', xp: 'definido pelo professor' },
+                  { action: 'Bônus de sequência', xp: 'marcos específicos' },
                 ].map((r) => (
                   <div key={r.action} className="flex items-center justify-between bg-white rounded-lg border border-slate-200 px-4 py-3">
                     <span className="font-sans text-sm text-slate-600">{r.action}</span>
@@ -600,7 +606,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
                 ))}
               </div>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mt-4">
-                <Endpoint method="GET" path="/gamification/stats" description="XP, nível e progresso" />
+                <Endpoint method="GET" path="/gamification/stats/me" description="XP, nível e progresso" />
               </div>
             </SubSection>
 
@@ -628,7 +634,7 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
                 concede XP adicional.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <Endpoint method="GET" path="/gamification/achievements" description="Todas as conquistas e status" />
+                <Endpoint method="GET" path="/gamification/achievements/me" description="Minhas conquistas e status" />
               </div>
             </SubSection>
 
@@ -638,8 +644,8 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
                 <strong> por turma</strong>. A posição é calculada com base no total de XP acumulado.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <Endpoint method="GET" path="/gamification/leaderboard" description="Ranking global" />
-                <Endpoint method="GET" path="/classes/:id/leaderboard" description="Ranking da turma" />
+                <Endpoint method="GET" path="/gamification/ranking?type=GLOBAL" description="Ranking global" />
+                <Endpoint method="GET" path="/gamification/ranking?type=TURMA&referenceId=:id" description="Ranking da turma" />
               </div>
             </SubSection>
           </Section>
@@ -656,9 +662,8 @@ curl -X POST ${API_URL}/daily-quiz/:id/answer \\
                 language="javascript"
                 code={`import { io } from 'socket.io-client';
 
-const socket = io('${API_URL}', {
+const socket = io('${SOCKET_URL}', {
   auth: {
-    userId: user.id,
     token: jwtToken,
   },
 });
@@ -670,7 +675,7 @@ socket.on('notification', (payload) => {
               />
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mt-4">
                 <Endpoint method="GET" path="/notifications" description="Listar notificações (paginado)" />
-                <Endpoint method="GET" path="/notifications/unread-count" description="Total não lidas" />
+                <Endpoint method="GET" path="/notifications/unread" description="Total não lidas" />
                 <Endpoint method="PATCH" path="/notifications/:id/read" description="Marcar como lida" />
                 <Endpoint method="PATCH" path="/notifications/read-all" description="Marcar todas como lidas" />
               </div>
