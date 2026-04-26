@@ -28,7 +28,19 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auri-auth-storage',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated, token: state.token }),
+      version: 2,
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<AuthState>;
+        return {
+          user: state.user ?? null,
+          token: null,
+          isAuthenticated: state.isAuthenticated ?? false,
+        };
+      },
     }
   )
 );

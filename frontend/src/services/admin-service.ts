@@ -154,7 +154,13 @@ export const adminService = {
     return data;
   },
 
-  listUsers: async (params: { page?: number; limit?: number; role?: string; search?: string } = {}) => {
+  listUsers: async (params: {
+    page?: number;
+    limit?: number;
+    role?: string;
+    name?: string;
+    email?: string;
+  } = {}) => {
     const { data } = await api.get<Paginated<AdminUserListItem>>('/users', { params });
     return data;
   },
