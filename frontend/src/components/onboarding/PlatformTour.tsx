@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Compass, Sparkles } from 'lucide-react';
 import { driver, type DriveStep } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { OPEN_TOUR_EVENT } from './platform-tour-events';
+import { Button } from '@/components/ui/button';
 
 type UserRole = 'ADMIN' | 'PROFESSOR' | 'ALUNO';
 
@@ -12,6 +14,21 @@ interface PlatformTourProps {
 }
 
 const TOUR_VERSION = 'v1';
+
+const introCopy: Record<UserRole, { title: string; description: string }> = {
+  ALUNO: {
+    title: 'Quer ver por onde comecar?',
+    description: 'Eu te mostro onde acompanhar turmas, missoes, quiz diario e progresso sem precisar ficar procurando no menu.',
+  },
+  PROFESSOR: {
+    title: 'Veja onde fica cada area principal',
+    description: 'Eu te mostro onde criar turmas, acompanhar alunos e acessar as areas que voce mais vai usar no dia a dia.',
+  },
+  ADMIN: {
+    title: 'Quer um resumo do painel admin?',
+    description: 'Eu te mostro onde ficam usuarios, turmas, missoes e os atalhos principais para gerenciar a plataforma.',
+  },
+};
 
 const getTourKey = (userId: string, role: UserRole) =>
   `auri-platform-tour:${userId}:${role}:${TOUR_VERSION}`;
@@ -104,36 +121,127 @@ const startTour = (role: UserRole, onClose: () => void) => {
 };
 
 export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourProps) => {
-  const autoStartedKeyRef = useRef<string | null>(null);
+  const introShownKeyRef = useRef<string | null>(null);
+  const disabledRef = useRef(disabled);
+  const [showIntro, setShowIntro] = useState(false);
 
   const tourKey = useMemo(() => {
     if (!userId || !role) return null;
     return getTourKey(userId, role);
   }, [role, userId]);
 
+  const intro = role ? introCopy[role] : null;
+
+  const markCompleted = useCallback(() => {
+    if (!tourKey) return;
+    localStorage.setItem(tourKey, 'completed');
+  }, [tourKey]);
+
+  const markDismissed = useCallback(() => {
+    if (!tourKey) return;
+    localStorage.setItem(tourKey, 'dismissed');
+  }, [tourKey]);
+
+  const handleStartTour = useCallback(() => {
+    if (!role) return;
+    setShowIntro(false);
+    startTour(role, markCompleted);
+  }, [markCompleted, role]);
+
+  useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
+
   useEffect(() => {
     if (!role || !tourKey) return;
 
     const handleOpenTour = () => {
-      startTour(role, () => localStorage.setItem(tourKey, 'completed'));
+      setShowIntro(false);
+      startTour(role, markCompleted);
     };
 
     window.addEventListener(OPEN_TOUR_EVENT, handleOpenTour);
     return () => window.removeEventListener(OPEN_TOUR_EVENT, handleOpenTour);
-  }, [role, tourKey]);
+  }, [markCompleted, role, tourKey]);
 
   useEffect(() => {
     if (!role || !tourKey || disabled) return;
-    if (autoStartedKeyRef.current === tourKey) return;
+    if (introShownKeyRef.current === tourKey) return;
     if (localStorage.getItem(tourKey)) return;
 
-    autoStartedKeyRef.current = tourKey;
     const timeoutId = window.setTimeout(() => {
-      startTour(role, () => localStorage.setItem(tourKey, 'completed'));
-    }, 450);
+      if (disabledRef.current) return;
+      if (localStorage.getItem(tourKey)) return;
+      introShownKeyRef.current = tourKey;
+      setShowIntro(true);
+    }, 350);
 
     return () => window.clearTimeout(timeoutId);
   }, [disabled, role, tourKey]);
 
-  return null;
+  if (!showIntro || disabled) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[1000000001] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.55)]">
+        <div className="flex items-start gap-4 border-b border-slate-200 px-6 py-6">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-900 text-accent-400">
+            <Compass className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+              Guia inicial
+            </p>
+            <h2 className="mt-2 text-2xl font-display font-bold text-brand-900">
+              {intro?.title ?? 'Conheca a plataforma'}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {intro?.description ?? 'Eu te mostro os pontos principais do painel.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-5 px-6 py-5">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-brand-900 shadow-sm">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Leva menos de um minuto.
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Se preferir, voce pode fechar agora e abrir esse guia depois em Configuracoes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-slate-200 text-slate-700"
+              onClick={() => {
+                markDismissed();
+                setShowIntro(false);
+              }}
+            >
+              Agora nao
+            </Button>
+            <Button
+              type="button"
+              className="bg-brand-900 text-white hover:bg-brand-800"
+              onClick={handleStartTour}
+            >
+              Comecar guia
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
