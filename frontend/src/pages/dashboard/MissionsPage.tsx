@@ -8,7 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { missionsService, type Mission, type MissionStatus, type MissionStats, type UserMission } from '@/services/missions-service';
+import {
+  missionsService,
+  type Mission,
+  type MissionStats,
+  type MissionStatus,
+  type UserMission,
+} from '@/services/missions-service';
 
 type MissionsTab = 'available' | 'history';
 
@@ -26,39 +32,19 @@ const typeLabels: Record<string, string> = {
 };
 
 const getStatusStyle = (status: MissionStatus) => {
-  if (status === 'CONCLUIDA') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  if (status === 'EM_PROGRESSO') return 'bg-blue-50 text-blue-700 border-blue-200';
-  if (status === 'EXPIRADA') return 'bg-slate-100 text-slate-500 border-slate-200';
-  return 'bg-amber-50 text-amber-700 border-amber-200';
+  if (status === 'CONCLUIDA') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  if (status === 'EM_PROGRESSO') return 'border-blue-200 bg-blue-50 text-blue-700';
+  if (status === 'EXPIRADA') return 'border-slate-200 bg-slate-100 text-slate-500';
+  return 'border-amber-200 bg-amber-50 text-amber-700';
 };
 
 export const MissionsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = (searchParams.get('tab') as MissionsTab) ?? 'available';
   const searchTerm = searchParams.get('search') ?? '';
-  const typeFilter = (searchParams.get('type') as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') ?? 'ALL';
+  const typeFilter =
+    (searchParams.get('type') as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') ?? 'ALL';
   const statusFilter = (searchParams.get('status') as 'ALL' | MissionStatus) ?? 'ALL';
-
-  const setTab = (value: MissionsTab) =>
-    setSearchParams((prev) => { prev.set('tab', value); return prev; }, { replace: true });
-
-  const setSearchTerm = (value: string) =>
-    setSearchParams((prev) => {
-      if (value) prev.set('search', value); else prev.delete('search');
-      return prev;
-    }, { replace: true });
-
-  const setTypeFilter = (value: 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') =>
-    setSearchParams((prev) => {
-      if (value !== 'ALL') prev.set('type', value); else prev.delete('type');
-      return prev;
-    }, { replace: true });
-
-  const setStatusFilter = (value: 'ALL' | MissionStatus) =>
-    setSearchParams((prev) => {
-      if (value !== 'ALL') prev.set('status', value); else prev.delete('status');
-      return prev;
-    }, { replace: true });
 
   const [available, setAvailable] = useState<Mission[]>([]);
   const [history, setHistory] = useState<UserMission[]>([]);
@@ -68,18 +54,56 @@ export const MissionsPage = () => {
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
   const [availablePage, setAvailablePage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
-  const pageSize = MISSIONS_PAGE_SIZE;
   const { notify } = useToast();
+  const pageSize = MISSIONS_PAGE_SIZE;
+
+  const setTab = (value: MissionsTab) =>
+    setSearchParams((prev) => {
+      prev.set('tab', value);
+      return prev;
+    }, { replace: true });
+
+  const setSearchTerm = (value: string) =>
+    setSearchParams((prev) => {
+      if (value) {
+        prev.set('search', value);
+      } else {
+        prev.delete('search');
+      }
+      return prev;
+    }, { replace: true });
+
+  const setTypeFilter = (value: 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') =>
+    setSearchParams((prev) => {
+      if (value !== 'ALL') {
+        prev.set('type', value);
+      } else {
+        prev.delete('type');
+      }
+      return prev;
+    }, { replace: true });
+
+  const setStatusFilter = (value: 'ALL' | MissionStatus) =>
+    setSearchParams((prev) => {
+      if (value !== 'ALL') {
+        prev.set('status', value);
+      } else {
+        prev.delete('status');
+      }
+      return prev;
+    }, { replace: true });
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+
     try {
       const [availableResponse, historyResponse, statsResponse] = await Promise.all([
         missionsService.getAvailable(),
         missionsService.getMyHistory(),
         missionsService.getMyStats(),
       ]);
+
       setAvailable(availableResponse);
       setHistory(historyResponse.data);
       setStats(statsResponse);
@@ -93,11 +117,14 @@ export const MissionsPage = () => {
 
   useEffect(() => {
     let isMounted = true;
+
     const load = async () => {
       if (!isMounted) return;
       await loadData();
     };
+
     load();
+
     return () => {
       isMounted = false;
     };
@@ -106,7 +133,7 @@ export const MissionsPage = () => {
   useEffect(() => {
     setAvailablePage(1);
     setHistoryPage(1);
-  }, [searchTerm, typeFilter, statusFilter, tab]);
+  }, [searchTerm, statusFilter, tab, typeFilter]);
 
   const openMissionQuiz = (missionId: string) => {
     setActiveMissionId(missionId);
@@ -126,34 +153,39 @@ export const MissionsPage = () => {
   const completionRate = useMemo(() => stats?.completionRate ?? 0, [stats]);
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
-  const filteredAvailable = useMemo(() => {
-    return available.filter((mission) => {
-      const status = mission.userStatus?.status ?? 'NAO_INICIADA';
-      const matchesStatus = statusFilter === 'ALL' || statusFilter === status;
-      const matchesType = typeFilter === 'ALL' || mission.type === typeFilter;
-      const matchesSearch =
-        !normalizedSearch ||
-        mission.title.toLowerCase().includes(normalizedSearch) ||
-        mission.description.toLowerCase().includes(normalizedSearch);
-      return matchesStatus && matchesType && matchesSearch;
-    });
-  }, [available, normalizedSearch, statusFilter, typeFilter]);
+  const filteredAvailable = useMemo(
+    () =>
+      available.filter((mission) => {
+        const status = mission.userStatus?.status ?? 'NAO_INICIADA';
+        const matchesStatus = statusFilter === 'ALL' || statusFilter === status;
+        const matchesType = typeFilter === 'ALL' || mission.type === typeFilter;
+        const matchesSearch =
+          !normalizedSearch ||
+          mission.title.toLowerCase().includes(normalizedSearch) ||
+          mission.description.toLowerCase().includes(normalizedSearch);
 
-  const filteredHistory = useMemo(() => {
-    return history.filter((entry) => {
-      const matchesStatus = statusFilter === 'ALL' || statusFilter === entry.status;
-      const matchesType = typeFilter === 'ALL' || entry.mission.type === typeFilter;
-      const matchesSearch =
-        !normalizedSearch ||
-        entry.mission.title.toLowerCase().includes(normalizedSearch) ||
-        entry.mission.description.toLowerCase().includes(normalizedSearch);
-      return matchesStatus && matchesType && matchesSearch;
-    });
-  }, [history, normalizedSearch, statusFilter, typeFilter]);
+        return matchesStatus && matchesType && matchesSearch;
+      }),
+    [available, normalizedSearch, statusFilter, typeFilter],
+  );
+
+  const filteredHistory = useMemo(
+    () =>
+      history.filter((entry) => {
+        const matchesStatus = statusFilter === 'ALL' || statusFilter === entry.status;
+        const matchesType = typeFilter === 'ALL' || entry.mission.type === typeFilter;
+        const matchesSearch =
+          !normalizedSearch ||
+          entry.mission.title.toLowerCase().includes(normalizedSearch) ||
+          entry.mission.description.toLowerCase().includes(normalizedSearch);
+
+        return matchesStatus && matchesType && matchesSearch;
+      }),
+    [history, normalizedSearch, statusFilter, typeFilter],
+  );
 
   const availableEmpty = !isLoading && filteredAvailable.length === 0;
   const historyEmpty = !isLoading && filteredHistory.length === 0;
-
   const availableTotalPages = Math.max(1, Math.ceil(filteredAvailable.length / pageSize));
   const historyTotalPages = Math.max(1, Math.ceil(filteredHistory.length / pageSize));
   const availablePageSafe = Math.min(availablePage, availableTotalPages);
@@ -167,7 +199,7 @@ export const MissionsPage = () => {
   const paginatedHistory = useMemo(() => {
     const start = (historyPageSafe - 1) * pageSize;
     return filteredHistory.slice(start, start + pageSize);
-  }, [historyPageSafe, filteredHistory, pageSize]);
+  }, [filteredHistory, historyPageSafe, pageSize]);
 
   return (
     <DashboardLayout>
@@ -178,45 +210,54 @@ export const MissionsPage = () => {
           onClose={() => setActiveMissionId(null)}
           onAnswered={loadData}
         />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-brand-900">Missões</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Acompanhe suas missões ativas e histórico de conquistas.
+            <h1
+              className="font-display text-2xl font-bold text-brand-900"
+              data-tour="missions-header"
+            >
+              Missões
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Acompanhe suas missões ativas e o histórico de conquistas.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="border-slate-200 text-slate-600"
-            onClick={loadData}
-          >
-            Atualizar
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-slate-200 text-slate-600"
+              onClick={loadData}
+            >
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         {stats && (
           <div className="grid gap-4 md:grid-cols-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Total
               </p>
               <p className="mt-2 text-2xl font-bold text-brand-900">{stats.total}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Concluídas
               </p>
               <p className="mt-2 text-2xl font-bold text-emerald-600">{stats.completed}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                 XP ganho
               </p>
               <p className="mt-2 text-2xl font-bold text-brand-900">{stats.totalPoints}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Taxa de conclusão
               </p>
               <p className="mt-2 text-2xl font-bold text-brand-900">{completionRate}%</p>
@@ -224,15 +265,15 @@ export const MissionsPage = () => {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" data-tour="missions-tabs">
           <button
             type="button"
             onClick={() => setTab('available')}
             className={cn(
-              'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-[0.2em] border',
+              'rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em]',
               tab === 'available'
-                ? 'bg-brand-900 text-white border-brand-900'
-                : 'bg-white text-slate-500 border-slate-200',
+                ? 'border-brand-900 bg-brand-900 text-white'
+                : 'border-slate-200 bg-white text-slate-500',
             )}
           >
             Disponíveis
@@ -241,17 +282,17 @@ export const MissionsPage = () => {
             type="button"
             onClick={() => setTab('history')}
             className={cn(
-              'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-[0.2em] border',
+              'rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em]',
               tab === 'history'
-                ? 'bg-brand-900 text-white border-brand-900'
-                : 'bg-white text-slate-500 border-slate-200',
+                ? 'border-brand-900 bg-brand-900 text-white'
+                : 'border-slate-200 bg-white text-slate-500',
             )}
           >
             Histórico
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center" data-tour="missions-filters">
           <div className="flex-1">
             <input
               type="text"
@@ -264,8 +305,10 @@ export const MissionsPage = () => {
           <div className="flex flex-wrap gap-3">
             <select
               value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA')}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 bg-white"
+              onChange={(event) =>
+                setTypeFilter(event.target.value as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA')
+              }
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
             >
               <option value="ALL">Todos os tipos</option>
               <option value="DIARIA">Diárias</option>
@@ -275,7 +318,7 @@ export const MissionsPage = () => {
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as 'ALL' | MissionStatus)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 bg-white"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
             >
               <option value="ALL">Todos os status</option>
               <option value="NAO_INICIADA">Não iniciada</option>
@@ -294,7 +337,10 @@ export const MissionsPage = () => {
             </div>
             <div className="grid gap-6 md:grid-cols-2">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={`skeleton-${index}`} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div
+                  key={`skeleton-${index}`}
+                  className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                >
                   <div className="space-y-2">
                     <Skeleton className="h-5 w-2/3" />
                     <Skeleton className="h-4 w-full" />
@@ -317,7 +363,7 @@ export const MissionsPage = () => {
         {error && <div className="text-sm text-red-500">{error}</div>}
 
         {!isLoading && tab === 'available' && availableEmpty && (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500">
             {searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL'
               ? 'Nenhuma missão encontrada para os filtros selecionados.'
               : 'Nenhuma missão disponível agora.'}
@@ -325,7 +371,7 @@ export const MissionsPage = () => {
         )}
 
         {!isLoading && tab === 'history' && historyEmpty && (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500">
             {searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL'
               ? 'Nenhuma missão encontrada para os filtros selecionados.'
               : 'Você ainda não iniciou nenhuma missão.'}
@@ -334,12 +380,16 @@ export const MissionsPage = () => {
 
         {!isLoading && tab === 'available' && (
           <div className="grid gap-6 md:grid-cols-2">
-            {paginatedAvailable.map((mission) => {
+            {paginatedAvailable.map((mission, index) => {
               const status = mission.userStatus?.status ?? 'NAO_INICIADA';
+              const showActionTour =
+                index === 0 && (mission.type === 'DIARIA' || status === 'EM_PROGRESSO');
+
               return (
                 <div
                   key={mission.id}
-                  className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4"
+                  className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                  data-tour={index === 0 ? 'mission-card' : undefined}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
@@ -348,7 +398,7 @@ export const MissionsPage = () => {
                     </div>
                     <span
                       className={cn(
-                        'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border',
+                        'rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide',
                         getStatusStyle(status),
                       )}
                     >
@@ -377,8 +427,9 @@ export const MissionsPage = () => {
                     {status === 'EM_PROGRESSO' && mission.type !== 'DIARIA' && (
                       <Button
                         type="button"
-                        className="bg-brand-900 hover:bg-brand-800 text-white"
+                        className="bg-brand-900 text-white hover:bg-brand-800"
                         onClick={() => handleCompleteMission(mission.id)}
+                        data-tour={showActionTour ? 'mission-action' : undefined}
                       >
                         Concluir
                       </Button>
@@ -389,6 +440,7 @@ export const MissionsPage = () => {
                         variant="outline"
                         className="border-slate-200 text-slate-600"
                         onClick={() => openMissionQuiz(mission.id)}
+                        data-tour={showActionTour ? 'mission-action' : undefined}
                       >
                         Abrir quiz
                       </Button>
@@ -401,16 +453,18 @@ export const MissionsPage = () => {
         )}
 
         {!isLoading && tab === 'available' && filteredAvailable.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-slate-500">
+          <div className="flex flex-col justify-between gap-3 text-sm text-slate-500 sm:flex-row sm:items-center">
             <span>
-              Mostrando {(availablePageSafe - 1) * pageSize + 1} a {Math.min(availablePageSafe * pageSize, filteredAvailable.length)} de {filteredAvailable.length}
+              Mostrando {(availablePageSafe - 1) * pageSize + 1} a{' '}
+              {Math.min(availablePageSafe * pageSize, filteredAvailable.length)} de{' '}
+              {filteredAvailable.length}
             </span>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setAvailablePage((page) => Math.max(1, page - 1))}
                 disabled={availablePageSafe <= 1}
-                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
               >
                 Anterior
               </button>
@@ -418,7 +472,7 @@ export const MissionsPage = () => {
                 type="button"
                 onClick={() => setAvailablePage((page) => Math.min(availableTotalPages, page + 1))}
                 disabled={availablePageSafe >= availableTotalPages}
-                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
               >
                 Próxima
               </button>
@@ -431,7 +485,7 @@ export const MissionsPage = () => {
             {paginatedHistory.map((entry) => (
               <div
                 key={entry.id}
-                className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-3"
+                className="space-y-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -440,7 +494,7 @@ export const MissionsPage = () => {
                   </div>
                   <span
                     className={cn(
-                      'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border',
+                      'rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide',
                       getStatusStyle(entry.status),
                     )}
                   >
@@ -463,16 +517,18 @@ export const MissionsPage = () => {
         )}
 
         {!isLoading && tab === 'history' && filteredHistory.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-slate-500">
+          <div className="flex flex-col justify-between gap-3 text-sm text-slate-500 sm:flex-row sm:items-center">
             <span>
-              Mostrando {(historyPageSafe - 1) * pageSize + 1} a {Math.min(historyPageSafe * pageSize, filteredHistory.length)} de {filteredHistory.length}
+              Mostrando {(historyPageSafe - 1) * pageSize + 1} a{' '}
+              {Math.min(historyPageSafe * pageSize, filteredHistory.length)} de{' '}
+              {filteredHistory.length}
             </span>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}
                 disabled={historyPageSafe <= 1}
-                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
               >
                 Anterior
               </button>
@@ -480,7 +536,7 @@ export const MissionsPage = () => {
                 type="button"
                 onClick={() => setHistoryPage((page) => Math.min(historyTotalPages, page + 1))}
                 disabled={historyPageSafe >= historyTotalPages}
-                className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
               >
                 Próxima
               </button>

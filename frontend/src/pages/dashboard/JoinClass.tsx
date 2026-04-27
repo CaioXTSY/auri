@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Loader2 } from 'lucide-react';
 import { classService } from '@/services/class-service';
 
 const joinClassSchema = z.object({
@@ -37,15 +37,18 @@ export const JoinClass = () => {
 
     try {
       const result = await classService.joinClass(data.code);
-      notify({ title: `Você entrou na turma "${result.class.name}"`, variant: 'success' });
+      notify({ title: `Voce entrou na turma "${result.class.name}"`, variant: 'success' });
       navigate('/dashboard/classes');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       const serverMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
-      
-      if (serverMessage === 'Turma não encontrada') {
+
+      if (serverMessage === 'Turma não encontrada' || serverMessage === 'Turma nao encontrada') {
         setError('Código de turma inválido. Verifique e tente novamente.');
-      } else if (serverMessage === 'Você já está matriculado nesta turma') {
+      } else if (
+        serverMessage === 'Você já está matriculado nesta turma' ||
+        serverMessage === 'Voce ja esta matriculado nesta turma'
+      ) {
         setError('Você já faz parte desta turma.');
       } else {
         setError(serverMessage || errorMessage || 'Erro ao entrar na turma.');
@@ -57,7 +60,7 @@ export const JoinClass = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-md mx-auto space-y-6 pt-10">
+      <div className="mx-auto max-w-md space-y-6 pt-10">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -65,27 +68,30 @@ export const JoinClass = () => {
             onClick={() => navigate('/dashboard/classes')}
             className="text-slate-500 hover:text-slate-900"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold text-brand-900 font-display">
+          <h1
+            className="font-display text-2xl font-bold text-brand-900"
+            data-tour="join-class-header"
+          >
             Entrar em uma Turma
           </h1>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-6 text-center">
-            <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">🎓</span>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
+              <span className="text-2xl">T</span>
             </div>
             <p className="text-slate-600">
-              Peça o código da turma ao seu professor e digite-o abaixo para entrar.
+              Peça o código da turma ao seu professor e digite abaixo para entrar.
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm">
+              <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
                 {error}
               </div>
             )}
@@ -96,6 +102,7 @@ export const JoinClass = () => {
                 id="code"
                 placeholder="Ex: ckz123456"
                 {...register('code')}
+                data-tour="join-class-code"
                 className={`text-center font-mono text-lg tracking-wider ${errors.code ? 'border-red-500' : ''}`}
                 autoComplete="off"
                 autoCapitalize="none"
@@ -118,11 +125,12 @@ export const JoinClass = () => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-brand-900 hover:bg-brand-800 text-white"
+                data-tour="join-class-submit"
+                className="w-full bg-brand-900 text-white hover:bg-brand-800"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
                   </>
                 ) : (

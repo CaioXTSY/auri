@@ -17,16 +17,19 @@ const TOUR_VERSION = 'v1';
 
 const introCopy: Record<UserRole, { title: string; description: string }> = {
   ALUNO: {
-    title: 'Quer ver por onde comecar?',
-    description: 'Eu te mostro onde acompanhar turmas, missoes, quiz diario e progresso sem precisar ficar procurando no menu.',
+    title: 'Quer ver por onde começar?',
+    description:
+      'Eu te mostro de uma vez onde entrar em turma, responder missões, acompanhar progresso e ajustar sua conta.',
   },
   PROFESSOR: {
     title: 'Veja onde fica cada area principal',
-    description: 'Eu te mostro onde criar turmas, acompanhar alunos e acessar as areas que voce mais vai usar no dia a dia.',
+    description:
+      'Eu te mostro de uma vez onde criar turmas, acompanhar alunos, publicar avisos e ajustar sua conta.',
   },
   ADMIN: {
     title: 'Quer um resumo do painel admin?',
-    description: 'Eu te mostro onde ficam usuarios, turmas, missoes e os atalhos principais para gerenciar a plataforma.',
+    description:
+      'Eu te mostro onde ficam usuários, turmas, missões e os atalhos principais para gerenciar a plataforma.',
   },
 };
 
@@ -49,37 +52,142 @@ const step = (
 });
 
 const commonSteps = [
-  step('[data-tour="dashboard-greeting"]', 'Seu painel', 'Aqui fica o resumo da sua conta e do seu papel na plataforma.', 'bottom'),
-  step('[data-tour="notifications"]', 'Notificações', 'Avisos importantes aparecem aqui. Quando houver algo novo, o contador mostra a quantidade.', 'bottom'),
-  step('[data-tour="settings"]', 'Configurações', 'Use esta área para ajustar perfil, foto, senha e reabrir este guia.', 'right'),
+  step(
+    '[data-tour="dashboard-greeting"]',
+    'Seu painel',
+    'Aqui fica o resumo da sua conta e do seu papel na plataforma.',
+    'bottom',
+  ),
+  step(
+    '[data-tour="notifications"]',
+    'Notificações',
+    'Avisos importantes aparecem aqui. Quando houver algo novo, o contador mostra a quantidade.',
+    'bottom',
+  ),
+  step(
+    '[data-tour="settings"]',
+    'Configurações',
+    'Use esta área para ajustar perfil, foto, senha e reabrir este guia.',
+    'right',
+  ),
 ];
 
 const stepsByRole: Record<UserRole, DriveStep[]> = {
   ALUNO: [
-    step('[data-tour="student-overview"]', 'Visão geral', 'Comece por aqui para acompanhar sua jornada, XP e progresso.', 'right'),
-    step('[data-tour="daily-quiz"]', 'Quiz diário', 'Responda o quiz do dia para manter sequência e ganhar XP.', 'bottom'),
-    step('[data-tour="student-xp"]', 'Nível e XP', 'Este bloco mostra seu nível atual e o quanto falta para evoluir.', 'left'),
-    step('[data-tour="student-classes"]', 'Turmas', 'Acesse as turmas em que você está matriculado ou entre em uma nova.', 'right'),
-    step('[data-tour="student-missions"]', 'Missões', 'Veja atividades disponíveis e conclua missões para somar pontos.', 'right'),
-    step('[data-tour="student-posts"]', 'Postagens', 'Acompanhe comunicados e participe das discussões das turmas.', 'right'),
-    step('[data-tour="student-achievements"]', 'Gamificação', 'Confira conquistas, ranking e evolução da sua participação.', 'right'),
+    step(
+      '[data-tour="student-overview"]',
+      'Visão geral',
+      'Comece por aqui para acompanhar sua jornada, XP e progresso.',
+      'right',
+    ),
+    step(
+      '[data-tour="daily-quiz"]',
+      'Quiz diário',
+      'Responda o quiz do dia para manter sequência e ganhar XP.',
+      'bottom',
+    ),
+    step(
+      '[data-tour="student-xp"]',
+      'Nível e XP',
+      'Este bloco mostra seu nível atual e o quanto falta para evoluir.',
+      'left',
+    ),
+    step(
+      '[data-tour="student-classes"]',
+      'Turmas',
+      'Quando o professor passar um código, é por aqui que você entra na turma e depois acompanha a sala.',
+      'right',
+    ),
+    step(
+      '[data-tour="student-missions"]',
+      'Missões',
+      'As missões disponíveis ficam aqui. Você abre o quiz ou conclui a atividade direto nessa área.',
+      'right',
+    ),
+    step(
+      '[data-tour="student-posts"]',
+      'Postagens',
+      'Acompanhe comunicados e participe das discussões das turmas.',
+      'right',
+    ),
+    step(
+      '[data-tour="student-achievements"]',
+      'Gamificação',
+      'Confira conquistas, ranking e evolução da sua participação.',
+      'right',
+    ),
     ...commonSteps,
   ],
   PROFESSOR: [
-    step('[data-tour="professor-overview"]', 'Visão geral', 'Acompanhe um resumo das suas turmas e alunos.', 'right'),
-    step('[data-tour="professor-classes"]', 'Gerenciar turmas', 'Crie turmas, veja alunos e acompanhe detalhes de cada sala.', 'right'),
-    step('[data-tour="teacher-new-class"]', 'Nova turma', 'Use este botão para criar uma turma e gerar o código de entrada.', 'bottom'),
-    step('[data-tour="professor-posts"]', 'Postagens', 'Publique comunicados e materiais para suas turmas.', 'right'),
+    step(
+      '[data-tour="professor-overview"]',
+      'Visão geral',
+      'Acompanhe um resumo das suas turmas e alunos.',
+      'right',
+    ),
+    step(
+      '[data-tour="professor-classes"]',
+      'Gerenciar turmas',
+      'Aqui você revisa suas turmas, abre cada sala e acompanha alunos e códigos de entrada.',
+      'right',
+    ),
+    step(
+      '[data-tour="teacher-new-class"]',
+      'Nova turma',
+      'Crie a turma com nome, semestre e ano. Depois disso, a plataforma gera o código para os alunos entrarem.',
+      'bottom',
+    ),
+    step(
+      '[data-tour="professor-posts"]',
+      'Postagens',
+      'Publique comunicados e materiais para suas turmas.',
+      'right',
+    ),
     ...commonSteps,
   ],
   ADMIN: [
-    step('[data-tour="admin-overview"]', 'Painel admin', 'Este é o ponto de partida para acompanhar o sistema.', 'right'),
-    step('[data-tour="admin-users"]', 'Usuários', 'Gerencie alunos, professores e administradores.', 'right'),
-    step('[data-tour="admin-classes"]', 'Turmas', 'Consulte e organize as turmas cadastradas.', 'right'),
-    step('[data-tour="admin-missions"]', 'Missões', 'Crie e acompanhe missões disponíveis na plataforma.', 'right'),
-    step('[data-tour="admin-achievements"]', 'Conquistas', 'Configure recompensas e critérios de gamificação.', 'right'),
-    step('[data-tour="admin-ai-generations"]', 'Gerações IA', 'Audite conteúdos gerados pela IA.', 'right'),
-    step('[data-tour="admin-broadcast"]', 'Broadcast', 'Envie avisos para usuários quando necessário.', 'right'),
+    step(
+      '[data-tour="admin-overview"]',
+      'Painel admin',
+      'Este e o ponto de partida para acompanhar o sistema.',
+      'right',
+    ),
+    step(
+      '[data-tour="admin-users"]',
+      'Usuários',
+      'Gerencie alunos, professores e administradores.',
+      'right',
+    ),
+    step(
+      '[data-tour="admin-classes"]',
+      'Turmas',
+      'Consulte e organize as turmas cadastradas.',
+      'right',
+    ),
+    step(
+      '[data-tour="admin-missions"]',
+      'Missões',
+      'Crie e acompanhe missões disponíveis na plataforma.',
+      'right',
+    ),
+    step(
+      '[data-tour="admin-achievements"]',
+      'Conquistas',
+      'Configure recompensas e critérios de gamificação.',
+      'right',
+    ),
+    step(
+      '[data-tour="admin-ai-generations"]',
+      'Gerações IA',
+      'Audite conteúdos gerados pela IA.',
+      'right',
+    ),
+    step(
+      '[data-tour="admin-broadcast"]',
+      'Broadcast',
+      'Envie avisos para usuários quando necessário.',
+      'right',
+    ),
     ...commonSteps,
   ],
 };
@@ -194,8 +302,8 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Guia inicial
             </p>
-            <h2 className="mt-2 text-2xl font-display font-bold text-brand-900">
-              {intro?.title ?? 'Conheca a plataforma'}
+            <h2 className="mt-2 font-display text-2xl font-bold text-brand-900">
+              {intro?.title ?? 'Conheça a plataforma'}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               {intro?.description ?? 'Eu te mostro os pontos principais do painel.'}
@@ -214,7 +322,7 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
                   Leva menos de um minuto.
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Se preferir, voce pode fechar agora e abrir esse guia depois em Configuracoes.
+                  Se preferir, você pode fechar agora e abrir esse guia depois em Configurações.
                 </p>
               </div>
             </div>
@@ -230,14 +338,14 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
                 setShowIntro(false);
               }}
             >
-              Agora nao
+              Agora não
             </Button>
             <Button
               type="button"
               className="bg-brand-900 text-white hover:bg-brand-800"
               onClick={handleStartTour}
             >
-              Comecar guia
+              Começar guia
             </Button>
           </div>
         </div>

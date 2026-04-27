@@ -23,7 +23,7 @@ const passwordSchema = z
     confirmPassword: z.string().min(1, 'Confirme a nova senha'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'As senhas nao coincidem',
+    message: 'As senhas não coincidem',
     path: ['confirmPassword'],
   });
 
@@ -172,7 +172,7 @@ export const SettingsPage = () => {
     <DashboardLayout>
       <div className="mx-auto max-w-4xl space-y-6">
         <header>
-          <h1 className="text-2xl font-display font-bold text-brand-900">Configuracoes</h1>
+          <h1 className="text-2xl font-display font-bold text-brand-900">Configurações</h1>
           <p className="mt-1 text-sm text-slate-500">
             Gerencie seus dados de perfil e acesso.
           </p>
@@ -223,7 +223,7 @@ export const SettingsPage = () => {
             <div>
               <h3 className="font-semibold text-slate-900">Dados do perfil</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Nome e email sao salvos separados da senha.
+                Nome e email são salvos separados da senha.
               </p>
             </div>
 
@@ -256,7 +256,7 @@ export const SettingsPage = () => {
                   <p className="text-xs text-red-500">{profileForm.formState.errors.email.message}</p>
                 )}
                 <p className="text-xs text-slate-500">
-                  Se alterar o email, use o novo endereco no proximo login.
+                  Se alterar o email, use o novo endereço no próximo login.
                 </p>
               </div>
             </div>
@@ -275,7 +275,7 @@ export const SettingsPage = () => {
                 disabled={!profileForm.formState.isDirty || isSavingProfile}
                 className="bg-brand-900 text-white hover:bg-brand-800"
               >
-                {isSavingProfile ? 'Salvando...' : 'Salvar alteracoes'}
+                {isSavingProfile ? 'Salvando...' : 'Salvar alterações'}
               </Button>
             </div>
           </form>
@@ -338,7 +338,7 @@ export const SettingsPage = () => {
                   Alterar senha
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  A troca de senha nao altera seu nome nem seu email.
+                  A troca de senha não altera seu nome nem seu email.
                 </p>
               </div>
 
