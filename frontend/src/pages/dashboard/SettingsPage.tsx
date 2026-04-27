@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+import { openPlatformTour } from '@/components/onboarding/platform-tour-events';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -295,6 +296,25 @@ export const SettingsPage = () => {
               onClick={() => setIsPasswordModalOpen(true)}
             >
               Alterar senha
+            </Button>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="font-semibold text-slate-900">Guia da plataforma</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Revise os pontos principais do painel quando precisar.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-slate-200"
+              onClick={openPlatformTour}
+            >
+              Ver guia novamente
             </Button>
           </div>
         </section>

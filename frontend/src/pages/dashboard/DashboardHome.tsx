@@ -37,6 +37,7 @@ const ProfessorDashboard = ({ firstName }: { firstName: string }) => {
           <Button
             className="bg-brand-900 hover:bg-brand-800 text-white font-semibold shrink-0"
             onClick={() => navigate('/dashboard/teacher/classes/new')}
+            data-tour="teacher-new-class"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nova Turma
@@ -296,6 +297,7 @@ export const DashboardHome = () => {
                 type="button"
                 className="mt-4 bg-brand-900 hover:bg-brand-800 text-white font-semibold w-fit"
                 onClick={openDailyQuiz}
+                data-tour="daily-quiz"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Ver quiz diário

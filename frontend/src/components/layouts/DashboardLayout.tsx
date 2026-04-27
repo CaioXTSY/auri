@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu, Users, GraduationCap, Target, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
+import { PlatformTour } from '@/components/onboarding/PlatformTour';
 import { authService } from '@/services/auth-service';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
 import { notificationsService, type NotificationItem } from '@/services/notifications-service';
@@ -18,9 +19,16 @@ interface SidebarContentProps {
   isActive: (path: string) => string;
   logout: () => void | Promise<void>;
   onNavClick: () => void;
+  enableTourMarkers?: boolean;
 }
 
-const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, onNavClick }: SidebarContentProps) => (
+const tourAttr = (enabled: boolean | undefined, value: string) =>
+  enabled ? { 'data-tour': value } : {};
+
+const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, onNavClick, enableTourMarkers }: SidebarContentProps) => {
+  const marker = (value: string) => tourAttr(enableTourMarkers, value);
+
+  return (
   <>
     <div className="h-20 px-6 flex items-center justify-center relative border-b border-brand-900">
       <Link to="/" onClick={onNavClick}>
@@ -38,60 +46,60 @@ const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, 
     <nav className="flex-1 px-3 py-6 space-y-1 text-sm font-medium overflow-y-auto">
       {userRole === 'ADMIN' ? (
         <>
-          <Link to="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin')}`} onClick={onNavClick}>
+          <Link to="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin')}`} onClick={onNavClick} {...marker('admin-overview')}>
             <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
           </Link>
-          <Link to="/admin/users" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/users')}`} onClick={onNavClick}>
+          <Link to="/admin/users" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/users')}`} onClick={onNavClick} {...marker('admin-users')}>
             <Users className="h-4 w-4" /><span>Usuários</span>
           </Link>
-          <Link to="/admin/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/classes')}`} onClick={onNavClick}>
+          <Link to="/admin/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/classes')}`} onClick={onNavClick} {...marker('admin-classes')}>
             <GraduationCap className="h-4 w-4" /><span>Turmas</span>
           </Link>
-          <Link to="/admin/missions" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/missions')}`} onClick={onNavClick}>
+          <Link to="/admin/missions" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/missions')}`} onClick={onNavClick} {...marker('admin-missions')}>
             <Target className="h-4 w-4" /><span>Missões</span>
           </Link>
-          <Link to="/admin/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/achievements')}`} onClick={onNavClick}>
+          <Link to="/admin/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/achievements')}`} onClick={onNavClick} {...marker('admin-achievements')}>
             <Trophy className="h-4 w-4" /><span>Conquistas</span>
           </Link>
-          <Link to="/admin/ai-generations" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/ai-generations')}`} onClick={onNavClick}>
+          <Link to="/admin/ai-generations" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/ai-generations')}`} onClick={onNavClick} {...marker('admin-ai-generations')}>
             <Sparkles className="h-4 w-4" /><span>Gerações IA</span>
           </Link>
-          <Link to="/admin/notifications" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/notifications')}`} onClick={onNavClick}>
+          <Link to="/admin/notifications" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/admin/notifications')}`} onClick={onNavClick} {...marker('admin-broadcast')}>
             <Bell className="h-4 w-4" /><span>Broadcast</span>
           </Link>
         </>
       ) : userRole === 'PROFESSOR' ? (
         <>
-          <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} onClick={onNavClick}>
+          <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} onClick={onNavClick} {...marker('professor-overview')}>
             <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
           </Link>
-          <Link to="/dashboard/teacher/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/teacher/classes')}`} onClick={onNavClick}>
+          <Link to="/dashboard/teacher/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/teacher/classes')}`} onClick={onNavClick} {...marker('professor-classes')}>
             <BookOpen className="h-4 w-4" /><span>Gerenciar Turmas</span>
           </Link>
-          <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} onClick={onNavClick}>
+          <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} onClick={onNavClick} {...marker('professor-posts')}>
             <MessageSquare className="h-4 w-4" /><span>Postagens</span>
           </Link>
         </>
       ) : (
         <>
-          <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} onClick={onNavClick}>
+          <Link to="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard')}`} onClick={onNavClick} {...marker('student-overview')}>
             <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
           </Link>
-          <Link to="/dashboard/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/classes')}`} onClick={onNavClick}>
+          <Link to="/dashboard/classes" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/classes')}`} onClick={onNavClick} {...marker('student-classes')}>
             <BookOpen className="h-4 w-4" /><span>Minhas Turmas</span>
           </Link>
-          <Link to="/dashboard/missions" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/missions')}`} onClick={onNavClick}>
+          <Link to="/dashboard/missions" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/missions')}`} onClick={onNavClick} {...marker('student-missions')}>
             <Flag className="h-4 w-4" /><span>Missões</span>
           </Link>
-          <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} onClick={onNavClick}>
+          <Link to="/dashboard/posts" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/posts')}`} onClick={onNavClick} {...marker('student-posts')}>
             <MessageSquare className="h-4 w-4" /><span>Postagens</span>
           </Link>
-          <Link to="/dashboard/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/achievements')}`} onClick={onNavClick}>
+          <Link to="/dashboard/achievements" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/achievements')}`} onClick={onNavClick} {...marker('student-achievements')}>
             <Trophy className="h-4 w-4" /><span>Gamificação</span>
           </Link>
         </>
       )}
-      <Link to="/dashboard/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/settings')}`} onClick={onNavClick}>
+      <Link to="/dashboard/settings" className={`flex items-center gap-3 px-3 py-2 rounded-md ${isActive('/dashboard/settings')}`} onClick={onNavClick} {...marker('settings')}>
         <Settings className="h-4 w-4" /><span>Configurações</span>
       </Link>
     </nav>
@@ -117,7 +125,8 @@ const SidebarContent = memo(({ userRole, firstName, initials, isActive, logout, 
       </button>
     </div>
   </>
-));
+  );
+});
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const user = useAuthStore((state) => state.user);
@@ -321,10 +330,16 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         onClose={handleDailyQuizClose}
         onAnswered={handleDailyQuizAnswered}
       />
+      <PlatformTour
+        userId={user?.id}
+        role={user?.role}
+        disabled={showDailyQuiz || mobileMenuOpen}
+      />
 
       {/* Mobile hamburger — fixed left center */}
       <button
         type="button"
+        data-tour="mobile-menu"
         className="fixed left-0 top-1/2 -translate-y-1/2 z-50 md:hidden bg-brand-950 text-slate-100 rounded-r-xl px-1.5 py-4 shadow-lg flex items-center justify-center"
         onClick={() => setMobileMenuOpen((o) => !o)}
       >
@@ -346,11 +361,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-64 bg-brand-950 text-slate-100 border-r border-brand-900">
-        <SidebarContent {...sidebarProps} />
+        <SidebarContent {...sidebarProps} enableTourMarkers />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between bg-white border-b border-slate-200">
+        <header className="h-16 md:h-20 px-4 md:px-8 flex items-center justify-between bg-white border-b border-slate-200" data-tour="dashboard-greeting">
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
@@ -363,7 +378,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex flex-col items-end text-xs text-slate-500">
+            <div className="hidden sm:flex flex-col items-end text-xs text-slate-500" data-tour={user?.role === 'ALUNO' ? 'student-xp' : undefined}>
               <span className="font-semibold text-slate-700">{user?.email}</span>
               <span className="uppercase tracking-widest">
                 {user?.role === 'ADMIN' ? 'Admin' : user?.role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
@@ -383,6 +398,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <button
                 type="button"
                 onClick={toggleNotifications}
+                data-tour="notifications"
                 className="relative h-10 w-10 rounded-full border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-slate-100 transition-colors"
               >
                 <Bell className="h-4 w-4" />

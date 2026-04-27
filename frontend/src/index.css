@@ -23,6 +23,141 @@
   }
 }
 
+@layer components {
+  .auri-driver-popover {
+    min-width: 300px;
+    max-width: 360px;
+    padding: 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    background:
+      linear-gradient(180deg, rgba(255, 251, 240, 0.72), rgba(255, 255, 255, 0) 42%),
+      #ffffff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26);
+    color: #1e293b;
+  }
+
+  .auri-driver-popover::before {
+    content: "";
+    display: block;
+    width: 44px;
+    height: 3px;
+    margin-bottom: 14px;
+    border-radius: 999px;
+    background: #e69a00;
+  }
+
+  .auri-driver-popover .driver-popover-title {
+    color: #1e293b;
+    font-family: Cinzel, Merriweather, serif;
+    font-size: 17px;
+    line-height: 1.25;
+    padding-right: 56px;
+  }
+
+  .auri-driver-popover .driver-popover-description {
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+
+  .auri-driver-popover .driver-popover-footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    gap: 12px;
+  }
+
+  .auri-driver-popover .driver-popover-progress-text {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .auri-driver-popover .driver-popover-navigation-btns {
+    gap: 8px;
+  }
+
+  .auri-driver-popover .driver-popover-navigation-btns button + button {
+    margin-left: 0;
+  }
+
+  .auri-driver-popover .driver-popover-footer button {
+    min-height: 34px;
+    padding: 8px 13px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    text-shadow: none;
+    transition:
+      background-color 0.16s ease,
+      border-color 0.16s ease,
+      color 0.16s ease,
+      transform 0.16s ease,
+      box-shadow 0.16s ease;
+  }
+
+  .auri-driver-popover .driver-popover-next-btn,
+  .auri-driver-popover .driver-popover-done-btn {
+    border: 1px solid #1e293b;
+    background: #1e293b;
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(30, 41, 59, 0.2);
+  }
+
+  .auri-driver-popover .driver-popover-next-btn:hover,
+  .auri-driver-popover .driver-popover-next-btn:focus,
+  .auri-driver-popover .driver-popover-done-btn:hover,
+  .auri-driver-popover .driver-popover-done-btn:focus {
+    border-color: #0f172a;
+    background: #0f172a;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.24);
+  }
+
+  .auri-driver-popover .driver-popover-prev-btn {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+  }
+
+  .auri-driver-popover .driver-popover-prev-btn:hover,
+  .auri-driver-popover .driver-popover-prev-btn:focus {
+    border-color: #94a3b8;
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .auri-driver-popover .driver-popover-btn-disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+  }
+
+  .auri-driver-popover .driver-popover-close-btn {
+    top: 14px;
+    right: 16px;
+    height: auto;
+    width: auto;
+    padding: 6px 8px;
+    border-radius: 999px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .auri-driver-popover .driver-popover-close-btn:hover,
+  .auri-driver-popover .driver-popover-close-btn:focus {
+    background: #f1f5f9;
+    color: #1e293b;
+  }
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

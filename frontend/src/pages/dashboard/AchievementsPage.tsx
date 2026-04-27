@@ -34,6 +34,8 @@ export const AchievementsPage = () => {
         setStats(statsData);
         setGlobalRanking(rankingData);
       } catch {
+        setStats(null);
+        setGlobalRanking([]);
       } finally {
         setIsLoading(false);
       }
@@ -77,6 +79,7 @@ export const AchievementsPage = () => {
           }
         }
       } catch {
+        setAchievements(null);
       } finally {
         setIsAchievementsLoading(false);
       }

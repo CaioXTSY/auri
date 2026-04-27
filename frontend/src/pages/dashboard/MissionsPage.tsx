@@ -162,12 +162,12 @@ export const MissionsPage = () => {
   const paginatedAvailable = useMemo(() => {
     const start = (availablePageSafe - 1) * pageSize;
     return filteredAvailable.slice(start, start + pageSize);
-  }, [availablePageSafe, filteredAvailable]);
+  }, [availablePageSafe, filteredAvailable, pageSize]);
 
   const paginatedHistory = useMemo(() => {
     const start = (historyPageSafe - 1) * pageSize;
     return filteredHistory.slice(start, start + pageSize);
-  }, [historyPageSafe, filteredHistory]);
+  }, [historyPageSafe, filteredHistory, pageSize]);
 
   return (
     <DashboardLayout>
