@@ -4,6 +4,10 @@ import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, Mes
 import { useAuthStore } from '@/stores/auth-store';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { PlatformTour } from '@/components/onboarding/PlatformTour';
+import {
+  CLOSE_MOBILE_TOUR_MENU_EVENT,
+  OPEN_MOBILE_TOUR_MENU_EVENT,
+} from '@/components/onboarding/platform-tour-events';
 import { useToast } from '@/components/ui/use-toast';
 import { authService } from '@/services/auth-service';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
@@ -172,6 +176,19 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       window.removeEventListener('open-daily-quiz', handleOpenDailyQuiz);
     };
   }, [user?.role]);
+
+  useEffect(() => {
+    const openMenu = () => setMobileMenuOpen(true);
+    const closeMenu = () => setMobileMenuOpen(false);
+
+    window.addEventListener(OPEN_MOBILE_TOUR_MENU_EVENT, openMenu);
+    window.addEventListener(CLOSE_MOBILE_TOUR_MENU_EVENT, closeMenu);
+
+    return () => {
+      window.removeEventListener(OPEN_MOBILE_TOUR_MENU_EVENT, openMenu);
+      window.removeEventListener(CLOSE_MOBILE_TOUR_MENU_EVENT, closeMenu);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -343,7 +360,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <PlatformTour
         userId={user?.id}
         role={user?.role}
-        disabled={showDailyQuiz || mobileMenuOpen}
+        disabled={showDailyQuiz}
       />
 
       {/* Mobile hamburger — fixed left center */}
@@ -366,7 +383,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Mobile drawer */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-brand-950 text-slate-100 border-r border-brand-900 transform transition-transform duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <SidebarContent {...sidebarProps} />
+        <SidebarContent {...sidebarProps} enableTourMarkers />
       </aside>
 
       {/* Desktop sidebar */}

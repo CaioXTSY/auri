@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Compass, Sparkles } from 'lucide-react';
 import { driver, type DriveStep } from 'driver.js';
 import 'driver.js/dist/driver.css';
-import { OPEN_TOUR_EVENT } from './platform-tour-events';
+import {
+  CLOSE_MOBILE_TOUR_MENU_EVENT,
+  OPEN_MOBILE_TOUR_MENU_EVENT,
+  OPEN_TOUR_EVENT,
+} from './platform-tour-events';
 import { Button } from '@/components/ui/button';
 
 type UserRole = 'ADMIN' | 'PROFESSOR' | 'ALUNO';
@@ -13,7 +17,8 @@ interface PlatformTourProps {
   disabled?: boolean;
 }
 
-const TOUR_VERSION = 'v1';
+const TOUR_VERSION = 'v2';
+const MOBILE_BREAKPOINT = 768;
 
 const introCopy: Record<UserRole, { title: string; description: string }> = {
   ALUNO: {
@@ -22,7 +27,7 @@ const introCopy: Record<UserRole, { title: string; description: string }> = {
       'Eu te mostro de uma vez onde entrar em turma, responder missões, acompanhar progresso e ajustar sua conta.',
   },
   PROFESSOR: {
-    title: 'Veja onde fica cada area principal',
+    title: 'Veja onde fica cada área principal',
     description:
       'Eu te mostro de uma vez onde criar turmas, acompanhar alunos, publicar avisos e ajustar sua conta.',
   },
@@ -51,7 +56,7 @@ const step = (
   },
 });
 
-const commonSteps = [
+const desktopCommonSteps = [
   step(
     '[data-tour="dashboard-greeting"]',
     'Seu painel',
@@ -72,7 +77,7 @@ const commonSteps = [
   ),
 ];
 
-const stepsByRole: Record<UserRole, DriveStep[]> = {
+const desktopStepsByRole: Record<UserRole, DriveStep[]> = {
   ALUNO: [
     step(
       '[data-tour="student-overview"]',
@@ -116,7 +121,7 @@ const stepsByRole: Record<UserRole, DriveStep[]> = {
       'Confira conquistas, ranking e evolução da sua participação.',
       'right',
     ),
-    ...commonSteps,
+    ...desktopCommonSteps,
   ],
   PROFESSOR: [
     step(
@@ -143,13 +148,13 @@ const stepsByRole: Record<UserRole, DriveStep[]> = {
       'Publique comunicados e materiais para suas turmas.',
       'right',
     ),
-    ...commonSteps,
+    ...desktopCommonSteps,
   ],
   ADMIN: [
     step(
       '[data-tour="admin-overview"]',
       'Painel admin',
-      'Este e o ponto de partida para acompanhar o sistema.',
+      'Este é o ponto de partida para acompanhar o sistema.',
       'right',
     ),
     step(
@@ -188,44 +193,175 @@ const stepsByRole: Record<UserRole, DriveStep[]> = {
       'Envie avisos para usuários quando necessário.',
       'right',
     ),
-    ...commonSteps,
+    ...desktopCommonSteps,
   ],
 };
 
-const getAvailableSteps = (role: UserRole) =>
-  stepsByRole[role].filter((tourStep) => {
+const mobileCommonSteps = [
+  step(
+    '[data-tour="dashboard-greeting"]',
+    'Seu painel',
+    'Aqui fica a visão principal da conta, com o resumo do seu espaço na plataforma.',
+    'bottom',
+  ),
+  step(
+    '[data-tour="notifications"]',
+    'Notificações',
+    'Avisos novos aparecem aqui e você pode abrir tudo sem sair da página.',
+    'left',
+  ),
+  step('[data-tour="mobile-menu"]', 'Menu', 'Este botão abre os atalhos principais do painel no celular.', 'right'),
+];
+
+const mobileIntroStepsByRole: Record<UserRole, DriveStep[]> = {
+  ALUNO: [
+    ...mobileCommonSteps,
+  ],
+  PROFESSOR: [
+    ...mobileCommonSteps,
+    step(
+      '[data-tour="teacher-new-class"]',
+      'Nova turma',
+      'Se este botão estiver visível, você já pode criar sua próxima turma direto daqui.',
+      'bottom',
+    ),
+  ],
+  ADMIN: [...mobileCommonSteps],
+};
+
+const mobileMenuStepsByRole: Record<UserRole, DriveStep[]> = {
+  ALUNO: [
+    step('[data-tour="student-classes"]', 'Turmas', 'Entre em turma, acompanhe a sala e volte aqui quando precisar.', 'right'),
+    step('[data-tour="student-missions"]', 'Missões', 'Aqui ficam as atividades e quizzes que você precisa responder.', 'right'),
+    step('[data-tour="student-posts"]', 'Postagens', 'Use esta área para acompanhar avisos e discussões das turmas.', 'right'),
+    step('[data-tour="student-achievements"]', 'Gamificação', 'Veja suas conquistas, ranking e progresso geral.', 'right'),
+    step('[data-tour="settings"]', 'Configurações', 'Perfil, senha e o botão para abrir este guia de novo ficam aqui.', 'right'),
+  ],
+  PROFESSOR: [
+    step('[data-tour="professor-classes"]', 'Turmas', 'Gerencie suas turmas, alunos e códigos de entrada por aqui.', 'right'),
+    step('[data-tour="professor-posts"]', 'Postagens', 'Publique avisos e materiais sem sair do painel.', 'right'),
+    step('[data-tour="settings"]', 'Configurações', 'Perfil, senha e atalhos do guia continuam aqui.', 'right'),
+  ],
+  ADMIN: [
+    step('[data-tour="admin-users"]', 'Usuários', 'Gerencie contas e permissões direto deste menu.', 'right'),
+    step('[data-tour="admin-classes"]', 'Turmas', 'Consulte e organize as turmas cadastradas.', 'right'),
+    step('[data-tour="admin-missions"]', 'Missões', 'Acompanhe ou crie missões pelo painel admin.', 'right'),
+    step('[data-tour="settings"]', 'Configurações', 'Se precisar rever o guia, o atalho fica aqui.', 'right'),
+  ],
+};
+
+const isMobileViewport = () => window.innerWidth < MOBILE_BREAKPOINT;
+
+const isElementVisible = (selector: string) => {
+  const element = document.querySelector(selector);
+  if (!(element instanceof HTMLElement)) {
+    return false;
+  }
+
+  const styles = window.getComputedStyle(element);
+  if (styles.display === 'none' || styles.visibility === 'hidden' || styles.opacity === '0') {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+
+  return (
+    rect.width > 0 &&
+    rect.height > 0 &&
+    rect.bottom > 0 &&
+    rect.right > 0 &&
+    rect.top < window.innerHeight &&
+    rect.left < window.innerWidth
+  );
+};
+
+const getAvailableSteps = (role: UserRole, mobile: boolean) => {
+  const source = mobile ? mobileIntroStepsByRole[role] : desktopStepsByRole[role];
+
+  return source.filter((tourStep) => {
     if (typeof tourStep.element !== 'string') return true;
-    return Boolean(document.querySelector(tourStep.element));
+    return isElementVisible(tourStep.element);
+  });
+};
+
+const getAvailableMobileMenuSteps = (role: UserRole) =>
+  mobileMenuStepsByRole[role].filter((tourStep) => {
+    if (typeof tourStep.element !== 'string') return true;
+    return isElementVisible(tourStep.element);
   });
 
 const startTour = (role: UserRole, onClose: () => void) => {
-  const availableSteps = getAvailableSteps(role);
-  if (availableSteps.length === 0) return;
+  const mobile = isMobileViewport();
+  const closeMobileMenuIfNeeded = () => {
+    if (mobile) {
+      window.dispatchEvent(new Event(CLOSE_MOBILE_TOUR_MENU_EVENT));
+    }
+  };
 
-  const instance = driver({
-    steps: availableSteps,
-    animate: true,
-    allowClose: true,
-    overlayOpacity: 0.62,
-    stagePadding: 8,
-    stageRadius: 14,
-    popoverClass: 'auri-driver-popover',
-    showProgress: true,
-    nextBtnText: 'Próximo',
-    prevBtnText: 'Voltar',
-    doneBtnText: 'Concluir',
-    onPopoverRender: (popover) => {
-      popover.closeButton.textContent = 'Pular';
-      popover.closeButton.setAttribute('aria-label', 'Pular guia');
-    },
-    onCloseClick: () => {
-      onClose();
-      instance.destroy();
-    },
-    onDestroyed: onClose,
-  });
+  const runDriver = (steps: DriveStep[], handleDone: () => void) => {
+    const instance = driver({
+      steps,
+      animate: true,
+      allowClose: true,
+      overlayOpacity: 0.62,
+      stagePadding: mobile ? 6 : 8,
+      stageRadius: 14,
+      popoverClass: 'auri-driver-popover',
+      showProgress: true,
+      nextBtnText: 'Próximo',
+      prevBtnText: 'Voltar',
+      doneBtnText: 'Concluir',
+      onPopoverRender: (popover) => {
+        popover.closeButton.textContent = 'Pular';
+        popover.closeButton.setAttribute('aria-label', 'Pular guia');
+      },
+      onCloseClick: () => {
+        closeMobileMenuIfNeeded();
+        onClose();
+        instance.destroy();
+      },
+      onDestroyed: handleDone,
+    });
 
-  instance.drive();
+    instance.drive();
+  };
+
+  if (!mobile) {
+    const availableSteps = getAvailableSteps(role, false);
+    if (availableSteps.length === 0) return;
+
+    runDriver(availableSteps, onClose);
+    return;
+  }
+
+  const introSteps = getAvailableSteps(role, true);
+  const menuSteps = () => getAvailableMobileMenuSteps(role);
+
+  const startMenuPhase = () => {
+    window.dispatchEvent(new Event(OPEN_MOBILE_TOUR_MENU_EVENT));
+
+    window.setTimeout(() => {
+      const availableMenuSteps = menuSteps();
+
+      if (availableMenuSteps.length === 0) {
+        closeMobileMenuIfNeeded();
+        onClose();
+        return;
+      }
+
+      runDriver(availableMenuSteps, () => {
+        closeMobileMenuIfNeeded();
+        onClose();
+      });
+    }, 320);
+  };
+
+  if (introSteps.length === 0) {
+    startMenuPhase();
+    return;
+  }
+
+  runDriver(introSteps, startMenuPhase);
 };
 
 export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourProps) => {
@@ -318,9 +454,7 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
                 <Sparkles className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Leva menos de um minuto.
-                </p>
+                <p className="text-sm font-semibold text-slate-900">Leva menos de um minuto.</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
                   Se preferir, você pode fechar agora e abrir esse guia depois em Configurações.
                 </p>
