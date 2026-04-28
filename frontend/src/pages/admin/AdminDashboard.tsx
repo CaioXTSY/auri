@@ -1,19 +1,4 @@
-import { useEffect, useState } from 'react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import {
   adminService,
@@ -34,16 +19,11 @@ import {
   Activity,
 } from 'lucide-react';
 
-const ROLE_COLORS: Record<string, string> = {
-  ALUNO: '#2563eb',
-  PROFESSOR: '#f59e0b',
-  ADMIN: '#dc2626',
-};
-
-const formatDay = (iso: string) => {
-  const d = new Date(iso);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
+const AdminDashboardCharts = lazy(() =>
+  import('@/components/admin/AdminDashboardCharts').then((module) => ({
+    default: module.AdminDashboardCharts,
+  })),
+);
 
 export const AdminDashboard = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -92,20 +72,6 @@ export const AdminDashboard = () => {
     );
   }
 
-  const roleChart = Object.entries(stats.users.byRole).map(([role, value]) => ({
-    name: role,
-    value,
-    color: ROLE_COLORS[role] ?? '#64748b',
-  }));
-
-  const timeseriesFormatted = timeseries.map((p) => ({
-    ...p,
-    dayLabel: formatDay(p.date),
-    total: p.correct + p.wrong,
-  }));
-
-  const last7Missions = timeseriesFormatted.slice(-7);
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -126,93 +92,9 @@ export const AdminDashboard = () => {
           <Kpi icon={<Flame className="w-4 h-4" />} label="Streak médio" value={stats.streaks.averageCurrent.toFixed(1)} hint="alunos" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <ChartCard title="Crescimento de usuários (30d)" className="lg:col-span-2">
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={timeseriesFormatted} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="dayLabel" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                <Tooltip />
-                <Line type="monotone" dataKey="users" name="Novos usuários" stroke="#2563eb" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard title="Usuários por role">
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie data={roleChart} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={2}>
-                  {roleChart.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard title="Missões criadas (7d)">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={last7Missions} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="dayLabel" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="missions" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard title="Quiz: acertos vs erros (30d)" className="lg:col-span-2">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={timeseriesFormatted} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="dayLabel" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="correct" name="Acertos" stackId="q" fill="#10b981" />
-                <Bar dataKey="wrong" name="Erros" stackId="q" fill="#ef4444" />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title="Top 5 turmas por alunos">
-            {tops.topClasses.length === 0 ? (
-              <p className="text-sm text-slate-500 py-8 text-center">Sem dados.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={tops.topClasses} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" width={120} />
-                  <Tooltip />
-                  <Bar dataKey="students" name="Alunos" fill="#6366f1" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-
-          <ChartCard title="Top 5 conquistas desbloqueadas">
-            {tops.topAchievements.length === 0 ? (
-              <p className="text-sm text-slate-500 py-8 text-center">Sem dados.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={tops.topAchievements} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" width={140} />
-                  <Tooltip />
-                  <Bar dataKey="unlocks" name="Desbloqueios" fill="#eab308" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-        </div>
+        <Suspense fallback={<ChartsSkeleton />}>
+          <AdminDashboardCharts stats={stats} timeseries={timeseries} tops={tops} />
+        </Suspense>
       </div>
     </DashboardLayout>
   );
@@ -229,9 +111,35 @@ const Kpi = ({ icon, label, value, hint }: { icon: React.ReactNode; label: strin
   </div>
 );
 
-const ChartCard = ({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white rounded-lg border border-slate-200 shadow-sm p-5 ${className}`}>
-    <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-widest mb-3">{title}</h3>
-    {children}
+const ChartsSkeleton = () => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="h-4 w-48 rounded bg-slate-200" />
+        <div className="mt-4 h-[260px] animate-pulse rounded bg-slate-100" />
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="h-4 w-36 rounded bg-slate-200" />
+        <div className="mt-4 h-[260px] animate-pulse rounded bg-slate-100" />
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="h-4 w-40 rounded bg-slate-200" />
+        <div className="mt-4 h-[240px] animate-pulse rounded bg-slate-100" />
+      </div>
+      <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="h-4 w-56 rounded bg-slate-200" />
+        <div className="mt-4 h-[240px] animate-pulse rounded bg-slate-100" />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="h-4 w-44 rounded bg-slate-200" />
+        <div className="mt-4 h-[240px] animate-pulse rounded bg-slate-100" />
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="h-4 w-52 rounded bg-slate-200" />
+        <div className="mt-4 h-[240px] animate-pulse rounded bg-slate-100" />
+      </div>
+    </div>
   </div>
 );

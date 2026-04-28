@@ -18,6 +18,7 @@ export default defineConfig({
           'vendor-router': ['react-router-dom'],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-socket': ['socket.io-client'],
+          'vendor-charts': ['recharts'],
         },
       },
     },

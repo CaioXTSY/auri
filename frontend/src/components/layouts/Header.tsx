@@ -133,19 +133,26 @@ export const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div id="mobile-main-menu" className="fixed inset-0 top-[80px] z-40 bg-white overflow-y-auto md:hidden pb-20 animate-in slide-in-from-right-10 duration-300">
+        <div
+          id="mobile-main-menu"
+          role="region"
+          aria-label="Menu principal mobile"
+          className="fixed inset-0 top-[80px] z-40 overflow-y-auto bg-white pb-20 animate-in slide-in-from-right-10 duration-300 md:hidden"
+        >
           <div className="flex flex-col divide-y divide-slate-100">
-            {mainNavItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={() => setIsMenuOpen(false)}
-                className="px-6 py-4 text-brand-900 font-serif font-bold text-lg hover:bg-slate-50 hover:text-accent-700 transition-colors flex justify-between items-center"
-              >
-                {item.label}
-                <ChevronDown className="-rotate-90 h-4 w-4 text-slate-400" />
-              </a>
-            ))}
+            <nav aria-label="Links principais" className="flex flex-col">
+              {mainNavItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-between px-6 py-4 font-serif text-lg font-bold text-brand-900 transition-colors hover:bg-slate-50 hover:text-accent-700"
+                >
+                  {item.label}
+                  <ChevronDown className="-rotate-90 h-4 w-4 text-slate-400" />
+                </a>
+              ))}
+            </nav>
             <div className="px-6 py-6 bg-slate-50 space-y-4">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Acesso Rápido</p>
               <div className="grid grid-cols-2 gap-3">
