@@ -65,15 +65,30 @@ export class LevelsService {
   }
 
   async checkLevelUp(userId: string) {
-    const levelInfo = await this.getUserLevel(userId);
+    const [levelInfo, latestPointEntry] = await Promise.all([
+      this.getUserLevel(userId),
+      this.prisma.userPoint.findFirst({
+        where: { userId },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: { points: true },
+      }),
+    ]);
 
-    if (levelInfo.pointsInCurrentLevel < 100) {
-      this.logger.log(
-        `Usuário ${userId} subiu para ${levelInfo.levelName}!`,
-      );
-      return levelInfo.currentLevel;
+    if (!latestPointEntry) {
+      return null;
     }
 
-    return null;
+    const previousTotalPoints = Math.max(
+      0,
+      levelInfo.totalPoints - latestPointEntry.points,
+    );
+    const previousLevel = this.calculateLevel(previousTotalPoints);
+
+    if (levelInfo.currentLevel <= previousLevel) {
+      return null;
+    }
+
+    this.logger.log(`Usuário ${userId} subiu para ${levelInfo.levelName}!`);
+    return levelInfo.currentLevel;
   }
 }

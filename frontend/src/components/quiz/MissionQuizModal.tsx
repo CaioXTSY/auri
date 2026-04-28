@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles, X } from 'lucide-react';
-import { checkAchievementUnlocks } from '@/components/gamification/achievement-unlock-events';
 import { Button } from '@/components/ui/button';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { cn } from '@/lib/utils';
@@ -79,9 +78,6 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
       const response = await missionsService.answerMissionQuiz(quiz.missionId, selectedIndex);
       setResult(response);
       onAnswered?.();
-      window.setTimeout(() => {
-        checkAchievementUnlocks();
-      }, 0);
     } catch (submitError) {
       const errorResponse = submitError as {
         response?: { status?: number; data?: { message?: string } };

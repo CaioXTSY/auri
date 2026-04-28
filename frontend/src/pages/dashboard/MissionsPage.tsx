@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
 import { MISSIONS_PAGE_SIZE } from '@/constants/app';
-import { checkAchievementUnlocks } from '@/components/gamification/achievement-unlock-events';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
@@ -117,19 +116,7 @@ export const MissionsPage = () => {
   }, [notify]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const load = async () => {
-      if (!isMounted) return;
-      await loadData();
-      checkAchievementUnlocks();
-    };
-
-    load();
-
-    return () => {
-      isMounted = false;
-    };
+    loadData();
   }, [loadData]);
 
   useEffect(() => {
