@@ -129,7 +129,6 @@ export class AchievementsService {
         isUnlocked: false,
       }));
     } else {
-      // ALL
       total = totalAchievementsCount;
       const achievements = await this.prisma.achievement.findMany({
         skip,
