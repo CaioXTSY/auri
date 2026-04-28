@@ -8,6 +8,7 @@ import {
   OPEN_TOUR_EVENT,
 } from './platform-tour-events';
 import { Button } from '@/components/ui/button';
+import { ModalDialog } from '@/components/ui/modal-dialog';
 
 type UserRole = 'ADMIN' | 'PROFESSOR' | 'ALUNO';
 
@@ -428,9 +429,42 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
   }
 
   return (
-    <div className="fixed inset-0 z-[1000000001] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.55)]">
-        <div className="flex items-start gap-4 border-b border-slate-200 px-6 py-6">
+    <ModalDialog
+      open={showIntro && !disabled}
+      title={intro?.title ?? 'Conheça a plataforma'}
+      description={intro?.description ?? 'Eu te mostro os pontos principais do painel.'}
+      onClose={() => {
+        markDismissed();
+        setShowIntro(false);
+      }}
+      panelClassName="max-w-lg"
+      initialFocusSelector="[data-tour-dismiss]"
+      footer={
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-slate-200 text-slate-700"
+            data-tour-dismiss
+            onClick={() => {
+              markDismissed();
+              setShowIntro(false);
+            }}
+          >
+            Agora não
+          </Button>
+          <Button
+            type="button"
+            className="bg-brand-900 text-white hover:bg-brand-800"
+            onClick={handleStartTour}
+          >
+            Começar guia
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-5">
+        <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-900 text-accent-400">
             <Compass className="h-6 w-6" />
           </div>
@@ -438,16 +472,9 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Guia inicial
             </p>
-            <h2 className="mt-2 font-display text-2xl font-bold text-brand-900">
-              {intro?.title ?? 'Conheça a plataforma'}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {intro?.description ?? 'Eu te mostro os pontos principais do painel.'}
-            </p>
           </div>
         </div>
 
-        <div className="space-y-5 px-6 py-5">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-brand-900 shadow-sm">
@@ -461,29 +488,7 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
               </div>
             </div>
           </div>
-
-          <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-slate-200 text-slate-700"
-              onClick={() => {
-                markDismissed();
-                setShowIntro(false);
-              }}
-            >
-              Agora não
-            </Button>
-            <Button
-              type="button"
-              className="bg-brand-900 text-white hover:bg-brand-800"
-              onClick={handleStartTour}
-            >
-              Começar guia
-            </Button>
-          </div>
-        </div>
       </div>
-    </div>
+    </ModalDialog>
   );
 };

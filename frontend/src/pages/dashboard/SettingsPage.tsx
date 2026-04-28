@@ -4,10 +4,16 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { openPlatformTour } from '@/components/onboarding/platform-tour-events';
+import {
+  PasswordSettingsDialog,
+  type PasswordSettingsFormValues,
+} from '@/components/settings/PasswordSettingsDialog';
+import {
+  ProfileDetailsForm,
+  type ProfileDetailsFormValues,
+} from '@/components/settings/ProfileDetailsForm';
+import { ProfileSummaryCard } from '@/components/settings/ProfileSummaryCard';
 import { Button } from '@/components/ui/button';
-import { Field } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { ModalDialog } from '@/components/ui/modal-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
 import { useToast } from '@/components/ui/use-toast';
@@ -55,7 +61,7 @@ export const SettingsPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const profileForm = useForm<ProfileForm>({
+  const profileForm = useForm<ProfileDetailsFormValues>({
     resolver: zodResolver(profileSchema) as never,
     defaultValues: {
       name: user?.name ?? '',
@@ -63,7 +69,7 @@ export const SettingsPage = () => {
     },
   });
 
-  const passwordForm = useForm<PasswordForm>({
+  const passwordForm = useForm<PasswordSettingsFormValues>({
     resolver: zodResolver(passwordSchema) as never,
     defaultValues: {
       password: '',
@@ -179,106 +185,24 @@ export const SettingsPage = () => {
           description="Gerencie seus dados de perfil e acesso."
         />
 
-        <SectionCard>
-          <div className="flex flex-col gap-5 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 overflow-hidden rounded-full bg-slate-100 text-lg font-bold text-slate-600">
-                {avatarSrc ? (
-                  <img src={avatarSrc} alt={user.name} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="flex h-full w-full items-center justify-center">{initials}</span>
-                )}
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">{user.name}</h2>
-                <p className="text-sm text-slate-500">{user.email}</p>
-                <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">{user.role}</p>
-              </div>
-            </div>
+        <ProfileSummaryCard
+          name={user.name}
+          email={user.email}
+          role={user.role}
+          initials={initials}
+          avatarSrc={avatarSrc}
+          isUploading={isUploading}
+          fileInputRef={fileInputRef}
+          onAvatarChange={handleAvatarChange}
+        />
 
-            <div className="flex flex-col items-start gap-2 sm:items-end">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="border-slate-200"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? 'Enviando...' : 'Alterar foto'}
-              </Button>
-              <p className="text-xs text-slate-500">PNG, JPG, GIF ou WebP ate 5MB.</p>
-            </div>
-          </div>
-
-          <form
-            onSubmit={profileForm.handleSubmit(onSubmitProfile as never)}
-            className="space-y-5 p-5"
-          >
-            <div>
-              <h3 className="font-semibold text-slate-900">Dados do perfil</h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Nome e email são salvos separados da senha.
-              </p>
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field
-                htmlFor="name"
-                label="Nome completo"
-                error={profileForm.formState.errors.name?.message}
-              >
-                <Input
-                  id="name"
-                  autoComplete="name"
-                  aria-invalid={!!profileForm.formState.errors.name}
-                  className={profileForm.formState.errors.name ? 'border-red-400 focus-visible:ring-red-500' : ''}
-                  {...profileForm.register('name')}
-                />
-              </Field>
-
-              <Field
-                htmlFor="email"
-                label="Email de acesso"
-                description="Se alterar o email, use o novo endereço no próximo login."
-                error={profileForm.formState.errors.email?.message}
-              >
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  aria-invalid={!!profileForm.formState.errors.email}
-                  className={profileForm.formState.errors.email ? 'border-red-400 focus-visible:ring-red-500' : ''}
-                  {...profileForm.register('email')}
-                />
-              </Field>
-            </div>
-
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => profileForm.reset({ name: user.name, email: user.email })}
-                disabled={!profileForm.formState.isDirty || isSavingProfile}
-              >
-                Descartar
-              </Button>
-              <Button
-                type="submit"
-                disabled={!profileForm.formState.isDirty || isSavingProfile}
-                className="bg-brand-900 text-white hover:bg-brand-800"
-              >
-                {isSavingProfile ? 'Salvando...' : 'Salvar alterações'}
-              </Button>
-            </div>
-          </form>
-        </SectionCard>
+        <ProfileDetailsForm
+          form={profileForm}
+          isSaving={isSavingProfile}
+          userName={user.name}
+          userEmail={user.email}
+          onSubmit={onSubmitProfile}
+        />
 
         <SectionCard className="p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -318,81 +242,16 @@ export const SettingsPage = () => {
           </div>
         </SectionCard>
 
-        <ModalDialog
+        <PasswordSettingsDialog
           open={isPasswordModalOpen}
-          title="Alterar senha"
-          description="A troca de senha não altera seu nome nem seu email."
+          isSaving={isSavingPassword}
+          form={passwordForm}
           onClose={() => {
-            if (isSavingPassword) return;
             passwordForm.reset({ password: '', confirmPassword: '' });
             setIsPasswordModalOpen(false);
           }}
-          panelClassName="max-w-md"
-        >
-          <div className="space-y-5">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              Use pelo menos 6 caracteres e confirme a nova senha antes de salvar.
-            </div>
-
-            <form
-              onSubmit={passwordForm.handleSubmit(onSubmitPassword as never)}
-              className="space-y-5"
-            >
-              <div className="space-y-5">
-                <Field
-                  htmlFor="password"
-                  label="Nova senha"
-                  error={passwordForm.formState.errors.password?.message}
-                >
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="new-password"
-                    aria-invalid={!!passwordForm.formState.errors.password}
-                    className={passwordForm.formState.errors.password ? 'border-red-400 focus-visible:ring-red-500' : ''}
-                    {...passwordForm.register('password')}
-                  />
-                </Field>
-
-                <Field
-                  htmlFor="confirmPassword"
-                  label="Confirmar nova senha"
-                  error={passwordForm.formState.errors.confirmPassword?.message}
-                >
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    aria-invalid={!!passwordForm.formState.errors.confirmPassword}
-                    className={passwordForm.formState.errors.confirmPassword ? 'border-red-400 focus-visible:ring-red-500' : ''}
-                    {...passwordForm.register('confirmPassword')}
-                  />
-                </Field>
-              </div>
-
-              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={isSavingPassword}
-                  onClick={() => {
-                    passwordForm.reset({ password: '', confirmPassword: '' });
-                      setIsPasswordModalOpen(false);
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSavingPassword}
-                  className="bg-brand-900 text-white hover:bg-brand-800"
-                >
-                  {isSavingPassword ? 'Atualizando...' : 'Atualizar senha'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </ModalDialog>
+          onSubmit={onSubmitPassword}
+        />
       </div>
     </DashboardLayout>
   );

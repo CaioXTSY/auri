@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Sparkles, X } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { ModalDialog } from '@/components/ui/modal-dialog';
 import { cn } from '@/lib/utils';
 import { missionsService, type MissionQuiz, type MissionQuizAnswerResponse } from '@/services/missions-service';
 import { useAuthStore } from '@/stores/auth-store';
@@ -101,17 +103,15 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-slate-950/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.55)] overflow-hidden">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 h-9 w-9 rounded-full bg-white/80 text-slate-500 flex items-center justify-center hover:bg-white transition-colors z-20"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        <div className="px-6 py-8 sm:px-8 sm:py-10 space-y-5">
+    <ModalDialog
+      open={open}
+      title={quiz?.title || 'Quiz da missão'}
+      description="Responda o desafio da missão sem sair do painel."
+      onClose={onClose}
+      panelClassName="max-w-3xl"
+      initialFocusSelector={result ? '[data-close-mission-quiz]' : '[data-answer-option]'}
+    >
+      <div className="space-y-5 px-1 py-1">
           <div className="flex items-start gap-3">
             <div className="h-11 w-11 rounded-2xl bg-brand-900 text-accent-400 flex items-center justify-center">
               <Sparkles className="h-6 w-6" />
@@ -120,9 +120,6 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
               <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500 font-semibold">
                 Quiz da missão
               </p>
-              <h2 className="text-2xl font-display font-bold text-brand-900">
-                {quiz?.title || 'Quiz da missão'}
-              </h2>
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 {quiz && (
                   <>
@@ -146,11 +143,7 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
               </div>
             )}
 
-            {!isLoading && error && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                {error}
-              </div>
-            )}
+            {!isLoading && error ? <ErrorState message={error} /> : null}
 
             {!isLoading && quiz && (
               <div className="space-y-5">
@@ -171,6 +164,7 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
                         type="button"
                         onClick={() => setSelectedIndex(index)}
                         disabled={Boolean(result)}
+                        data-answer-option={index === 0 ? true : undefined}
                         className={cn(
                           'w-full text-left rounded-xl border px-4 py-3 transition-all group',
                           isSelected && !isAnswered && 'border-brand-900 bg-brand-50',
@@ -221,6 +215,7 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
                         type="button"
                         variant="outline"
                         className="border-slate-200 text-slate-600"
+                        data-close-mission-quiz
                         onClick={onClose}
                       >
                         Fechar
@@ -256,6 +251,7 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
                       type="button"
                       variant="outline"
                       className="border-slate-200 text-slate-600"
+                      data-close-mission-quiz
                       onClick={onClose}
                     >
                       Ver depois
@@ -265,8 +261,7 @@ export const MissionQuizModal = ({ missionId, open, onClose, onAnswered }: Missi
               </div>
             )}
           </div>
-        </div>
       </div>
-    </div>
+    </ModalDialog>
   );
 };

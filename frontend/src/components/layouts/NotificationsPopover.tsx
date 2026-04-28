@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef } from 'react';
 import { Bell, X } from 'lucide-react';
 import type { NotificationItem } from '@/services/notifications-service';
 
@@ -22,13 +23,52 @@ export const NotificationsPopover = ({
   onMarkAllAsRead,
   onMarkAsRead,
 }: NotificationsPopoverProps) => {
+  const dialogId = useId();
+  const titleId = useId();
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const triggerElement = triggerRef.current;
+    const focusTarget =
+      panelRef.current?.querySelector<HTMLElement>('button:not([disabled])') ?? panelRef.current;
+    focusTarget?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) {
+        return;
+      }
+      onClose();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handlePointerDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handlePointerDown);
+      triggerElement?.focus();
+    };
+  }, [onClose, open]);
+
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-label="Abrir notificações"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-controls={dialogId}
         onClick={onToggle}
         data-tour="notifications"
         className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-100"
@@ -43,13 +83,18 @@ export const NotificationsPopover = ({
 
       {open ? (
         <div
+          id={dialogId}
+          ref={panelRef}
           role="dialog"
           aria-modal="false"
-          aria-label="Lista de notificações"
+          aria-labelledby={titleId}
+          tabIndex={-1}
           className="absolute right-0 z-50 mt-3 w-80 rounded-xl border border-slate-200 bg-white shadow-xl"
         >
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <span className="text-sm font-semibold text-slate-700">Notificações</span>
+            <span id={titleId} className="text-sm font-semibold text-slate-700">
+              Notificações
+            </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"

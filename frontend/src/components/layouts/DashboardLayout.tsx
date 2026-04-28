@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { DashboardHeader } from '@/components/layouts/DashboardHeader';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { NotificationsPopover } from '@/components/layouts/NotificationsPopover';
 import { SidebarNav } from '@/components/layouts/SidebarNav';
 import { PlatformTour } from '@/components/onboarding/PlatformTour';
-import {
-  CLOSE_MOBILE_TOUR_MENU_EVENT,
-  OPEN_MOBILE_TOUR_MENU_EVENT,
-} from '@/components/onboarding/platform-tour-events';
 import { useToast } from '@/components/ui/use-toast';
+import { useDashboardMenu } from '@/hooks/use-dashboard-menu';
 import { authService } from '@/services/auth-service';
 import { useDailyQuizState } from '@/hooks/use-daily-quiz-state';
 import { useNotificationsCenter } from '@/hooks/use-notifications-center';
@@ -55,21 +53,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       });
     },
   });
-
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const openMenu = () => setMenuOpen(true);
-    const closeMenu = () => setMenuOpen(false);
-
-    window.addEventListener(OPEN_MOBILE_TOUR_MENU_EVENT, openMenu);
-    window.addEventListener(CLOSE_MOBILE_TOUR_MENU_EVENT, closeMenu);
-
-    return () => {
-      window.removeEventListener(OPEN_MOBILE_TOUR_MENU_EVENT, openMenu);
-      window.removeEventListener(CLOSE_MOBILE_TOUR_MENU_EVENT, closeMenu);
-    };
-  }, []);
+  const { menuId, menuOpen, toggleMenu, closeMenu } = useDashboardMenu();
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aluno';
   const initials = user?.name
@@ -87,7 +71,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       : 'text-slate-200 hover:bg-brand-900/80 hover:text-white transition-colors';
   }, [location.pathname]);
 
-  const onNavClick = useCallback(() => setMenuOpen(false), []);
+  const onNavClick = useCallback(() => closeMenu(), [closeMenu]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -109,18 +93,28 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         type="button"
         aria-label={menuOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'}
         aria-expanded={menuOpen}
+        aria-controls={menuId}
         data-tour="mobile-menu"
         className="fixed left-0 top-1/2 z-50 flex -translate-y-1/2 items-center justify-center rounded-r-xl bg-brand-950 px-1.5 py-4 text-slate-100 shadow-lg md:hidden"
-        onClick={() => setMenuOpen((current) => !current)}
+        onClick={toggleMenu}
       >
         {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {menuOpen ? (
-        <div className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm md:hidden" onClick={() => setMenuOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm md:hidden"
+          aria-hidden="true"
+          onClick={closeMenu}
+        />
       ) : null}
 
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-brand-900 bg-brand-950 text-slate-100 transition-transform duration-300 ease-in-out md:hidden ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside
+        id={menuId}
+        role="navigation"
+        aria-label="Menu lateral móvel"
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-brand-900 bg-brand-950 text-slate-100 transition-transform duration-300 ease-in-out md:hidden ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
         <SidebarNav
           userRole={user?.role}
           firstName={firstName}
@@ -145,30 +139,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:h-20 md:px-8" data-tour="dashboard-greeting">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                {user?.role === 'ADMIN' ? 'Painel Admin' : user?.role === 'PROFESSOR' ? 'Painel do Professor' : 'Painel do Aluno'}
-              </span>
-              <span className="font-display text-lg font-bold text-brand-900 md:text-xl">Olá, {firstName}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden flex-col items-end text-xs text-slate-500 sm:flex" data-tour={user?.role === 'ALUNO' ? 'student-xp' : undefined}>
-              <span className="font-semibold text-slate-700">{user?.email}</span>
-              <span className="uppercase tracking-widest">
-                {user?.role === 'ADMIN' ? 'Admin' : user?.role === 'PROFESSOR' ? 'Professor' : 'Aluno'}
-              </span>
-              {user?.role === 'ALUNO' && userStats ? (
-                <span className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
-                  XP {userStats.currentXp} • Nível {userStats.level}
-                  {userStats.currentStreak > 0 ? <span className="ml-1 font-semibold text-orange-500">🔥 {userStats.currentStreak}</span> : null}
-                </span>
-              ) : null}
-            </div>
-
+        <DashboardHeader
+          userRole={user?.role}
+          firstName={firstName}
+          email={user?.email}
+          initials={initials}
+          userStats={user?.role === 'ALUNO' ? userStats : null}
+          notifications={
             <NotificationsPopover
               open={notificationsOpen}
               unreadCount={unreadCount}
@@ -179,12 +156,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               onMarkAllAsRead={markAllAsRead}
               onMarkAsRead={markAsRead}
             />
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-sm font-bold uppercase text-accent-400">
-              {initials}
-            </div>
-          </div>
-        </header>
+          }
+        />
 
         <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
