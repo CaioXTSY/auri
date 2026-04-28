@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Search, Globe, ChevronDown, LayoutDashboard, User } from 'lucide-react';
+import { Menu, X, Globe, ChevronDown, LayoutDashboard, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -19,14 +19,14 @@ export const Header = () => {
 
   const topNavItems = [
     { label: 'Documentação', href: '/docs' },
-    { label: 'Suporte', href: '/suporte' },
-    { label: 'Blog', href: '/blog' },
+    { label: 'Início', href: '/#home' },
+    { label: 'Criar Conta', href: '/register' },
   ];
 
   const mainNavItems = [
     { label: 'Funcionalidades', href: '/#features' },
     { label: 'Metodologia', href: '/#methodology' },
-    { label: 'Para Professores', href: '/#methodology' },
+    { label: 'Para Professores', href: '/#teachers' },
   ];
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Usuário';
@@ -94,9 +94,6 @@ export const Header = () => {
                 <ChevronDown className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
               </a>
             ))}
-            <button className="text-brand-900 hover:text-accent-700 transition-colors">
-              <Search className="h-5 w-5" />
-            </button>
             {isAuthenticated ? (
               <Link to="/dashboard" className="hidden lg:flex items-center gap-2 bg-brand-900 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors font-bold text-xs uppercase tracking-widest">
                 <LayoutDashboard className="h-4 w-4" />
@@ -121,6 +118,10 @@ export const Header = () => {
               </Link>
             )}
             <button
+              type="button"
+              aria-label={isMenuOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-main-menu"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-brand-900 p-1"
             >
@@ -132,7 +133,7 @@ export const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 top-[80px] z-40 bg-white overflow-y-auto md:hidden pb-20 animate-in slide-in-from-right-10 duration-300">
+        <div id="mobile-main-menu" className="fixed inset-0 top-[80px] z-40 bg-white overflow-y-auto md:hidden pb-20 animate-in slide-in-from-right-10 duration-300">
           <div className="flex flex-col divide-y divide-slate-100">
             {mainNavItems.map((item) => (
               <a

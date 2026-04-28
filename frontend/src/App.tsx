@@ -27,6 +27,7 @@ const AdminMissions = lazy(() => import('@/pages/admin/AdminMissions').then(m =>
 const AdminAchievements = lazy(() => import('@/pages/admin/AdminAchievements').then(m => ({ default: m.AdminAchievements })));
 const AdminAIGenerations = lazy(() => import('@/pages/admin/AdminAIGenerations').then(m => ({ default: m.AdminAIGenerations })));
 const AdminNotifications = lazy(() => import('@/pages/admin/AdminNotifications').then(m => ({ default: m.AdminNotifications })));
+const NotFound = lazy(() => import('@/pages/NotFound').then(m => ({ default: m.NotFound })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-100">
@@ -146,6 +147,7 @@ function App() {
           <Route path="/admin/achievements" element={<RoleRoute allow={['ADMIN']}><AdminAchievements /></RoleRoute>} />
           <Route path="/admin/ai-generations" element={<RoleRoute allow={['ADMIN']}><AdminAIGenerations /></RoleRoute>} />
           <Route path="/admin/notifications" element={<RoleRoute allow={['ADMIN']}><AdminNotifications /></RoleRoute>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </Router>
