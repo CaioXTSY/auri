@@ -7,6 +7,7 @@ import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getAppEntryPath } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
 import { authService } from '@/services/auth-service';
@@ -71,7 +72,7 @@ export const Register = () => {
     try {
       const response = await authService.register(data);
       login(response.user, response.access_token);
-      navigate('/dashboard');
+      navigate(getAppEntryPath(response.user.role), { replace: true });
     } catch (error) {
       console.error(error);
       setError(getRegisterErrorMessage(error));

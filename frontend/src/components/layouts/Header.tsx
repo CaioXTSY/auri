@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Globe, ChevronDown, LayoutDashboard, User } from 'lucide-react';
+import { getAppEntryPath } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -17,12 +18,6 @@ export const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const topNavItems = [
-    { label: 'Documentação', href: '/docs' },
-    { label: 'Início', href: '/#home' },
-    { label: 'Criar Conta', href: '/register' },
-  ];
-
   const mainNavItems = [
     { label: 'Funcionalidades', href: '/#features' },
     { label: 'Metodologia', href: '/#methodology' },
@@ -30,6 +25,17 @@ export const Header = () => {
   ];
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Usuário';
+  const entryPath = getAppEntryPath(user?.role);
+  const topNavItems = isAuthenticated
+    ? [
+        { label: 'Documentação', href: '/docs' },
+        { label: 'Início', href: '/#home' },
+      ]
+    : [
+        { label: 'Documentação', href: '/docs' },
+        { label: 'Início', href: '/#home' },
+        { label: 'Criar Conta', href: '/register' },
+      ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex flex-col font-sans">
@@ -53,7 +59,7 @@ export const Header = () => {
               <span>PT-BR</span>
             </div>
             {isAuthenticated ? (
-              <Link to="/dashboard" className="flex items-center gap-2 bg-brand-800 px-3 py-1 rounded-sm hover:bg-brand-700 transition-colors font-bold text-accent-400">
+              <Link to={entryPath} className="flex items-center gap-2 bg-brand-800 px-3 py-1 rounded-sm hover:bg-brand-700 transition-colors font-bold text-accent-400">
                 <User className="h-3 w-3" />
                 <span>Olá, {firstName}</span>
               </Link>
@@ -95,7 +101,7 @@ export const Header = () => {
               </a>
             ))}
             {isAuthenticated ? (
-              <Link to="/dashboard" className="hidden lg:flex items-center gap-2 bg-brand-900 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors font-bold text-xs uppercase tracking-widest">
+              <Link to={entryPath} className="hidden lg:flex items-center gap-2 bg-brand-900 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors font-bold text-xs uppercase tracking-widest">
                 <LayoutDashboard className="h-4 w-4" />
                 Painel
               </Link>
@@ -109,7 +115,7 @@ export const Header = () => {
           {/* Mobile Toggle */}
           <div className="md:hidden flex items-center gap-4">
             {isAuthenticated ? (
-              <Link to="/dashboard" className="text-xs font-bold text-brand-900 border border-brand-900 px-3 py-1 rounded hover:bg-brand-900 hover:text-white transition-colors">
+              <Link to={entryPath} className="text-xs font-bold text-brand-900 border border-brand-900 px-3 py-1 rounded hover:bg-brand-900 hover:text-white transition-colors">
                 PAINEL
               </Link>
             ) : (
@@ -170,7 +176,7 @@ export const Header = () => {
               <div className="pt-4 border-t border-slate-200">
                 {isAuthenticated ? (
                   <Link
-                    to="/dashboard"
+                    to={entryPath}
                     className="w-full flex items-center justify-center gap-2 bg-brand-900 text-white py-3 rounded-md font-bold text-sm uppercase tracking-wider"
                     onClick={() => setIsMenuOpen(false)}
                   >

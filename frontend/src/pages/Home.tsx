@@ -2,6 +2,8 @@ import { ArrowRight, BookOpen, BrainCircuit, GraduationCap, Sparkles, Trophy, Us
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layouts/Header';
 import { Button } from '@/components/ui/button';
+import { getAppEntryPath } from '@/lib/navigation';
+import { useAuthStore } from '@/stores/auth-store';
 
 const features = [
   {
@@ -47,6 +49,10 @@ const teacherBenefits = [
 ];
 
 export const Home = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const entryPath = isAuthenticated ? getAppEntryPath(user?.role) : '/login';
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-brand-200 selection:text-brand-900">
       <Header />
@@ -66,7 +72,7 @@ export const Home = () => {
 
                 <div className="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row lg:justify-start">
                   <Button asChild className="h-14 rounded-md bg-brand-900 px-8 text-base font-medium text-white shadow-lg transition-all hover:bg-brand-800 hover:shadow-xl">
-                    <Link to="/register">
+                    <Link to={entryPath}>
                       Entrar na plataforma
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
