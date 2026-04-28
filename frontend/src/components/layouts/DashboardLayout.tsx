@@ -2,9 +2,9 @@ import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu, Users, GraduationCap, Target, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
-import { AchievementUnlockOverlay } from '@/components/gamification/AchievementUnlockOverlay';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { PlatformTour } from '@/components/onboarding/PlatformTour';
+import { useToast } from '@/components/ui/use-toast';
 import { authService } from '@/services/auth-service';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
 import { notificationsService, type NotificationItem } from '@/services/notifications-service';
@@ -142,6 +142,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
   const token = useAuthStore((state) => state.token);
+  const { notify } = useToast();
 
   const dailyQuizKey = useMemo(() => {
     if (!user?.id) return null;
@@ -220,6 +221,14 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       socket.on('notification', (payload: NotificationItem) => {
         setNotifications((current) => [payload, ...current].slice(0, 5));
         setUnreadCount((current) => current + 1);
+
+        if (payload.type === 'CONQUISTA') {
+          notify({
+            title: payload.title,
+            description: payload.message,
+            variant: 'success',
+          });
+        }
       });
     });
 
@@ -227,7 +236,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       disconnected = true;
       socketRef?.disconnect();
     };
-  }, [token, user?.id]);
+  }, [notify, token, user?.id]);
 
   const loadNotifications = async () => {
     if (!user?.id) return;
@@ -335,11 +344,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         userId={user?.id}
         role={user?.role}
         disabled={showDailyQuiz || mobileMenuOpen}
-      />
-      <AchievementUnlockOverlay
-        key={user?.id ?? 'guest'}
-        userId={user?.id}
-        enabled={user?.role === 'ALUNO' && !showDailyQuiz}
       />
 
       {/* Mobile hamburger — fixed left center */}

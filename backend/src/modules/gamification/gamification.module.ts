@@ -6,9 +6,10 @@ import { LevelsService } from './levels.service';
 import { AchievementsService } from './achievements.service';
 import { RankingService } from './ranking.service';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, NotificationsModule],
   controllers: [GamificationController],
   providers: [
     GamificationService,

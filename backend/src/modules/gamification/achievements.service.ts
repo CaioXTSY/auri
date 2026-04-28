@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PointsService } from './points.service';
 import { LevelsService } from './levels.service';
-import { MissionStatus } from '@prisma/client';
+import { MissionStatus, NotificationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AchievementsService {
@@ -12,6 +13,7 @@ export class AchievementsService {
     private readonly prisma: PrismaService,
     private readonly pointsService: PointsService,
     private readonly levelsService: LevelsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async refreshProgressionAfterAchievementPoints(userId: string) {
@@ -57,6 +59,13 @@ export class AchievementsService {
     );
 
     await this.refreshProgressionAfterAchievementPoints(userId);
+
+    await this.notificationsService.createNotification({
+      userId,
+      type: NotificationType.CONQUISTA,
+      title: `Conquista desbloqueada: ${userAchievement.achievement.name}`,
+      message: `${userAchievement.achievement.description} +${userAchievement.achievement.points} XP.`,
+    });
 
     this.logger.log(
       `Usuário ${userId} desbloqueou: ${userAchievement.achievement.name}`,
