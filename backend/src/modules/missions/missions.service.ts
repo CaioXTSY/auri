@@ -13,8 +13,6 @@ export class MissionsService {
     private missionQuizService: MissionQuizService,
   ) {}
 
-  // ─── CRUD ────────────────────────────────────────────────
-
   async create(createMissionDto: CreateMissionDto, createdById: string) {
     const { startDate, endDate, ...rest } = createMissionDto;
 
@@ -165,8 +163,6 @@ export class MissionsService {
     return this.prisma.mission.delete({ where: { id } });
   }
 
-  // ─── Queries de usuário ──────────────────────────────────
-
   async getAvailableMissions(userId?: string, classId?: string) {
     const now = new Date();
 
@@ -309,8 +305,6 @@ export class MissionsService {
       completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
     };
   }
-
-  // ─── Delegações para MissionQuizService ──────────────────
 
   startMission(missionId: string, userId: string) {
     return this.missionQuizService.startMission(missionId, userId);

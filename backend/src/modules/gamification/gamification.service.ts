@@ -31,8 +31,6 @@ export class GamificationService {
     await this.achievementsService.checkPointsAchievements(userId);
   }
 
-  // ─── Pontos (delegação) ──────────────────────────────────
-
   addPoints(userId: string, points: number, source: string, description: string, referenceId?: string) {
     return this.pointsService.addPoints(userId, points, source, description, referenceId).then(async (userPoint) => {
       await this.refreshProgressionAfterPointsChange(userId);
@@ -48,13 +46,9 @@ export class GamificationService {
     return this.pointsService.getUserPointsHistory(userId, limit);
   }
 
-  // ─── Níveis (delegação) ──────────────────────────────────
-
   getUserLevel(userId: string) {
     return this.levelsService.getUserLevel(userId);
   }
-
-  // ─── Conquistas (delegação) ──────────────────────────────
 
   getAllAchievements() {
     return this.achievementsService.getAllAchievements();
@@ -88,8 +82,6 @@ export class GamificationService {
     return this.achievementsService.checkStreakAchievements(userId, currentStreak);
   }
 
-  // ─── Ranking (delegação) ─────────────────────────────────
-
   updateGlobalRanking() {
     return this.rankingService.updateGlobalRanking();
   }
@@ -105,8 +97,6 @@ export class GamificationService {
   getUserRankingPosition(userId: string, type: 'GLOBAL' | 'TURMA', referenceId?: string) {
     return this.rankingService.getUserRankingPosition(userId, type, referenceId);
   }
-
-  // ─── Streak (orquestração) ───────────────────────────────
 
   private getEffectiveStreak(user: {
     currentStreak: number;
@@ -169,8 +159,6 @@ export class GamificationService {
     this.logger.log(`Streak atualizado para usuário ${userId}: ${newStreak} dias`);
     return { newStreak, isNewRecord };
   }
-
-  // ─── Stats composta ──────────────────────────────────────
 
   async getUserGamificationStats(userId: string) {
     const [totalPoints, levelInfo, achievements, globalRanking, user] =

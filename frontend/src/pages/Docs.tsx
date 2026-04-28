@@ -10,8 +10,6 @@ const API_URL = 'https://api-auri.caiots.dev/api/v1';
 const SOCKET_URL = 'https://api-auri.caiots.dev';
 const SWAGGER_URL = 'https://api-auri.caiots.dev/api/v1/docs';
 
-// ─── Sidebar nav ────────────────────────────────────────────────────────────
-
 interface NavSection {
   id: string;
   label: string;
@@ -112,8 +110,6 @@ const nav: NavSection[] = [
   },
 ];
 
-// ─── Small components ────────────────────────────────────────────────────────
-
 const Badge = ({ method }: { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' }) => {
   const colors: Record<string, string> = {
     GET: 'bg-emerald-100 text-emerald-700',
@@ -178,8 +174,6 @@ const Callout = ({ type = 'info', children }: { type?: 'info' | 'warning' | 'tip
     </div>
   );
 };
-
-// ─── Main page ───────────────────────────────────────────────────────────────
 
 export const Docs = () => {
   const [activeSection, setActiveSection] = useState('visao-geral');
