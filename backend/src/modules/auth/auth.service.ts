@@ -39,7 +39,6 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     await this.updateRefreshToken(user.id, tokens.refresh_token);
 
-    // Verificar conquistas de login
     await this.gamificationService.checkLoginAchievements(user.id);
 
     return {
@@ -101,7 +100,6 @@ export class AuthService {
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const user = await this.usersService.findByEmail(forgotPasswordDto.email);
     if (!user) {
-      // Por segurança, não revelar se o email existe
       return { message: 'Se o email existir, um link de recuperação será enviado' };
     }
 
@@ -164,4 +162,3 @@ export class AuthService {
     }
   }
 }
-

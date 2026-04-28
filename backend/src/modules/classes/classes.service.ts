@@ -80,7 +80,6 @@ export class ClassesService {
       },
     });
 
-    // Verificar conquistas de entrar na turma
     await this.gamificationService.checkClassJoinAchievements(userId);
 
     return enrollment;
@@ -142,7 +141,6 @@ export class ClassesService {
       where.status = status;
     }
 
-    // Professor só vê as próprias turmas
     if (userRole === Role.PROFESSOR && userId) {
       where.createdById = userId;
     }

@@ -11,16 +11,13 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // Servir arquivos estáticos
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
 
-  // Global prefix
   const apiPrefix = process.env.API_PREFIX || 'api/v1';
   app.setGlobalPrefix(apiPrefix);
 
-  // CORS
   const corsEnv =
     process.env.CORS_ORIGINS ||
     process.env.CORS_ORIGIN ||
@@ -70,7 +67,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -79,7 +75,6 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('AURI API')
     .setDescription('API da plataforma gamificada de ensino de programação')
@@ -98,7 +93,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
 
-  // Enable shutdown hooks
   app.enableShutdownHooks();
 
   const numericPort = Number(port);

@@ -30,10 +30,6 @@ import {
 export class GamificationController {
   constructor(private readonly gamificationService: GamificationService) {}
 
-  /**
-   * NÍVEIS
-   */
-
   @Get('level/me')
   @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Obter meu nível atual' })
@@ -55,10 +51,6 @@ export class GamificationController {
   async getMyLevel(@Request() req) {
     return this.gamificationService.getUserLevel(req.user.id);
   }
-
-  /**
-   * CONQUISTAS
-   */
 
   @Get('achievements/me')
   @Roles(Role.ALUNO)
@@ -114,10 +106,6 @@ export class GamificationController {
     );
   }
 
-  /**
-   * RANKING
-   */
-
   @Get('ranking')
   @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Obter ranking' })
@@ -153,10 +141,6 @@ export class GamificationController {
       query.limit || 50,
     );
   }
-
-  /**
-   * DASHBOARD
-   */
 
   @Get('stats/me')
   @Roles(Role.ALUNO)
