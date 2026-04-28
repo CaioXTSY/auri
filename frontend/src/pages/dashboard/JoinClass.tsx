@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { checkAchievementUnlocks } from '@/components/gamification/achievement-unlock-events';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,9 @@ export const JoinClass = () => {
     try {
       const result = await classService.joinClass(data.code);
       notify({ title: `Voce entrou na turma "${result.class.name}"`, variant: 'success' });
+      window.setTimeout(() => {
+        checkAchievementUnlocks();
+      }, 0);
       navigate('/dashboard/classes');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';

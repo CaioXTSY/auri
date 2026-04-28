@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PointsService } from './points.service';
+import { LevelsService } from './levels.service';
 import { MissionStatus } from '@prisma/client';
 
 @Injectable()
@@ -10,7 +11,18 @@ export class AchievementsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pointsService: PointsService,
+    private readonly levelsService: LevelsService,
   ) {}
+
+  private async refreshProgressionAfterAchievementPoints(userId: string) {
+    const newLevel = await this.levelsService.checkLevelUp(userId);
+
+    if (newLevel !== null) {
+      await this.checkLevelAchievements(userId, newLevel);
+    }
+
+    await this.checkPointsAchievements(userId);
+  }
 
   async getAllAchievements() {
     return this.prisma.achievement.findMany({
@@ -43,6 +55,8 @@ export class AchievementsService {
       `Desbloqueou: ${userAchievement.achievement.name}`,
       achievementId,
     );
+
+    await this.refreshProgressionAfterAchievementPoints(userId);
 
     this.logger.log(
       `Usuário ${userId} desbloqueou: ${userAchievement.achievement.name}`,

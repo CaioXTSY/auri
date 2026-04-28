@@ -21,16 +21,21 @@ export class GamificationService {
     private readonly rankingService: RankingService,
   ) {}
 
+  async refreshProgressionAfterPointsChange(userId: string) {
+    const newLevel = await this.levelsService.checkLevelUp(userId);
+
+    if (newLevel !== null) {
+      await this.achievementsService.checkLevelAchievements(userId, newLevel);
+    }
+
+    await this.achievementsService.checkPointsAchievements(userId);
+  }
+
   // ─── Pontos (delegação) ──────────────────────────────────
 
   addPoints(userId: string, points: number, source: string, description: string, referenceId?: string) {
     return this.pointsService.addPoints(userId, points, source, description, referenceId).then(async (userPoint) => {
-      await this.levelsService.checkLevelUp(userId).then(async (newLevel) => {
-        if (newLevel !== null) {
-          await this.achievementsService.checkLevelAchievements(userId, newLevel);
-        }
-      });
-      await this.achievementsService.checkPointsAchievements(userId);
+      await this.refreshProgressionAfterPointsChange(userId);
       return userPoint;
     });
   }
@@ -153,7 +158,7 @@ export class GamificationService {
     const bonusMap: Record<number, number> = { 7: 50, 14: 100, 30: 250, 100: 500 };
     const bonus = bonusMap[newStreak];
     if (bonus) {
-      await this.pointsService.addPoints(
+      await this.addPoints(
         userId,
         bonus,
         'STREAK_BONUS',

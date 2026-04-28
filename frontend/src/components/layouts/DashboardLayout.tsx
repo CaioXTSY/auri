@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, Trophy, Settings, LogOut, Flag, Bell, X, MessageSquare, Menu, Users, GraduationCap, Target, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
+import { AchievementUnlockOverlay } from '@/components/gamification/AchievementUnlockOverlay';
 import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { PlatformTour } from '@/components/onboarding/PlatformTour';
 import { authService } from '@/services/auth-service';
@@ -334,6 +335,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         userId={user?.id}
         role={user?.role}
         disabled={showDailyQuiz || mobileMenuOpen}
+      />
+      <AchievementUnlockOverlay
+        key={user?.id ?? 'guest'}
+        userId={user?.id}
+        enabled={user?.role === 'ALUNO' && !showDailyQuiz}
       />
 
       {/* Mobile hamburger — fixed left center */}

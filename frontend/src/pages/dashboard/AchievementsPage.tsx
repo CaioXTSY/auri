@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Trophy, Star, Medal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { AchievementCard } from '@/components/gamification/AchievementCard';
 import { Leaderboard } from '@/components/gamification/Leaderboard';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { gamificationService, type Achievement, type PaginatedAchievements, type RankingEntry, type UserStats } from '@/services/gamification-service';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Star, Medal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/stores/auth-store';
+import {
+  gamificationService,
+  type PaginatedAchievements,
+  type RankingEntry,
+  type UserStats,
+} from '@/services/gamification-service';
 
 export const AchievementsPage = () => {
   const [achievements, setAchievements] = useState<PaginatedAchievements | null>(null);
@@ -16,11 +19,6 @@ export const AchievementsPage = () => {
   const [globalRanking, setGlobalRanking] = useState<RankingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAchievementsLoading, setIsAchievementsLoading] = useState(true);
-  const [unlockQueue, setUnlockQueue] = useState<Achievement[]>([]);
-  const [activeUnlock, setActiveUnlock] = useState<Achievement | null>(null);
-  const user = useAuthStore((state) => state.user);
-
-  // Pagination & Filter
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<'ALL' | 'UNLOCKED' | 'LOCKED'>('ALL');
 
@@ -29,7 +27,7 @@ export const AchievementsPage = () => {
       try {
         const [statsData, rankingData] = await Promise.all([
           gamificationService.getMyStats(),
-          gamificationService.getRanking('GLOBAL', undefined, 10)
+          gamificationService.getRanking('GLOBAL', undefined, 10),
         ]);
         setStats(statsData);
         setGlobalRanking(rankingData);
@@ -41,7 +39,7 @@ export const AchievementsPage = () => {
       }
     };
 
-    loadInitialData();
+    void loadInitialData();
   }, []);
 
   useEffect(() => {
@@ -50,34 +48,6 @@ export const AchievementsPage = () => {
       try {
         const data = await gamificationService.getMyAchievements(page, 6, filter);
         setAchievements(data);
-        const userId = user?.id;
-        if (userId) {
-          const storageKey = `auri-achievements-seen-${userId}`;
-          const seenRaw = localStorage.getItem(storageKey);
-          let seenIds: string[] = [];
-          if (seenRaw) {
-            try {
-              seenIds = JSON.parse(seenRaw);
-            } catch {
-              seenIds = [];
-            }
-          }
-          const newlyUnlocked = data.data.filter(
-            (achievement) =>
-              achievement.isUnlocked &&
-              achievement.unlockedAt &&
-              !seenIds.includes(achievement.id),
-          );
-          if (newlyUnlocked.length > 0) {
-            const mergedSeen = Array.from(new Set([...seenIds, ...newlyUnlocked.map((item) => item.id)]));
-            localStorage.setItem(storageKey, JSON.stringify(mergedSeen));
-            setUnlockQueue((current) => {
-              const existingIds = new Set(current.map((item) => item.id));
-              const additions = newlyUnlocked.filter((item) => !existingIds.has(item.id));
-              return [...current, ...additions];
-            });
-          }
-        }
       } catch {
         setAchievements(null);
       } finally {
@@ -85,19 +55,8 @@ export const AchievementsPage = () => {
       }
     };
 
-    loadAchievements();
-  }, [page, filter, user?.id]);
-
-  useEffect(() => {
-    if (!activeUnlock && unlockQueue.length > 0) {
-      setActiveUnlock(unlockQueue[0]);
-    }
-  }, [activeUnlock, unlockQueue]);
-
-  const handleCloseUnlock = () => {
-    setUnlockQueue((current) => current.slice(1));
-    setActiveUnlock(null);
-  };
+    void loadAchievements();
+  }, [filter, page]);
 
   const achievementProgress = useMemo(() => {
     if (!stats?.totalAchievements) return 0;
@@ -106,14 +65,16 @@ export const AchievementsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="mx-auto max-w-6xl space-y-8">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {isLoading ? (
             <>
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                  <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
+                <div
+                  key={i}
+                  className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                >
+                  <Skeleton className="h-12 w-12 flex-shrink-0 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-3.5 w-36" />
                     <Skeleton className="h-7 w-24" />
@@ -124,88 +85,101 @@ export const AchievementsPage = () => {
             </>
           ) : (
             <>
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-slate-500 font-medium">Conquistas Desbloqueadas</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {stats?.achievementsCount} <span className="text-sm text-slate-400 font-normal">/ {stats?.totalAchievements}</span>
-              </p>
-              <div className="mt-2">
-                <ProgressBar value={achievementProgress} variant="xp" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center">
-              <Star className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500 font-medium">Pontuação Total</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {stats?.currentXp || 0} XP
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center">
-              <Medal className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500 font-medium">Nível Atual</p>
-              <div className="flex flex-col">
-                <p className="text-lg font-bold text-slate-900">{stats?.levelName || 'Iniciante'}</p>
-                {stats && (
-                  <div className="w-full bg-slate-100 h-1.5 mt-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-purple-600 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${stats.progress}%` }}
-                    />
+              <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                  <Trophy className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-500">Conquistas Desbloqueadas</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {stats?.achievementsCount}{' '}
+                    <span className="text-sm font-normal text-slate-400">
+                      / {stats?.totalAchievements}
+                    </span>
+                  </p>
+                  <div className="mt-2">
+                    <ProgressBar value={achievementProgress} variant="xp" />
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-          </div>
+
+              <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+                  <Star className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Pontuação Total</p>
+                  <p className="text-2xl font-bold text-slate-900">{stats?.currentXp || 0} XP</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+                  <Medal className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Nível Atual</p>
+                  <div className="flex flex-col">
+                    <p className="text-lg font-bold text-slate-900">
+                      {stats?.levelName || 'Iniciante'}
+                    </p>
+                    {stats && (
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-purple-600 transition-all duration-500"
+                          style={{ width: `${stats.progress}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Achievements List */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-brand-600" />
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                <Trophy className="h-5 w-5 text-brand-600" />
                 Minhas Conquistas
               </h2>
-              
-              <div className="flex p-1 bg-slate-100 rounded-lg">
-                {(['ALL', 'UNLOCKED', 'LOCKED'] as const).map((f) => (
+
+              <div className="flex rounded-lg bg-slate-100 p-1">
+                {(['ALL', 'UNLOCKED', 'LOCKED'] as const).map((value) => (
                   <button
-                    key={f}
-                    onClick={() => { setFilter(f); setPage(1); }}
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      setFilter(value);
+                      setPage(1);
+                    }}
                     className={cn(
-                      "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                      filter === f 
-                        ? "bg-white text-brand-600 shadow-sm" 
-                        : "text-slate-500 hover:text-slate-700"
+                      'rounded-md px-4 py-1.5 text-sm font-medium transition-all',
+                      filter === value
+                        ? 'bg-white text-brand-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700',
                     )}
                   >
-                    {f === 'ALL' ? 'Todas' : f === 'UNLOCKED' ? 'Desbloqueadas' : 'Bloqueadas'}
+                    {value === 'ALL'
+                      ? 'Todas'
+                      : value === 'UNLOCKED'
+                        ? 'Desbloqueadas'
+                        : 'Bloqueadas'}
                   </button>
                 ))}
               </div>
             </div>
-            
+
             {isAchievementsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
-                    <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4"
+                  >
+                    <Skeleton className="h-12 w-12 flex-shrink-0 rounded-full" />
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-3/4" />
                       <Skeleton className="h-3 w-full" />
@@ -216,42 +190,48 @@ export const AchievementsPage = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {achievements?.data.map((achievement) => (
-                    <AchievementCard 
-                      key={achievement.id} 
-                      achievement={achievement} 
-                      locked={!achievement.isUnlocked} 
+                    <AchievementCard
+                      key={achievement.id}
+                      achievement={achievement}
+                      locked={!achievement.isUnlocked}
                     />
                   ))}
-                  
+
                   {achievements?.data.length === 0 && (
-                    <div className="col-span-2 text-center py-12 text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    <div className="col-span-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 py-12 text-center text-slate-500">
                       Nenhuma conquista encontrada nesta categoria.
                     </div>
                   )}
                 </div>
 
-                {/* Pagination */}
                 {achievements && achievements.meta.totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                  <div className="flex items-center justify-between border-t border-slate-200 pt-4">
                     <p className="text-sm text-slate-500">
-                      Mostrando {((achievements.meta.page - 1) * achievements.meta.limit) + 1} até {Math.min(achievements.meta.page * achievements.meta.limit, achievements.meta.total)} de {achievements.meta.total}
+                      Mostrando {(achievements.meta.page - 1) * achievements.meta.limit + 1} até{' '}
+                      {Math.min(
+                        achievements.meta.page * achievements.meta.limit,
+                        achievements.meta.total,
+                      )}{' '}
+                      de {achievements.meta.total}
                     </p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={!achievements.meta.page || achievements.meta.page <= 1}
-                        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                        type="button"
+                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                        disabled={achievements.meta.page <= 1}
+                        className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setPage(p => p + 1)}
+                        type="button"
+                        onClick={() => setPage((current) => current + 1)}
                         disabled={!achievements.meta.hasNextPage}
-                        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                        className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -260,45 +240,11 @@ export const AchievementsPage = () => {
             )}
           </div>
 
-          {/* Sidebar Ranking */}
           <div className="space-y-6">
-            <Leaderboard 
-              entries={globalRanking} 
-              title="Ranking Global" 
-            />
+            <Leaderboard entries={globalRanking} title="Ranking Global" />
           </div>
         </div>
       </div>
-
-      {activeUnlock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-slate-200 p-6 space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl">
-                {activeUnlock.icon || '🏆'}
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold">
-                  Conquista desbloqueada
-                </p>
-                <h3 className="text-lg font-bold text-slate-900">{activeUnlock.name}</h3>
-              </div>
-            </div>
-            <p className="text-sm text-slate-600">{activeUnlock.description}</p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold text-amber-600">+{activeUnlock.points} XP</span>
-              <span className="text-xs uppercase tracking-widest text-slate-400">
-                {activeUnlock.rarity}
-              </span>
-            </div>
-            <div className="flex justify-end">
-              <Button type="button" className="bg-brand-900 hover:bg-brand-800 text-white" onClick={handleCloseUnlock}>
-                Continuar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 };

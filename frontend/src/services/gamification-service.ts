@@ -59,6 +59,13 @@ export const gamificationService = {
     return response.data;
   },
 
+  getLatestUnlockedAchievements: async (limit = 10): Promise<Achievement[]> => {
+    const response = await api.get<PaginatedAchievements>('/gamification/achievements/me', {
+      params: { page: 1, limit, filter: 'UNLOCKED' },
+    });
+    return response.data.data;
+  },
+
   getRanking: async (type: 'GLOBAL' | 'TURMA', referenceId?: string, limit = 50): Promise<RankingEntry[]> => {
     const response = await api.get<RankingEntry[]>('/gamification/ranking', {
       params: { type, referenceId, limit },
