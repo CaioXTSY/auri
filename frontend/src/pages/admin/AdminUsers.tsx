@@ -1,5 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+import { ConfirmAction } from '@/components/ui/confirm-action';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
+import { Field } from '@/components/ui/field';
+import { ModalDialog } from '@/components/ui/modal-dialog';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
+import {
+  Table,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '@/components/ui/table';
 import { adminService, type AdminUserListItem } from '@/services/admin-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,10 +31,13 @@ export const AdminUsers = () => {
   const [editRole, setEditRole] = useState<Role>('ALUNO');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userToRemove, setUserToRemove] = useState<AdminUserListItem | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+
     try {
       const trimmedSearch = search.trim();
       const baseParams = {
@@ -37,12 +55,13 @@ export const AdminUsers = () => {
         adminService.listUsers({ ...baseParams, name: trimmedSearch }),
         adminService.listUsers({ ...baseParams, email: trimmedSearch }),
       ]);
+
       const merged = [...byName.data, ...byEmail.data].filter(
         (user, index, all) => all.findIndex((item) => item.id === user.id) === index,
       );
       setUsers(merged);
     } catch {
-      setError('Falha ao carregar usuarios');
+      setError('Falha ao carregar usuários.');
     } finally {
       setIsLoading(false);
     }
@@ -60,132 +79,190 @@ export const AdminUsers = () => {
   const saveEdit = async () => {
     if (!editing) return;
     setIsSaving(true);
+    setError(null);
+
     try {
       await adminService.updateUser(editing.id, { role: editRole });
       setEditing(null);
       await load();
+    } catch {
+      setError('Não foi possível atualizar o usuário.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const removeUser = async (user: AdminUserListItem) => {
-    if (!confirm(`Remover ${user.name}?`)) return;
-    await adminService.deleteUser(user.id);
-    await load();
+  const removeUser = async () => {
+    if (!userToRemove) return;
+    setIsRemoving(true);
+    setError(null);
+
+    try {
+      await adminService.deleteUser(userToRemove.id);
+      setUserToRemove(null);
+      await load();
+    } catch {
+      setError('Não foi possível remover o usuário.');
+    } finally {
+      setIsRemoving(false);
+    }
   };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-900 font-display">Usuarios</h1>
-          <p className="text-slate-500">Gerencie contas e permissoes.</p>
-        </div>
+        <PageHeader
+          title="Usuários"
+          description="Gerencie contas, permissões e consistência de acesso da plataforma."
+        />
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            placeholder="Buscar por nome ou email..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            onKeyDown={(event) => event.key === 'Enter' && load()}
-          />
-          <select
-            value={roleFilter}
-            onChange={(event) => setRoleFilter(event.target.value as Role | '')}
-            className="h-10 rounded-md border border-slate-200 px-3 text-sm"
-          >
-            <option value="">Todas as roles</option>
-            <option value="ADMIN">Admin</option>
-            <option value="PROFESSOR">Professor</option>
-            <option value="ALUNO">Aluno</option>
-          </select>
-          <Button onClick={load} variant="outline">Filtrar</Button>
-        </div>
+        <SectionCard className="p-4">
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr),220px,auto]">
+            <Field htmlFor="users-search" label="Buscar usuário">
+              <Input
+                id="users-search"
+                placeholder="Nome ou email"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && load()}
+              />
+            </Field>
+
+            <Field htmlFor="users-role-filter" label="Filtrar por perfil">
+              <select
+                id="users-role-filter"
+                value={roleFilter}
+                onChange={(event) => setRoleFilter(event.target.value as Role | '')}
+                className="h-10 rounded-md border border-slate-200 px-3 text-sm"
+              >
+                <option value="">Todos os perfis</option>
+                <option value="ADMIN">Admin</option>
+                <option value="PROFESSOR">Professor</option>
+                <option value="ALUNO">Aluno</option>
+              </select>
+            </Field>
+
+            <div className="flex items-end">
+              <Button onClick={load} variant="outline" className="w-full md:w-auto">
+                Filtrar
+              </Button>
+            </div>
+          </div>
+        </SectionCard>
+
+        {error ? <ErrorState message={error} /> : null}
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
           </div>
-        ) : error ? (
-          <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">{error}</div>
+        ) : users.length === 0 ? (
+          <EmptyState message="Nenhum usuário encontrado para os filtros atuais." />
         ) : (
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 tracking-widest">
+          <TableContainer>
+            <Table>
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-3">Nome</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Role</th>
-                  <th className="px-4 py-3 text-right">Acoes</th>
+                  <TableHeaderCell>Nome</TableHeaderCell>
+                  <TableHeaderCell>Email</TableHeaderCell>
+                  <TableHeaderCell>Perfil</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Ações</TableHeaderCell>
                 </tr>
-              </thead>
+              </TableHead>
               <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
-                      Nenhum usuario encontrado.
-                    </td>
-                  </tr>
-                ) : users.map((user) => (
-                  <tr key={user.id} className="border-t border-slate-100">
-                    <td className="px-4 py-3 font-medium text-slate-800">{user.name}</td>
-                    <td className="px-4 py-3 text-slate-600">{user.email}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-700">
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium text-slate-800">{user.name}</TableCell>
+                    <TableCell className="text-slate-600">{user.email}</TableCell>
+                    <TableCell>
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
                         {user.role}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-right space-x-2">
+                    </TableCell>
+                    <TableCell className="space-x-2 text-right">
                       <button
+                        type="button"
                         onClick={() => startEdit(user)}
-                        className="text-brand-700 hover:text-brand-900 inline-flex items-center gap-1 text-xs font-semibold"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-900"
                       >
-                        <Pencil className="w-3 h-3" /> Editar
+                        <Pencil className="h-3 w-3" /> Editar
                       </button>
                       <button
-                        onClick={() => removeUser(user)}
-                        className="text-rose-600 hover:text-rose-800 inline-flex items-center gap-1 text-xs font-semibold"
+                        type="button"
+                        onClick={() => setUserToRemove(user)}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-800"
                       >
-                        <Trash2 className="w-3 h-3" /> Remover
+                        <Trash2 className="h-3 w-3" /> Remover
                       </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </Table>
+          </TableContainer>
         )}
 
-        {editing && (
-          <div
-            className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4"
-            onClick={() => setEditing(null)}
-          >
-            <div
-              className="bg-white rounded-lg border border-slate-200 shadow-xl p-6 w-full max-w-md"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <h3 className="text-lg font-bold text-brand-900 mb-4">Editar {editing.name}</h3>
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Role</label>
+        <ModalDialog
+          open={Boolean(editing)}
+          title={editing ? `Editar ${editing.name}` : 'Editar usuário'}
+          description="Altere o perfil de acesso do usuário selecionado."
+          onClose={() => {
+            if (isSaving) return;
+            setEditing(null);
+          }}
+          initialFocusSelector="#edit-user-role"
+          panelClassName="max-w-md"
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditing(null)} disabled={isSaving}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={saveEdit}
+                disabled={isSaving}
+                className="bg-accent-600 font-bold text-brand-950 hover:bg-accent-700"
+              >
+                {isSaving ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
+          }
+        >
+          {editing ? (
+            <Field htmlFor="edit-user-role" label="Perfil">
               <select
+                id="edit-user-role"
                 value={editRole}
                 onChange={(event) => setEditRole(event.target.value as Role)}
-                className="mt-2 w-full h-10 rounded-md border border-slate-200 px-3 text-sm"
+                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm"
               >
                 <option value="ADMIN">Admin</option>
                 <option value="PROFESSOR">Professor</option>
                 <option value="ALUNO">Aluno</option>
               </select>
-              <div className="mt-6 flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
-                <Button onClick={saveEdit} disabled={isSaving} className="bg-accent-600 hover:bg-accent-700 text-brand-950 font-bold">
-                  {isSaving ? 'Salvando...' : 'Salvar'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+            </Field>
+          ) : null}
+        </ModalDialog>
+
+        <ConfirmAction
+          open={Boolean(userToRemove)}
+          title="Remover usuário"
+          description="Essa ação exclui a conta selecionada."
+          body={
+            userToRemove ? (
+              <p>
+                Remover <strong>{userToRemove.name}</strong> agora?
+              </p>
+            ) : null
+          }
+          confirmLabel="Remover"
+          destructive
+          isConfirming={isRemoving}
+          onConfirm={removeUser}
+          onClose={() => {
+            if (isRemoving) return;
+            setUserToRemove(null);
+          }}
+        />
       </div>
     </DashboardLayout>
   );
