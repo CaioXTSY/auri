@@ -5,8 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { openPlatformTour } from '@/components/onboarding/platform-tour-events';
 import { Button } from '@/components/ui/button';
+import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { ModalDialog } from '@/components/ui/modal-dialog';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthStore } from '@/stores/auth-store';
 import { userService, type UpdateProfilePayload } from '@/services/user-service';
@@ -90,9 +93,9 @@ export const SettingsPage = () => {
   if (!user) {
     return (
       <DashboardLayout>
-        <div className="mx-auto max-w-3xl rounded-xl border border-slate-200 bg-white p-6">
+        <SectionCard className="mx-auto max-w-3xl p-6">
           <p className="text-sm text-slate-500">Carregando perfil...</p>
-        </div>
+        </SectionCard>
       </DashboardLayout>
     );
   }
@@ -171,14 +174,12 @@ export const SettingsPage = () => {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-4xl space-y-6">
-        <header>
-          <h1 className="text-2xl font-display font-bold text-brand-900">Configurações</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Gerencie seus dados de perfil e acesso.
-          </p>
-        </header>
+        <PageHeader
+          title="Configurações"
+          description="Gerencie seus dados de perfil e acesso."
+        />
 
-        <section className="rounded-xl border border-slate-200 bg-white">
+        <SectionCard>
           <div className="flex flex-col gap-5 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 overflow-hidden rounded-full bg-slate-100 text-lg font-bold text-slate-600">
@@ -228,8 +229,11 @@ export const SettingsPage = () => {
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
+              <Field
+                htmlFor="name"
+                label="Nome completo"
+                error={profileForm.formState.errors.name?.message}
+              >
                 <Input
                   id="name"
                   autoComplete="name"
@@ -237,13 +241,14 @@ export const SettingsPage = () => {
                   className={profileForm.formState.errors.name ? 'border-red-400 focus-visible:ring-red-500' : ''}
                   {...profileForm.register('name')}
                 />
-                {profileForm.formState.errors.name && (
-                  <p className="text-xs text-red-500">{profileForm.formState.errors.name.message}</p>
-                )}
-              </div>
+              </Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email de acesso</Label>
+              <Field
+                htmlFor="email"
+                label="Email de acesso"
+                description="Se alterar o email, use o novo endereço no próximo login."
+                error={profileForm.formState.errors.email?.message}
+              >
                 <Input
                   id="email"
                   type="email"
@@ -252,13 +257,7 @@ export const SettingsPage = () => {
                   className={profileForm.formState.errors.email ? 'border-red-400 focus-visible:ring-red-500' : ''}
                   {...profileForm.register('email')}
                 />
-                {profileForm.formState.errors.email && (
-                  <p className="text-xs text-red-500">{profileForm.formState.errors.email.message}</p>
-                )}
-                <p className="text-xs text-slate-500">
-                  Se alterar o email, use o novo endereço no próximo login.
-                </p>
-              </div>
+              </Field>
             </div>
 
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
@@ -279,9 +278,9 @@ export const SettingsPage = () => {
               </Button>
             </div>
           </form>
-        </section>
+        </SectionCard>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <SectionCard className="p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="font-semibold text-slate-900">Senha</h2>
@@ -298,9 +297,9 @@ export const SettingsPage = () => {
               Alterar senha
             </Button>
           </div>
-        </section>
+        </SectionCard>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <SectionCard className="p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="font-semibold text-slate-900">Guia da plataforma</h2>
@@ -317,44 +316,34 @@ export const SettingsPage = () => {
               Ver guia novamente
             </Button>
           </div>
-        </section>
+        </SectionCard>
 
-        {isPasswordModalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="change-password-title"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget && !isSavingPassword) {
-                passwordForm.reset({ password: '', confirmPassword: '' });
-                setIsPasswordModalOpen(false);
-              }
-            }}
-          >
-            <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-              <div className="border-b border-slate-200 px-5 py-4">
-                <h2 id="change-password-title" className="font-semibold text-slate-900">
-                  Alterar senha
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  A troca de senha não altera seu nome nem seu email.
-                </p>
-              </div>
-
-              <div className="px-5 py-4">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  Use pelo menos 6 caracteres e confirme a nova senha antes de salvar.
-                </div>
-              </div>
+        <ModalDialog
+          open={isPasswordModalOpen}
+          title="Alterar senha"
+          description="A troca de senha não altera seu nome nem seu email."
+          onClose={() => {
+            if (isSavingPassword) return;
+            passwordForm.reset({ password: '', confirmPassword: '' });
+            setIsPasswordModalOpen(false);
+          }}
+          panelClassName="max-w-md"
+        >
+          <div className="space-y-5">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              Use pelo menos 6 caracteres e confirme a nova senha antes de salvar.
+            </div>
 
             <form
               onSubmit={passwordForm.handleSubmit(onSubmitPassword as never)}
-                className="space-y-5 px-5 pb-5"
+              className="space-y-5"
             >
-                <div className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Nova senha</Label>
+              <div className="space-y-5">
+                <Field
+                  htmlFor="password"
+                  label="Nova senha"
+                  error={passwordForm.formState.errors.password?.message}
+                >
                   <Input
                     id="password"
                     type="password"
@@ -363,13 +352,13 @@ export const SettingsPage = () => {
                     className={passwordForm.formState.errors.password ? 'border-red-400 focus-visible:ring-red-500' : ''}
                     {...passwordForm.register('password')}
                   />
-                  {passwordForm.formState.errors.password && (
-                    <p className="text-xs text-red-500">{passwordForm.formState.errors.password.message}</p>
-                  )}
-                </div>
+                </Field>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                <Field
+                  htmlFor="confirmPassword"
+                  label="Confirmar nova senha"
+                  error={passwordForm.formState.errors.confirmPassword?.message}
+                >
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -378,15 +367,10 @@ export const SettingsPage = () => {
                     className={passwordForm.formState.errors.confirmPassword ? 'border-red-400 focus-visible:ring-red-500' : ''}
                     {...passwordForm.register('confirmPassword')}
                   />
-                  {passwordForm.formState.errors.confirmPassword && (
-                    <p className="text-xs text-red-500">
-                      {passwordForm.formState.errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
+                </Field>
               </div>
 
-                <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="ghost"
@@ -407,9 +391,8 @@ export const SettingsPage = () => {
                 </Button>
               </div>
             </form>
-            </div>
           </div>
-        )}
+        </ModalDialog>
       </div>
     </DashboardLayout>
   );

@@ -1,7 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { Eye, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Field } from '@/components/ui/field';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { Label } from '@/components/ui/label';
+import { SectionCard } from '@/components/ui/section-card';
 import { getAssetUrl } from '@/lib/assets';
 import { getUserInitials } from '@/hooks/use-posts-board';
 import type { Class } from '@/services/class-service';
@@ -50,7 +53,7 @@ export const PostEditor = ({
   onSave,
 }: PostEditorProps) => {
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <SectionCard className="overflow-hidden">
       <div className={`h-1.5 ${selectedPost ? 'bg-amber-400' : 'bg-brand-900'}`} />
       <div className="space-y-5 p-5">
         <div className="flex items-center justify-between">
@@ -69,10 +72,7 @@ export const PostEditor = ({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
-          <div className="space-y-1.5">
-            <label htmlFor="post-title" className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Título
-            </label>
+          <Field htmlFor="post-title" label="Título" labelClassName="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             <input
               id="post-title"
               className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
@@ -80,11 +80,8 @@ export const PostEditor = ({
               onChange={(event) => onTitleChange(event.target.value)}
               placeholder="Título da postagem"
             />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="post-class" className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Turma
-            </label>
+          </Field>
+          <Field htmlFor="post-class" label="Turma" labelClassName="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             <select
               id="post-class"
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
@@ -96,7 +93,7 @@ export const PostEditor = ({
                 <option key={item.id} value={item.id}>{item.name}</option>
               ))}
             </select>
-          </div>
+          </Field>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
@@ -114,10 +111,11 @@ export const PostEditor = ({
 
         <div className="grid gap-4 xl:grid-cols-2">
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Editor</p>
+            <Label htmlFor="post-content" className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Editor</Label>
             <div className="overflow-hidden rounded-lg border border-slate-200">
               <Suspense fallback={<div className="flex h-[300px] items-center justify-center text-sm text-slate-400">Carregando editor…</div>}>
                 <Editor
+                  path="post-content"
                   height="300px"
                   language="markdown"
                   theme="vs"
@@ -155,6 +153,6 @@ export const PostEditor = ({
           </Button>
         </div>
       </div>
-    </section>
+    </SectionCard>
   );
 };

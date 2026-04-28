@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { ModalDialog } from '@/components/ui/modal-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
+import {
+  Table,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '@/components/ui/table';
 import { adminService, type AIGenerationListItem, type AIGenerationDetail } from '@/services/admin-service';
 import { Loader2, X } from 'lucide-react';
 
@@ -31,40 +42,44 @@ export const AdminAIGenerations = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-900 font-display">Gerações de IA</h1>
-          <p className="text-slate-500">Auditoria de prompts e respostas usados em missões geradas.</p>
-        </div>
+        <PageHeader
+          title="Gerações de IA"
+          description="Auditoria de prompts e respostas usados em missões geradas."
+        />
 
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
         ) : (
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 tracking-widest">
+          <TableContainer>
+            <Table>
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Prompt (preview)</th>
-                  <th className="px-4 py-3">Criado em</th>
-                  <th className="px-4 py-3 text-right">Ações</th>
+                  <TableHeaderCell>Tipo</TableHeaderCell>
+                  <TableHeaderCell>Prompt (preview)</TableHeaderCell>
+                  <TableHeaderCell>Criado em</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Ações</TableHeaderCell>
                 </tr>
-              </thead>
+              </TableHead>
               <tbody>
                 {items.length === 0 ? (
-                  <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">Nenhuma geração.</td></tr>
-                ) : items.map((g) => (
-                  <tr key={g.id} className="border-t border-slate-100">
-                    <td className="px-4 py-3 font-medium text-slate-800">{g.type}</td>
-                    <td className="px-4 py-3 text-slate-600 max-w-md truncate">{g.promptPreview}</td>
-                    <td className="px-4 py-3 text-slate-600">{new Date(g.createdAt).toLocaleString('pt-BR')}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => openDetail(g.id)} className="text-brand-700 hover:text-brand-900 text-xs font-semibold">Ver</button>
-                    </td>
+                  <tr>
+                    <TableCell colSpan={4}>
+                      <EmptyState message="Nenhuma geração." className="border-0 py-6" />
+                    </TableCell>
                   </tr>
+                ) : items.map((g) => (
+                  <TableRow key={g.id}>
+                    <TableCell className="font-medium text-slate-800">{g.type}</TableCell>
+                    <TableCell className="max-w-md truncate text-slate-600">{g.promptPreview}</TableCell>
+                    <TableCell className="text-slate-600">{new Date(g.createdAt).toLocaleString('pt-BR')}</TableCell>
+                    <TableCell className="text-right">
+                      <button onClick={() => openDetail(g.id)} className="text-brand-700 hover:text-brand-900 text-xs font-semibold">Ver</button>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </Table>
+          </TableContainer>
         )}
 
         <ModalDialog
@@ -91,25 +106,25 @@ export const AdminAIGenerations = () => {
               <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-brand-600" /></div>
             ) : (
               <>
-                <div>
+                <SectionCard className="p-4">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Tipo</p>
                   <p className="text-sm">{selected.type}</p>
-                </div>
-                <div>
+                </SectionCard>
+                <SectionCard className="p-4">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Prompt</p>
                   <pre className="whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-slate-50 p-3 text-xs">{selected.prompt}</pre>
-                </div>
-                <div>
+                </SectionCard>
+                <SectionCard className="p-4">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Response</p>
                   <pre className="whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-slate-50 p-3 text-xs">{selected.response}</pre>
-                </div>
+                </SectionCard>
                 {selected.missionQuizzes.length > 0 ? (
-                  <div>
+                  <SectionCard className="p-4">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Quizzes gerados</p>
                     <ul className="list-disc pl-5 text-sm">
                       {selected.missionQuizzes.map((quiz) => <li key={quiz.id}>{quiz.title}</li>)}
                     </ul>
-                  </div>
+                  </SectionCard>
                 ) : null}
               </>
             )}

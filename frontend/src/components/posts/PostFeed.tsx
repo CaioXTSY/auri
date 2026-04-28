@@ -1,5 +1,8 @@
 import { ChevronDown, ChevronUp, Loader2, MessageSquare, Pencil, Send, Trash2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Label } from '@/components/ui/label';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { SectionCard } from '@/components/ui/section-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getAssetUrl } from '@/lib/assets';
 import { formatRelativeDate, getUserInitials } from '@/hooks/use-posts-board';
@@ -75,9 +78,7 @@ export const PostFeed = ({
 
   if (posts.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 py-16 text-center text-slate-500">
-        Nenhuma postagem ainda.
-      </div>
+      <EmptyState message="Nenhuma postagem ainda." />
     );
   }
 
@@ -88,7 +89,7 @@ export const PostFeed = ({
         const replyCount = post._count?.replies ?? 0;
 
         return (
-          <article key={post.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <SectionCard key={post.id} className="overflow-hidden">
             <div className="h-1.5 bg-brand-900" />
             <div className="p-5">
               <div className="flex items-start justify-between gap-3">
@@ -198,7 +199,7 @@ export const PostFeed = ({
                       </div>
                       <div className="flex flex-1 items-start gap-2">
                         <div className="flex-1">
-                          <label htmlFor={`reply-input-${post.id}`} className="sr-only">Adicionar comentário</label>
+                          <Label htmlFor={`reply-input-${post.id}`} className="sr-only">Adicionar comentário</Label>
                           <textarea
                             id={`reply-input-${post.id}`}
                             rows={1}
@@ -228,7 +229,7 @@ export const PostFeed = ({
                 )}
               </div>
             ) : null}
-          </article>
+          </SectionCard>
         );
       })}
     </div>
