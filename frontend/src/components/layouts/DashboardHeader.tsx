@@ -1,16 +1,20 @@
 import type { ReactNode } from 'react';
+import { ProfileMenu } from '@/components/layouts/ProfileMenu';
 
 interface DashboardHeaderProps {
   userRole?: 'ADMIN' | 'PROFESSOR' | 'ALUNO' | string;
+  userName: string;
   firstName: string;
   email?: string;
   initials: string;
+  avatar?: string;
   userStats?: {
     currentXp: number;
     level: number;
     currentStreak: number;
   } | null;
   notifications: ReactNode;
+  onLogout: () => void | Promise<void>;
 }
 
 const getRoleLabel = (role?: string) => {
@@ -27,11 +31,14 @@ const getPanelLabel = (role?: string) => {
 
 export const DashboardHeader = ({
   userRole,
+  userName,
   firstName,
   email,
   initials,
+  avatar,
   userStats,
   notifications,
+  onLogout,
 }: DashboardHeaderProps) => {
   return (
     <header
@@ -70,9 +77,14 @@ export const DashboardHeader = ({
 
         {notifications}
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-sm font-bold uppercase text-accent-400">
-          {initials}
-        </div>
+        <ProfileMenu
+          name={userName}
+          email={email}
+          role={userRole}
+          initials={initials}
+          avatar={avatar}
+          onLogout={onLogout}
+        />
       </div>
     </header>
   );

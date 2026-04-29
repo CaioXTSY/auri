@@ -141,10 +141,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader
           userRole={user?.role}
+          userName={user?.name ?? firstName}
           firstName={firstName}
           email={user?.email}
           initials={initials}
+          avatar={user?.avatar}
           userStats={user?.role === 'ALUNO' ? userStats : null}
+          onLogout={handleLogout}
           notifications={
             <NotificationsPopover
               open={notificationsOpen}
