@@ -4,6 +4,8 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { GamificationService } from '../gamification/gamification.service';
+import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -50,9 +52,18 @@ describe('AuthService', () => {
         JWT_SECRET: 'test-secret',
         JWT_REFRESH_SECRET: 'test-refresh-secret',
         JWT_EXPIRES_IN: '15m',
+        FRONTEND_URL: 'https://auri.test',
       };
       return config[key] || defaultValue;
     }),
+  };
+
+  const mockGamificationService = {
+    checkLoginAchievements: jest.fn(),
+  };
+
+  const mockMailService = {
+    sendPasswordResetEmail: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -62,6 +73,8 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: mockUsersService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: GamificationService, useValue: mockGamificationService },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -187,6 +200,12 @@ describe('AuthService', () => {
 
       expect(result).toHaveProperty('message');
       expect(mockUsersService.updateResetToken).toHaveBeenCalled();
+      expect(mockMailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockUser.email,
+          name: mockUser.name,
+        }),
+      );
     });
 
     it('should return success message even if email does not exist', async () => {
@@ -209,7 +228,7 @@ describe('AuthService', () => {
         resetTokenExpires: new Date(Date.now() + 3600000),
       };
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
-      mockUsersService.findByResetToken.mockResolvedValue([userWithResetToken]);
+      mockUsersService.findByResetToken.mockResolvedValue(userWithResetToken);
 
       const result = await service.resetPassword(resetPasswordDto);
 
@@ -220,7 +239,7 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException if token is invalid', async () => {
       const resetPasswordDto = { token: 'invalid-token', newPassword: 'newPassword123' };
-      mockUsersService.findByResetToken.mockResolvedValue([]);
+      mockUsersService.findByResetToken.mockResolvedValue(null);
 
       await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
         BadRequestException,

@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { GamificationService } from '../gamification/gamification.service';
+import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
@@ -14,11 +15,14 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
     private gamificationService: GamificationService,
+    private mailService: MailService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -107,6 +111,21 @@ export class AuthService {
     const expires = new Date(Date.now() + 3600000); // 1 hora
 
     await this.usersService.updateResetToken(user.id, resetToken, expires);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:5173';
+    const resetUrl = `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${resetToken}`;
+
+    try {
+      await this.mailService.sendPasswordResetEmail({
+        to: user.email,
+        name: user.name,
+        resetUrl,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Falha ao enviar email de recuperação para ${user.email}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
 
     return { message: 'Se o email existir, um link de recuperação será enviado' };
   }

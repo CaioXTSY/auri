@@ -1,2 +1,8 @@
 docs/
 .claude/settings.local.json
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
