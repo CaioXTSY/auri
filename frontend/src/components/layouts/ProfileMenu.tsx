@@ -10,6 +10,11 @@ interface ProfileMenuProps {
   role?: string;
   initials: string;
   avatar?: string;
+  userStats?: {
+    currentXp: number;
+    level: number;
+    currentStreak: number;
+  } | null;
   onLogout: () => void | Promise<void>;
 }
 
@@ -25,6 +30,7 @@ export const ProfileMenu = ({
   role,
   initials,
   avatar,
+  userStats,
   onLogout,
 }: ProfileMenuProps) => {
   const [open, setOpen] = useState(false);
@@ -76,17 +82,22 @@ export const ProfileMenu = ({
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((current) => !current)}
-        className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-1.5 py-1 pr-3 transition-colors hover:bg-slate-50"
+        className="group flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-1.5 py-1 pr-2 shadow-sm transition-all hover:border-brand-200 hover:bg-slate-50 hover:shadow md:pr-3"
       >
-        <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-900 text-sm font-bold uppercase text-accent-400">
+        <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 text-sm font-bold uppercase text-accent-300 ring-2 ring-white">
           {avatarSrc ? (
             <img src={avatarSrc} alt={name} className="h-full w-full object-cover" />
           ) : (
             initials
           )}
         </span>
+        <span className="hidden text-left sm:block">
+          <span className="block max-w-24 truncate text-xs font-semibold text-slate-700">
+            {name}
+          </span>
+        </span>
         <ChevronDown
-          className={`hidden h-4 w-4 text-slate-500 transition-transform sm:block ${open ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 text-slate-500 transition-transform group-hover:text-brand-700 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -101,7 +112,7 @@ export const ProfileMenu = ({
         >
           <div className="border-b border-slate-100 px-3 py-3">
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-brand-900 text-sm font-bold uppercase text-accent-400">
+              <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 text-sm font-bold uppercase text-accent-300 ring-2 ring-slate-100">
                 {avatarSrc ? (
                   <img src={avatarSrc} alt={name} className="h-full w-full object-cover" />
                 ) : (
@@ -116,6 +127,21 @@ export const ProfileMenu = ({
                 </p>
               </div>
             </div>
+            {role === 'ALUNO' && userStats ? (
+              <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  <span className="font-semibold text-brand-900">
+                    XP {userStats.currentXp}
+                  </span>
+                  <span className="text-slate-500">Nível {userStats.level}</span>
+                  {userStats.currentStreak > 0 ? (
+                    <span className="font-medium text-orange-500">
+                      🔥 {userStats.currentStreak}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="py-2">

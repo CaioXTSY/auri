@@ -83,6 +83,7 @@ export const DashboardHeader = ({
           role={userRole}
           initials={initials}
           avatar={avatar}
+          userStats={userStats}
           onLogout={onLogout}
         />
       </div>
