@@ -1,9 +1,15 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Medal, Sparkles, Target, Trophy } from 'lucide-react';
+import { ArrowRight, GraduationCap, Medal, MessageSquareText, Sparkles, Target, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { STREAK_MILESTONES } from '@/constants/app';
+import { formatRelativeDate, getUserInitials } from '@/hooks/use-posts-board';
+import { getAssetUrl } from '@/lib/assets';
+import { classService } from '@/services/class-service';
+import { postsService } from '@/services/posts-service';
 import type { StudentDashboard } from '@/services/dashboard-service';
 
 interface StudentDashboardOverviewProps {
@@ -41,6 +47,17 @@ export const StudentDashboardOverview = ({
   onRetry,
   onOpenDailyQuiz,
 }: StudentDashboardOverviewProps) => {
+  const { data: recentPosts = [], isLoading: isLoadingRecentPosts } = useQuery({
+    queryKey: ['dashboard-recent-posts'],
+    queryFn: async () => {
+      const response = await postsService.list({ page: 1, limit: 3 });
+      return response.data;
+    },
+  });
+  const { data: myClasses = [], isLoading: isLoadingMyClasses } = useQuery({
+    queryKey: ['dashboard-my-classes'],
+    queryFn: classService.getMyClasses,
+  });
   const levelInfo = dashboardData?.level ?? null;
   const level = levelInfo?.currentLevel ?? 0;
   const currentXp = levelInfo?.totalPoints ?? 0;
@@ -296,6 +313,122 @@ export const StudentDashboardOverview = ({
                 <Link to="/dashboard/missions" className="text-xs font-semibold text-brand-700 transition-colors hover:text-brand-900">
                   Ver todas →
                 </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">
+                  <MessageSquareText className="h-4 w-4 text-brand-700" />
+                  Últimos Posts
+                </h3>
+                <Link to="/dashboard/posts" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 transition-colors hover:text-brand-900">
+                  Ver mural <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {isLoadingRecentPosts ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="rounded-xl border border-slate-100 p-4">
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="mt-2 h-3 w-full" />
+                      <Skeleton className="mt-3 h-3 w-28" />
+                    </div>
+                  ))
+                ) : recentPosts.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-sm text-slate-500">
+                    Nenhuma postagem recente disponível.
+                  </p>
+                ) : (
+                  recentPosts.map((post) => (
+                    <Link
+                      key={post.id}
+                      to={`/dashboard/posts?postId=${post.id}`}
+                      className="block rounded-xl border border-slate-100 p-4 transition-colors hover:border-brand-200 hover:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">{post.title}</p>
+                          <div className="mt-1 max-h-16 overflow-hidden text-xs leading-relaxed text-slate-500">
+                            <MarkdownContent content={post.content} className="space-y-1 [&_*]:text-inherit [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_pre]:hidden" />
+                          </div>
+                        </div>
+                        {post.class ? (
+                          <span className="shrink-0 rounded-full border border-brand-100 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700">
+                            {post.class.name}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                        <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[9px] font-bold text-slate-600">
+                          {post.author.avatar ? (
+                            <img src={getAssetUrl(post.author.avatar) ?? ''} alt={post.author.name} className="h-full w-full object-cover" />
+                          ) : (
+                            getUserInitials(post.author.name)
+                          )}
+                        </div>
+                        <span className="truncate">{post.author.name}</span>
+                        <span>•</span>
+                        <span>{formatRelativeDate(post.createdAt)}</span>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">
+                  <GraduationCap className="h-4 w-4 text-emerald-600" />
+                  Suas Turmas
+                </h3>
+                <Link to="/dashboard/classes" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 transition-colors hover:text-brand-900">
+                  Ver todas <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {isLoadingMyClasses ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="rounded-xl border border-slate-100 p-4">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="mt-2 h-3 w-24" />
+                    </div>
+                  ))
+                ) : myClasses.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-sm text-slate-500">
+                    Você ainda não entrou em nenhuma turma.
+                    <Link to="/dashboard/classes/join" className="mt-3 inline-flex items-center gap-1 font-semibold text-brand-700 transition-colors hover:text-brand-900">
+                      Entrar em uma turma <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                ) : (
+                  myClasses.slice(0, 3).map((classroom) => (
+                    <Link
+                      key={classroom.id}
+                      to={`/dashboard/classes/${classroom.id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-4 transition-colors hover:border-emerald-200 hover:bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">{classroom.name}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {classroom.semester} {classroom.year}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${
+                        classroom.status === 'ATIVA'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {classroom.status}
+                      </span>
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
           </section>
