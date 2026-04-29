@@ -11,10 +11,15 @@ import {
   UpdatePostDto,
   UpdatePostReplyDto,
 } from './dto';
+import { NotificationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   private async validateClassExists(classId?: string) {
     if (!classId) {
@@ -74,7 +79,7 @@ export class PostsService {
   async create(userId: string, createPostDto: CreatePostDto) {
     await this.validateClassExists(createPostDto.classId);
 
-    return this.prisma.post.create({
+    const post = await this.prisma.post.create({
       data: {
         title: createPostDto.title,
         content: createPostDto.content,
@@ -93,6 +98,40 @@ export class PostsService {
         },
       },
     });
+
+    if (post.classId) {
+      await this.notifyClassStudentsAboutPost(post);
+    }
+
+    return post;
+  }
+
+  private async notifyClassStudentsAboutPost(post: {
+    id: string;
+    title: string;
+    classId?: string | null;
+    class?: { name: string } | null;
+    author: { name: string };
+  }) {
+    if (!post.classId) {
+      return;
+    }
+
+    const students = await this.prisma.classStudent.findMany({
+      where: { classId: post.classId },
+      select: { userId: true },
+    });
+
+    await Promise.all(
+      students.map((student) =>
+        this.notificationsService.createNotification({
+          userId: student.userId,
+          type: NotificationType.SISTEMA,
+          title: `Nova postagem em ${post.class?.name ?? 'sua turma'}`,
+          message: `${post.author.name} publicou: ${post.title}`,
+        }),
+      ),
+    );
   }
 
   async findAll(userId: string, userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO', query: QueryPostsDto) {
