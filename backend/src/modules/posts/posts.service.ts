@@ -34,6 +34,27 @@ export class PostsService {
     }
   }
 
+  private async validatePostTargetClassAccess(
+    userId: string,
+    userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
+    classId?: string,
+  ) {
+    await this.validateClassExists(classId);
+
+    if (!classId || userRole !== 'PROFESSOR') {
+      return;
+    }
+
+    const ownClass = await this.prisma.class.findFirst({
+      where: { id: classId, createdById: userId },
+      select: { id: true },
+    });
+
+    if (!ownClass) {
+      throw new ForbiddenException('Você não tem acesso aos posts desta turma');
+    }
+  }
+
   private async isStudentEnrolled(userId: string, classId: string) {
     const enrollment = await this.prisma.classStudent.findUnique({
       where: {
@@ -76,8 +97,16 @@ export class PostsService {
     }
   }
 
-  async create(userId: string, createPostDto: CreatePostDto) {
-    await this.validateClassExists(createPostDto.classId);
+  async create(
+    userId: string,
+    userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
+    createPostDto: CreatePostDto,
+  ) {
+    await this.validatePostTargetClassAccess(
+      userId,
+      userRole,
+      createPostDto.classId,
+    );
 
     const post = await this.prisma.post.create({
       data: {
@@ -257,7 +286,11 @@ export class PostsService {
       throw new ForbiddenException('Você não pode editar este post');
     }
 
-    await this.validateClassExists(updatePostDto.classId);
+    await this.validatePostTargetClassAccess(
+      userId,
+      userRole,
+      updatePostDto.classId,
+    );
 
     return this.prisma.post.update({
       where: { id },

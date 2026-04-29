@@ -46,7 +46,7 @@ export class PostsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   create(@Request() req, @Body() createPostDto: CreatePostDto) {
-    return this.postsService.create(req.user.id, createPostDto);
+    return this.postsService.create(req.user.id, req.user.role, createPostDto);
   }
 
   @Get()
