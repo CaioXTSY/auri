@@ -42,7 +42,7 @@ export const ForgotPassword = () => {
         <div className="flex flex-col items-center gap-4 py-4 text-center">
           <CheckCircle2 className="h-12 w-12 text-emerald-500" />
           <p className="text-sm text-slate-600">
-            Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha nos próximos minutos.
+            Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha nos próximos minutos. Se não encontrar a mensagem, verifique também a caixa de spam.
           </p>
           <Link to="/login" className="text-sm font-semibold text-brand-900 hover:text-accent-700 transition-colors">
             ← Voltar para o login
