@@ -24,13 +24,13 @@ export interface PostReply {
 
 export interface PostItem {
   id: string;
-  classId?: string | null;
+  classId: string;
   authorId: string;
   title: string;
   content: string;
   createdAt: string;
   updatedAt: string;
-  class?: PostClassInfo | null;
+  class: PostClassInfo;
   author: PostAuthor;
   _count?: {
     replies: number;
@@ -54,13 +54,13 @@ export interface PaginatedPosts {
 export interface CreatePostDto {
   title: string;
   content: string;
-  classId?: string;
+  classId: string;
 }
 
 export interface UpdatePostDto {
   title?: string;
   content?: string;
-  classId?: string | null;
+  classId?: string;
 }
 
 export interface CreatePostReplyDto {

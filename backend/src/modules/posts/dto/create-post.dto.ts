@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -20,11 +20,10 @@ export class CreatePostDto {
   @IsNotEmpty()
   content: string;
 
-  @ApiPropertyOptional({
-    description: 'ID da turma alvo (opcional)',
+  @ApiProperty({
+    description: 'ID da turma alvo',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  @IsOptional()
   @IsUUID()
-  classId?: string;
+  classId: string;
 }

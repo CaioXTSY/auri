@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -21,10 +22,7 @@ export class PostsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  private async validateClassExists(classId?: string | null) {
-    if (!classId) {
-      return;
-    }
+  private async validateClassExists(classId: string) {
     const classExists = await this.prisma.class.findUnique({
       where: { id: classId },
       select: { id: true },
@@ -37,11 +35,15 @@ export class PostsService {
   private async validatePostTargetClassAccess(
     userId: string,
     userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
-    classId?: string | null,
+    classId?: string,
   ) {
+    if (!classId) {
+      throw new BadRequestException('Selecione uma turma para publicar');
+    }
+
     await this.validateClassExists(classId);
 
-    if (!classId || userRole !== 'PROFESSOR') {
+    if (userRole !== 'PROFESSOR') {
       return;
     }
 
@@ -73,12 +75,9 @@ export class PostsService {
   private async ensureCanReadPost(
     userId: string,
     userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
-    classId?: string | null,
+    classId: string,
   ) {
     if (userRole === 'ADMIN') {
-      return;
-    }
-    if (!classId) {
       return;
     }
     if (userRole === 'PROFESSOR') {
@@ -128,9 +127,7 @@ export class PostsService {
       },
     });
 
-    if (post.classId) {
-      await this.notifyClassStudentsAboutPost(post);
-    }
+    await this.notifyClassStudentsAboutPost(post);
 
     return post;
   }
@@ -138,14 +135,10 @@ export class PostsService {
   private async notifyClassStudentsAboutPost(post: {
     id: string;
     title: string;
-    classId?: string | null;
-    class?: { name: string } | null;
+    classId: string;
+    class: { name: string };
     author: { name: string };
   }) {
-    if (!post.classId) {
-      return;
-    }
-
     const students = await this.prisma.classStudent.findMany({
       where: { classId: post.classId },
       select: { userId: true },
@@ -156,7 +149,7 @@ export class PostsService {
         this.notificationsService.createNotification({
           userId: student.userId,
           type: NotificationType.SISTEMA,
-          title: `Nova postagem em ${post.class?.name ?? 'sua turma'}`,
+          title: `Nova postagem em ${post.class.name}`,
           message: `${post.author.name} publicou: ${post.title}`,
         }),
       ),
@@ -169,8 +162,7 @@ export class PostsService {
     const skip = (page - 1) * limit;
 
     const where: {
-      classId?: string;
-      OR?: Array<{ classId: null } | { classId: string } | { classId: { in: string[] } }>;
+      classId?: string | { in: string[] };
     } = {};
 
     if (query.classId) {
@@ -188,21 +180,21 @@ export class PostsService {
           throw new ForbiddenException('Você não tem acesso aos posts desta turma');
         }
       }
-      where.OR = [{ classId: null }, { classId: query.classId }];
+      where.classId = query.classId;
     } else if (userRole === 'ALUNO') {
       const enrollments = await this.prisma.classStudent.findMany({
         where: { userId },
         select: { classId: true },
       });
       const classIds = enrollments.map((enrollment) => enrollment.classId);
-      where.OR = [{ classId: null }, { classId: { in: classIds } }];
+      where.classId = { in: classIds };
     } else if (userRole === 'PROFESSOR') {
       const ownClasses = await this.prisma.class.findMany({
         where: { createdById: userId },
         select: { id: true },
       });
       const classIds = ownClasses.map((c) => c.id);
-      where.OR = [{ classId: null }, { classId: { in: classIds } }];
+      where.classId = { in: classIds };
     }
 
     const [data, total] = await Promise.all([
@@ -275,7 +267,7 @@ export class PostsService {
   ) {
     const post = await this.prisma.post.findUnique({
       where: { id },
-      select: { id: true, authorId: true },
+      select: { id: true, authorId: true, classId: true },
     });
 
     if (!post) {
@@ -289,7 +281,7 @@ export class PostsService {
     await this.validatePostTargetClassAccess(
       userId,
       userRole,
-      updatePostDto.classId,
+      updatePostDto.classId ?? post.classId,
     );
 
     return this.prisma.post.update({

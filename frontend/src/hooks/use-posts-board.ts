@@ -78,7 +78,7 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
       if (isProfessor && !isEditingPostRef.current) {
         setPostTitle(details.title);
         setPostContent(details.content);
-        setPostClassId(details.classId || '');
+        setPostClassId(details.classId);
       }
     } catch {
       setError('Não foi possível carregar os comentários.');
@@ -126,13 +126,13 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
     setSelectedPostId(null);
     setSelectedPost(null);
     resetEditor();
-    setPostClassId(initialClassId);
+    setPostClassId(initialClassId || classes[0]?.id || '');
   };
 
   const startEditPost = (post: PostItem) => {
     setIsEditingPost(true);
     setPostTitle(post.title);
-    setPostClassId(post.classId || '');
+    setPostClassId(post.classId);
     setPostContent(post.content);
   };
 
@@ -140,7 +140,7 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
     setIsEditingPost(false);
     if (selectedPost) {
       setPostTitle(selectedPost.title);
-      setPostClassId(selectedPost.classId || '');
+      setPostClassId(selectedPost.classId);
       setPostContent(selectedPost.content);
       return;
     }
@@ -152,6 +152,10 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
       setError('Título e conteúdo são obrigatórios.');
       return;
     }
+    if (!postClassId) {
+      setError('Selecione uma turma para publicar.');
+      return;
+    }
 
     setIsSavingPost(true);
     setError(null);
@@ -160,14 +164,14 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
         await postsService.update(selectedPost.id, {
           title: postTitle,
           content: postContent,
-          classId: postClassId || null,
+          classId: postClassId,
         });
         setSelectedPostId(selectedPost.id);
       } else {
         const created = await postsService.create({
           title: postTitle,
           content: postContent,
-          classId: postClassId || undefined,
+          classId: postClassId,
         });
         setSelectedPostId(created.id);
       }

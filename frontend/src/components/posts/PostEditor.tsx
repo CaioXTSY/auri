@@ -91,7 +91,7 @@ export const PostEditor = ({
             value={postClassId}
             onChange={(event) => onClassChange(event.target.value)}
           >
-            <option value="">Geral</option>
+            <option value="" disabled>Selecione uma turma</option>
             {classes.map((item) => (
               <option key={item.id} value={item.id}>{item.name}</option>
             ))}
