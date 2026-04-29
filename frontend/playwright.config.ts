@@ -7,4 +7,10 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   retries: 0,
+  webServer: {
+    command: 'npm run dev -- --host 127.0.0.1',
+    port: 5173,
+    reuseExistingServer: true,
+    timeout: 120000,
+  },
 });
