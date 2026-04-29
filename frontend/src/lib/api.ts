@@ -6,9 +6,6 @@ const BASE_URL = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 30_000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   withCredentials: true, // envia cookies (refresh_token HttpOnly) automaticamente
 });
 
@@ -17,6 +14,13 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  } else if (!config.headers['Content-Type']) {
+    config.headers['Content-Type'] = 'application/json';
+  }
+
   return config;
 }, (error) => Promise.reject(error));
 
