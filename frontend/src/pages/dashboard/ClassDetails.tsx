@@ -196,6 +196,14 @@ export const ClassDetails = () => {
                     <span>•</span>
                     <span>{post._count?.replies || 0} respostas</span>
                   </div>
+                  <div className="mt-4 flex justify-end">
+                    <Link
+                      to={`/dashboard/posts?postId=${post.id}`}
+                      className="inline-flex items-center rounded-lg border border-brand-100 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800 transition-colors hover:border-brand-200 hover:bg-brand-100"
+                    >
+                      Abrir post
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

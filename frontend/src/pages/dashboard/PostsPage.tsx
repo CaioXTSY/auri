@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -13,12 +14,31 @@ import { useAuthStore } from '@/stores/auth-store';
 
 export const PostsPage = () => {
   const user = useAuthStore((state) => state.user);
+  const [searchParams] = useSearchParams();
   const board = usePostsBoard(user);
+  const didApplyInitialClass = useRef(false);
+  const didApplyInitialPost = useRef(false);
   const [pendingDelete, setPendingDelete] = useState<
     | { type: 'post'; postId: string }
     | { type: 'reply'; reply: PostReply }
     | null
   >(null);
+  const initialClassId = searchParams.get('classId') ?? '';
+  const initialPostId = searchParams.get('postId') ?? '';
+
+  useEffect(() => {
+    if (!initialClassId || didApplyInitialClass.current || !board.isProfessor) return;
+
+    didApplyInitialClass.current = true;
+    board.startCreatePost(initialClassId);
+  }, [board, initialClassId]);
+
+  useEffect(() => {
+    if (!initialPostId || didApplyInitialPost.current || board.isLoadingPosts) return;
+
+    didApplyInitialPost.current = true;
+    board.toggleComments(initialPostId);
+  }, [board, initialPostId]);
 
   const handleConfirmDelete = async () => {
     if (!pendingDelete) return;
@@ -39,7 +59,7 @@ export const PostsPage = () => {
           title="Mural da Turma"
           description="Postagens e comunicados"
           actions={board.isProfessor && !board.isEditingPost ? (
-            <Button type="button" className="bg-brand-900 text-white hover:bg-brand-800" onClick={board.startCreatePost}>
+            <Button type="button" className="bg-brand-900 text-white hover:bg-brand-800" onClick={() => board.startCreatePost()}>
               <Plus className="mr-2 h-4 w-4" />
               Nova postagem
             </Button>

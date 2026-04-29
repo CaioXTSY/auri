@@ -114,11 +114,12 @@ export const usePostsBoard = (user: User | null) => {
     setPostContent('');
   }, []);
 
-  const startCreatePost = () => {
+  const startCreatePost = (initialClassId = '') => {
     setIsEditingPost(true);
     setSelectedPostId(null);
     setSelectedPost(null);
     resetEditor();
+    setPostClassId(initialClassId);
   };
 
   const startEditPost = (post: PostItem) => {

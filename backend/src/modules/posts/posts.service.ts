@@ -102,11 +102,10 @@ export class PostsService {
 
     const where: {
       classId?: string;
-      OR?: Array<{ classId: null } | { classId: { in: string[] } }>;
+      OR?: Array<{ classId: null } | { classId: string } | { classId: { in: string[] } }>;
     } = {};
 
     if (query.classId) {
-      where.classId = query.classId;
       if (userRole === 'ALUNO') {
         const enrolled = await this.isStudentEnrolled(userId, query.classId);
         if (!enrolled) {
@@ -121,6 +120,7 @@ export class PostsService {
           throw new ForbiddenException('Você não tem acesso aos posts desta turma');
         }
       }
+      where.OR = [{ classId: null }, { classId: query.classId }];
     } else if (userRole === 'ALUNO') {
       const enrollments = await this.prisma.classStudent.findMany({
         where: { userId },

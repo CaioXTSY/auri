@@ -328,7 +328,7 @@ export const TeacherClassDetails = () => {
             title="Postagens da turma"
             description="Resumo das publicações mais recentes vinculadas a esta turma."
             actions={
-              <Button variant="outline" onClick={() => navigate('/dashboard/posts')}>
+              <Button variant="outline" onClick={() => navigate(`/dashboard/posts?classId=${id}`)}>
                 Gerenciar postagens
               </Button>
             }
@@ -365,6 +365,15 @@ export const TeacherClassDetails = () => {
                     <span>{post.author.name}</span>
                     <span>•</span>
                     <span>{post._count?.replies || 0} respostas</span>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate(`/dashboard/posts?postId=${post.id}`)}
+                    >
+                      Abrir post
+                    </Button>
                   </div>
                 </SectionCard>
               ))}

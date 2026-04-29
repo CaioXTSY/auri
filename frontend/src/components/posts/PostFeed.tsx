@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Loader2, MessageSquare, Pencil, Send, Trash2 } from 'lucide-react';
+import { ArrowUp, ChevronDown, ChevronUp, Loader2, MessageSquare, Pencil, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import { MarkdownContent } from '@/components/ui/markdown-content';
@@ -137,9 +137,9 @@ export const PostFeed = ({
             </div>
 
             {isExpanded ? (
-              <div className="space-y-4 border-t border-slate-100 bg-slate-50 px-5 py-4">
+              <div className="border-t border-slate-100 bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] px-5 py-5">
                 {isLoadingPostDetails ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {Array.from({ length: 2 }).map((_, index) => (
                       <div key={index} className="flex gap-3">
                         <Skeleton className="mt-0.5 h-8 w-8 rounded-full flex-shrink-0" />
@@ -158,29 +158,40 @@ export const PostFeed = ({
                   </div>
                 ) : (
                   <>
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">Discussão</p>
+                        <p className="text-xs text-slate-500">
+                          {replyCount === 0
+                            ? 'Ainda não há respostas neste post.'
+                            : `${replyCount} ${replyCount === 1 ? 'resposta publicada' : 'respostas publicadas'}`}
+                        </p>
+                      </div>
+                    </div>
+
                     {selectedPost && selectedPost.replies.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {selectedPost.replies.map((reply) => {
                           const canDeleteReply = user?.role === 'ADMIN' || reply.authorId === user?.id;
                           return (
-                            <div key={reply.id} className="flex gap-3">
-                              <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+                            <div key={reply.id} className="group flex gap-3">
+                              <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-600 ring-4 ring-white">
                                 {reply.author.avatar ? <img src={getAssetUrl(reply.author.avatar) ?? ''} alt={reply.author.name} className="h-full w-full object-cover" /> : getUserInitials(reply.author.name)}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                                  <div className="mb-1.5 flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-semibold text-slate-800">{reply.author.name}</span>
-                                      <span className="text-[10px] text-slate-400">{formatRelativeDate(reply.createdAt)}</span>
+                                <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm shadow-slate-200/50">
+                                  <div className="mb-2 flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-semibold text-slate-900">{reply.author.name}</p>
+                                      <p className="text-[11px] text-slate-400">{formatRelativeDate(reply.createdAt)}</p>
                                     </div>
                                     {canDeleteReply ? (
-                                      <button type="button" aria-label="Excluir comentário" onClick={() => onRequestDeleteReply(reply)} className="text-slate-300 transition-colors hover:text-rose-500">
+                                      <button type="button" aria-label="Excluir comentário" onClick={() => onRequestDeleteReply(reply)} className="rounded-md p-1 text-slate-300 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100 focus:opacity-100">
                                         <Trash2 className="h-3.5 w-3.5" />
                                       </button>
                                     ) : null}
                                   </div>
-                                  <div className="text-sm text-slate-700">
+                                  <div className="text-sm leading-relaxed text-slate-700">
                                     <MarkdownContent content={reply.content} />
                                   </div>
                                 </div>
@@ -190,20 +201,23 @@ export const PostFeed = ({
                         })}
                       </div>
                     ) : (
-                      <p className="py-2 text-center text-sm text-slate-400">Seja o primeiro a comentar.</p>
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 px-4 py-6 text-center">
+                        <p className="text-sm font-medium text-slate-600">Comece a conversa</p>
+                        <p className="mt-1 text-xs text-slate-400">Perguntas, dúvidas e complementos aparecem aqui.</p>
+                      </div>
                     )}
 
-                    <div className="flex gap-3 pt-1">
-                      <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+                    <div className="mt-5 flex gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-200/60">
+                      <div className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
                         {user?.avatar ? <img src={getAssetUrl(user.avatar) ?? ''} alt={user.name} className="h-full w-full object-cover" /> : getUserInitials(user?.name)}
                       </div>
-                      <div className="flex flex-1 items-start gap-2">
+                      <div className="flex min-w-0 flex-1 items-end gap-2">
                         <div className="flex-1">
                           <Label htmlFor={`reply-input-${post.id}`} className="sr-only">Adicionar comentário</Label>
                           <textarea
                             id={`reply-input-${post.id}`}
                             rows={1}
-                            className="flex-1 w-full resize-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                            className="max-h-40 min-h-10 w-full resize-none border-0 bg-transparent px-0 py-2 text-sm leading-relaxed text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0"
                             value={replyContent}
                             onChange={(event) => onReplyContentChange(event.target.value)}
                             onInput={(event) => {
@@ -220,8 +234,8 @@ export const PostFeed = ({
                             }}
                           />
                         </div>
-                        <button type="button" aria-label="Enviar comentário" onClick={onCreateReply} disabled={!replyContent.trim() || isSendingReply} className="mt-0.5 flex-shrink-0 rounded-xl bg-brand-900 p-2.5 text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">
-                          {isSendingReply ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        <button type="button" aria-label="Enviar comentário" onClick={onCreateReply} disabled={!replyContent.trim() || isSendingReply} className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
+                          {isSendingReply ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
