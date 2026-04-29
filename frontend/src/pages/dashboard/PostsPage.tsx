@@ -34,7 +34,7 @@ export const PostsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-2xl space-y-5 pb-10">
+      <div className="mx-auto max-w-5xl space-y-5 pb-10">
         <PageHeader
           title="Mural da Turma"
           description="Postagens e comunicados"

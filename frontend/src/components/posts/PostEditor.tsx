@@ -1,9 +1,19 @@
-import { lazy, Suspense } from 'react';
-import { Eye, Loader2, X } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
+import {
+  BookOpen,
+  Braces,
+  Eye,
+  Heading1,
+  Heading2,
+  List,
+  Loader2,
+  MessageSquareQuote,
+  Send,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { MarkdownContent } from '@/components/ui/markdown-content';
-import { Label } from '@/components/ui/label';
 import { SectionCard } from '@/components/ui/section-card';
 import { getAssetUrl } from '@/lib/assets';
 import { getUserInitials } from '@/hooks/use-posts-board';
@@ -30,11 +40,11 @@ interface PostEditorProps {
 }
 
 const markdownHelpers = [
-  { label: 'H1', template: '\n# Título' },
-  { label: 'H2', template: '\n## Subtítulo' },
-  { label: 'Lista', template: '\n- Item 1\n- Item 2' },
-  { label: 'Código', template: '\n```python\nprint("hello")\n```' },
-  { label: 'Citação', template: '\n> Aviso importante' },
+  { label: 'Título', icon: Heading1, template: '\n# Título' },
+  { label: 'Subtítulo', icon: Heading2, template: '\n## Subtítulo' },
+  { label: 'Lista', icon: List, template: '\n- Item 1\n- Item 2' },
+  { label: 'Código', icon: Braces, template: '\n```python\nprint("hello")\n```' },
+  { label: 'Citação', icon: MessageSquareQuote, template: '\n> Aviso importante' },
 ];
 
 export const PostEditor = ({
@@ -52,104 +62,160 @@ export const PostEditor = ({
   onCancel,
   onSave,
 }: PostEditorProps) => {
+  const [mode, setMode] = useState<'write' | 'preview'>('write');
+  const editorLineCount = Math.max(12, postContent.split('\n').length);
+  const editorHeight = `${Math.max(420, editorLineCount * 24 + 64)}px`;
+
   return (
-    <SectionCard className="overflow-hidden">
-      <div className={`h-1.5 ${selectedPost ? 'bg-amber-400' : 'bg-brand-900'}`} />
-      <div className="space-y-5 p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-xs font-bold text-slate-600">
-              {user?.avatar ? <img src={getAssetUrl(user.avatar) ?? ''} alt={user.name} className="h-full w-full object-cover" /> : getUserInitials(user?.name)}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
-              <p className="text-xs text-slate-400">{selectedPost ? 'Editando postagem' : 'Nova postagem'}</p>
-            </div>
+    <SectionCard className="overflow-hidden border-slate-300 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.45)]">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-900 text-xs font-bold uppercase text-accent-300">
+            {user?.avatar ? (
+              <img src={getAssetUrl(user.avatar) ?? ''} alt={user.name} className="h-full w-full object-cover" />
+            ) : (
+              getUserInitials(user?.name)
+            )}
           </div>
-          <button type="button" aria-label="Fechar editor de postagem" onClick={onCancel} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
+            <p className="text-xs text-slate-500">{selectedPost ? 'Editando postagem' : 'Nova postagem'}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            id="post-class"
+            aria-label="Turma da postagem"
+            className="h-9 max-w-[180px] rounded-md border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-100 sm:max-w-xs"
+            value={postClassId}
+            onChange={(event) => onClassChange(event.target.value)}
+          >
+            <option value="">Geral</option>
+            {classes.map((item) => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            aria-label="Fechar editor de postagem"
+            onClick={onCancel}
+            className="rounded-md p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
+      </div>
 
-        <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
-          <Field htmlFor="post-title" label="Título" labelClassName="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <div className="bg-slate-50/60">
+        <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-5">
+          <Field htmlFor="post-title" label="Título da postagem" labelClassName="sr-only">
             <input
               id="post-title"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="w-full border-0 bg-transparent px-0 py-1 text-2xl font-bold text-brand-950 placeholder:text-slate-300 focus:outline-none focus:ring-0"
               value={postTitle}
               onChange={(event) => onTitleChange(event.target.value)}
               placeholder="Título da postagem"
             />
           </Field>
-          <Field htmlFor="post-class" label="Turma" labelClassName="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-            <select
-              id="post-class"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
-              value={postClassId}
-              onChange={(event) => onClassChange(event.target.value)}
-            >
-              <option value="">Todas as turmas</option>
-              {classes.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
-            </select>
-          </Field>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {markdownHelpers.map(({ label, template }) => (
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-100/70 px-4 py-2 sm:px-5">
+          <div className="flex items-center gap-1">
+            {markdownHelpers.map(({ label, icon: Icon, template }) => (
+              <button
+                key={label}
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-white hover:text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                onClick={() => onInsertTemplate(template)}
+                title={label}
+                aria-label={`Inserir ${label.toLowerCase()}`}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+          <div className="flex rounded-md border border-slate-200 bg-white p-0.5">
             <button
-              key={label}
               type="button"
-              className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 transition-colors hover:bg-slate-100"
-              onClick={() => onInsertTemplate(template)}
+              onClick={() => setMode('write')}
+              className={`inline-flex h-8 items-center gap-1.5 rounded px-3 text-xs font-semibold transition-colors ${
+                mode === 'write'
+                  ? 'bg-brand-900 text-white'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+              }`}
             >
-              {label}
+              <BookOpen className="h-3.5 w-3.5" />
+              Escrever
             </button>
-          ))}
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="post-content" className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Editor</Label>
-            <div className="overflow-hidden rounded-lg border border-slate-200">
-              <Suspense fallback={<div className="flex h-[300px] items-center justify-center text-sm text-slate-400">Carregando editor…</div>}>
-                <Editor
-                  path="post-content"
-                  height="300px"
-                  language="markdown"
-                  theme="vs"
-                  value={postContent}
-                  onChange={(value) => onContentChange(value || '')}
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    lineNumbers: 'off',
-                    wordWrap: 'on',
-                    automaticLayout: true,
-                    padding: { top: 12, bottom: 12 },
-                    scrollBeyondLastLine: false,
-                  }}
-                />
-              </Suspense>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-              <Eye className="h-3 w-3" />
-              Prévia
-            </p>
-            <div className="min-h-[300px] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              <MarkdownContent content={postContent || '*Comece a escrever para visualizar...*'} />
-            </div>
+            <button
+              type="button"
+              onClick={() => setMode('preview')}
+              className={`inline-flex h-8 items-center gap-1.5 rounded px-3 text-xs font-semibold transition-colors ${
+                mode === 'preview'
+                  ? 'bg-brand-900 text-white'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+              }`}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Visualizar
+            </button>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-1">
+        <div className="bg-white">
+          {mode === 'write' ? (
+            <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center text-sm text-slate-400">Carregando editor...</div>}>
+            <Editor
+              path="post-content"
+              height={editorHeight}
+              language="plaintext"
+              theme="vs"
+              value={postContent}
+              onChange={(value) => onContentChange(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'off',
+                wordWrap: 'on',
+                automaticLayout: true,
+                padding: { top: 18, bottom: 18 },
+                scrollBeyondLastLine: false,
+                scrollbar: {
+                  vertical: 'hidden',
+                  horizontal: 'hidden',
+                  handleMouseWheel: false,
+                },
+                renderLineHighlight: 'none',
+                overviewRulerBorder: false,
+                hideCursorInOverviewRuler: true,
+              }}
+            />
+          </Suspense>
+          ) : (
+            <div className="min-h-[420px] p-6 text-sm leading-relaxed text-slate-700">
+              {postTitle ? (
+                <h3 className="mb-4 text-2xl font-bold text-brand-950">{postTitle}</h3>
+              ) : null}
+              <MarkdownContent content={postContent || '*Nada para visualizar ainda.*'} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-5">
           <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
           <Button type="button" className="bg-brand-900 text-white hover:bg-brand-800" onClick={onSave} disabled={isSavingPost}>
-            {isSavingPost ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : 'Publicar'}
+            {isSavingPost ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                {selectedPost ? 'Atualizar' : 'Publicar'}
+              </>
+            )}
           </Button>
         </div>
       </div>
