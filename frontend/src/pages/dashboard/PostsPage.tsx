@@ -15,7 +15,9 @@ import { useAuthStore } from '@/stores/auth-store';
 export const PostsPage = () => {
   const user = useAuthStore((state) => state.user);
   const [searchParams] = useSearchParams();
-  const board = usePostsBoard(user);
+  const initialClassId = searchParams.get('classId') ?? '';
+  const initialPostId = searchParams.get('postId') ?? '';
+  const board = usePostsBoard(user, initialClassId || undefined);
   const didApplyInitialClass = useRef(false);
   const didApplyInitialPost = useRef(false);
   const [pendingDelete, setPendingDelete] = useState<
@@ -23,8 +25,6 @@ export const PostsPage = () => {
     | { type: 'reply'; reply: PostReply }
     | null
   >(null);
-  const initialClassId = searchParams.get('classId') ?? '';
-  const initialPostId = searchParams.get('postId') ?? '';
 
   useEffect(() => {
     if (!initialClassId || didApplyInitialClass.current || !board.isProfessor) return;
@@ -59,7 +59,11 @@ export const PostsPage = () => {
           title="Mural da Turma"
           description="Postagens e comunicados"
           actions={board.isProfessor && !board.isEditingPost ? (
-            <Button type="button" className="bg-brand-900 text-white hover:bg-brand-800" onClick={() => board.startCreatePost()}>
+            <Button
+              type="button"
+              className="bg-brand-900 text-white hover:bg-brand-800"
+              onClick={() => board.startCreatePost(initialClassId)}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Nova postagem
             </Button>

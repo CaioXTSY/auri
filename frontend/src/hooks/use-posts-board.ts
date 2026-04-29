@@ -24,7 +24,7 @@ export const formatRelativeDate = (dateStr: string) => {
   return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
 };
 
-export const usePostsBoard = (user: User | null) => {
+export const usePostsBoard = (user: User | null, classId?: string) => {
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<PostDetails | null>(null);
@@ -48,9 +48,16 @@ export const usePostsBoard = (user: User | null) => {
     setIsLoadingPosts(true);
     setError(null);
     try {
-      const response = await postsService.list({ page: 1, limit: 30 });
+      const response = await postsService.list({
+        page: 1,
+        limit: 30,
+        classId: classId || undefined,
+      });
       setPosts(response.data);
       if (response.data.length === 0) {
+        setSelectedPost(null);
+        setSelectedPostId(null);
+      } else if (selectedPostId && !response.data.some((post) => post.id === selectedPostId)) {
         setSelectedPost(null);
         setSelectedPostId(null);
       }
@@ -59,7 +66,7 @@ export const usePostsBoard = (user: User | null) => {
     } finally {
       setIsLoadingPosts(false);
     }
-  }, []);
+  }, [classId, selectedPostId]);
 
   const loadPostDetails = useCallback(async (postId: string) => {
     setIsLoadingPostDetails(true);
