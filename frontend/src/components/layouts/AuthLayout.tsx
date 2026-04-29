@@ -36,9 +36,6 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             </p>
           </div>
 
-          <div className="text-xs text-brand-400 font-medium tracking-wider">
-            © 2026 AURI EDUCATION PLATFORM
-          </div>
         </div>
       </div>
 
