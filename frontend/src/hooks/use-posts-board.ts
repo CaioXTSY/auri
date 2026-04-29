@@ -160,7 +160,7 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
         await postsService.update(selectedPost.id, {
           title: postTitle,
           content: postContent,
-          classId: postClassId || undefined,
+          classId: postClassId || null,
         });
         setSelectedPostId(selectedPost.id);
       } else {

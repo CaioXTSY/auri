@@ -21,7 +21,7 @@ export class PostsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  private async validateClassExists(classId?: string) {
+  private async validateClassExists(classId?: string | null) {
     if (!classId) {
       return;
     }
@@ -37,7 +37,7 @@ export class PostsService {
   private async validatePostTargetClassAccess(
     userId: string,
     userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
-    classId?: string,
+    classId?: string | null,
   ) {
     await this.validateClassExists(classId);
 

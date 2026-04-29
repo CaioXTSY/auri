@@ -60,7 +60,7 @@ export interface CreatePostDto {
 export interface UpdatePostDto {
   title?: string;
   content?: string;
-  classId?: string;
+  classId?: string | null;
 }
 
 export interface CreatePostReplyDto {
