@@ -144,16 +144,12 @@ export class PostsService {
       select: { userId: true },
     });
 
-    await Promise.all(
-      students.map((student) =>
-        this.notificationsService.createNotification({
-          userId: student.userId,
-          type: NotificationType.SISTEMA,
-          title: `Nova postagem em ${post.class.name}`,
-          message: `${post.author.name} publicou: ${post.title}`,
-        }),
-      ),
-    );
+    await this.notificationsService.createNotificationsForUsers({
+      userIds: students.map((student) => student.userId),
+      type: NotificationType.SISTEMA,
+      title: `Nova postagem em ${post.class.name}`,
+      message: `${post.author.name} publicou: ${post.title}`,
+    });
   }
 
   async findAll(userId: string, userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO', query: QueryPostsDto) {

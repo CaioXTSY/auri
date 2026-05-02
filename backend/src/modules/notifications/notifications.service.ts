@@ -107,6 +107,43 @@ export class NotificationsService {
     return notification;
   }
 
+  async createNotificationsForUsers(input: {
+    userIds: string[];
+    type: NotificationType;
+    title: string;
+    message: string;
+  }) {
+    const uniqueUserIds = Array.from(new Set(input.userIds));
+
+    if (uniqueUserIds.length === 0) {
+      return { count: 0 };
+    }
+
+    const now = new Date();
+
+    await this.prisma.notification.createMany({
+      data: uniqueUserIds.map((userId) => ({
+        userId,
+        type: input.type,
+        title: input.title,
+        message: input.message,
+        createdAt: now,
+      })),
+    });
+
+    for (const userId of uniqueUserIds) {
+      this.gateway.emitToUser(userId, {
+        type: input.type,
+        title: input.title,
+        message: input.message,
+        createdAt: now,
+        read: false,
+      });
+    }
+
+    return { count: uniqueUserIds.length };
+  }
+
   private async ensureCanCreateNotification(
     actor: { id: string; role: Role },
     recipientUserId: string,
