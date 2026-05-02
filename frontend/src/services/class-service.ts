@@ -24,12 +24,13 @@ export interface StudentInClass {
   classId: string;
   studentId: string;
   enrolledAt: string;
+  membershipType?: 'OWNER' | 'STUDENT';
   user: {
     id: string;
     name: string;
     email: string;
     avatar?: string;
-    role: string;
+    role: 'ADMIN' | 'PROFESSOR' | 'ALUNO';
   };
 }
 

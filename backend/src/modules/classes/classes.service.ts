@@ -218,6 +218,17 @@ export class ClassesService {
   async findStudentsByClass(classId: string, userId?: string, userRole?: Role) {
     const classEntity = await this.prisma.class.findUnique({
       where: { id: classId },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            role: true,
+          },
+        },
+      },
     });
 
     if (!classEntity) {
@@ -262,7 +273,23 @@ export class ClassesService {
       },
     });
 
-    return students;
+    if (!classEntity.createdBy) {
+      return students;
+    }
+
+    return [
+      {
+        classId,
+        studentId: classEntity.createdBy.id,
+        enrolledAt: classEntity.createdAt,
+        user: classEntity.createdBy,
+        membershipType: 'OWNER',
+      },
+      ...students.map((student) => ({
+        ...student,
+        membershipType: 'STUDENT',
+      })),
+    ];
   }
 
   async update(id: string, updateClassDto: UpdateClassDto, userId?: string, userRole?: Role): Promise<Class> {
