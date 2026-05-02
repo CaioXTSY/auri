@@ -3,12 +3,23 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Difficulty, Prisma } from '@prisma/client';
 import {
+  buildDailyQuizValidationPrompt,
   buildDailyQuizUserPrompt,
   DAILY_QUIZ_LANGUAGES,
   DAILY_QUIZ_SYSTEM_PROMPT,
   DAILY_QUIZ_TOPICS,
+  DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT,
 } from './prompts/daily-quiz.prompt';
 import { getDailyQuizDateWindow } from './daily-quiz-date';
+
+type GeneratedDailyQuiz = {
+  title: string;
+  question: string;
+  difficulty: Difficulty;
+  options: string[];
+  correctIndex: number;
+  explanations: string[];
+};
 
 @Injectable()
 export class QuizGeneratorService {
@@ -80,10 +91,13 @@ export class QuizGeneratorService {
     ]);
 
     const usedLanguages = recentQuizzes.map((q) => q.language).filter(Boolean);
-    const preferredLanguages = DAILY_QUIZ_LANGUAGES.filter((l) => !usedLanguages.slice(0, 3).includes(l));
-    const languageHint = preferredLanguages.length > 0
-      ? preferredLanguages.slice(0, 3).join(', ')
-      : DAILY_QUIZ_LANGUAGES.join(', ');
+    const preferredLanguages = DAILY_QUIZ_LANGUAGES.filter(
+      (l) => !usedLanguages.slice(0, 3).includes(l),
+    );
+    const languageHint =
+      preferredLanguages.length > 0
+        ? preferredLanguages.slice(0, 3).join(', ')
+        : DAILY_QUIZ_LANGUAGES.join(', ');
 
     const randomTopic = DAILY_QUIZ_TOPICS[Math.floor(Math.random() * DAILY_QUIZ_TOPICS.length)];
 
@@ -109,7 +123,7 @@ export class QuizGeneratorService {
           },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.4,
+        temperature: 0.2,
         response_format: { type: 'json_object' },
       }),
     });
@@ -137,17 +151,15 @@ export class QuizGeneratorService {
     const title = String(parsed?.title || '').trim();
     const question = String(parsed?.question || '').trim();
     const options = Array.isArray(parsed?.options)
-      ? parsed.options
-          .map((option) => String(option).trim())
-          .filter((option) => option.length > 0)
+      ? parsed.options.map((option) => String(option).trim()).filter((option) => option.length > 0)
       : [];
     const explanations = Array.isArray(parsed?.explanations)
-      ? parsed.explanations
-          .map((exp) => String(exp).trim())
-          .filter((exp) => exp.length > 0)
+      ? parsed.explanations.map((exp) => String(exp).trim()).filter((exp) => exp.length > 0)
       : [];
     const correctIndex = Number(parsed?.correctIndex);
-    const difficultyRaw = String(parsed?.difficulty || '').trim().toUpperCase();
+    const difficultyRaw = String(parsed?.difficulty || '')
+      .trim()
+      .toUpperCase();
     const difficulty =
       difficultyRaw === 'FACIL' || difficultyRaw === 'MEDIO' || difficultyRaw === 'DIFICIL'
         ? difficultyRaw
@@ -160,7 +172,9 @@ export class QuizGeneratorService {
     const points = pointsByDifficulty[difficulty];
 
     if (!title || !question || options.length !== 4 || explanations.length !== 4) {
-      this.logger.error(`Estrutura inválida no quiz gerado — campos ausentes ou array com tamanho errado: title="${title}", optionsLen=${options.length}, explanationsLen=${explanations.length}`);
+      this.logger.error(
+        `Estrutura inválida no quiz gerado — campos ausentes ou array com tamanho errado: title="${title}", optionsLen=${options.length}, explanationsLen=${explanations.length}`,
+      );
       return null;
     }
 
@@ -176,6 +190,23 @@ export class QuizGeneratorService {
 
     if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
       this.logger.error(`correctIndex inválido no quiz gerado: ${correctIndex}`);
+      return null;
+    }
+
+    const quizForValidation: GeneratedDailyQuiz = {
+      title,
+      question,
+      difficulty,
+      options,
+      correctIndex,
+      explanations,
+    };
+    const validation = await this.validateGeneratedQuiz(apiKey, model, quizForValidation);
+    if (!validation.isValid || validation.correctIndex !== correctIndex) {
+      this.logger.error(
+        `Quiz diário rejeitado pela validação: isValid=${validation.isValid}, ` +
+          `correctIndex=${validation.correctIndex}, expected=${correctIndex}, reason="${validation.reason}"`,
+      );
       return null;
     }
 
@@ -227,6 +258,60 @@ export class QuizGeneratorService {
     };
   }
 
+  private async validateGeneratedQuiz(
+    apiKey: string,
+    model: string,
+    quiz: GeneratedDailyQuiz,
+  ): Promise<{ isValid: boolean; correctIndex: number | null; reason: string }> {
+    const validationPrompt = buildDailyQuizValidationPrompt(quiz);
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'system',
+            content: DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT,
+          },
+          { role: 'user', content: validationPrompt },
+        ],
+        temperature: 0,
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      this.logger.error(`Falha na validação OpenAI (${response.status}): ${text}`);
+      return { isValid: false, correctIndex: null, reason: 'Falha na chamada de validação' };
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      this.logger.error(`Validação da IA sem conteúdo: ${JSON.stringify(data)}`);
+      return { isValid: false, correctIndex: null, reason: 'Resposta de validação vazia' };
+    }
+
+    try {
+      const parsed = this.parseJsonFromText(content);
+      const isValid = parsed?.isValid === true;
+      const validationCorrectIndex = Number(parsed?.correctIndex);
+      const correctIndex = Number.isInteger(validationCorrectIndex) ? validationCorrectIndex : null;
+      const reason = String(parsed?.reason || '').trim();
+
+      return { isValid, correctIndex, reason };
+    } catch {
+      this.logger.error(`Falha ao fazer parse do JSON de validação da IA: ${content}`);
+      return { isValid: false, correctIndex: null, reason: 'JSON de validação inválido' };
+    }
+  }
+
   private parseJsonFromText(text: string) {
     const trimmed = text.trim();
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
@@ -259,7 +344,9 @@ export class QuizGeneratorService {
     }
   }
 
-  private async getRecentQuizSummaries(days: number): Promise<{ title: string; topic: string; language: string | null }[]> {
+  private async getRecentQuizSummaries(
+    days: number,
+  ): Promise<{ title: string; topic: string; language: string | null }[]> {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
 
@@ -278,7 +365,9 @@ export class QuizGeneratorService {
     return quizzes.map((q) => {
       const languageMatch = q.question.match(/\b(Python|JavaScript|Java|C\+\+|C(?!#|\+))\b/i);
       const language = languageMatch ? languageMatch[1] : null;
-      const topicMatch = q.question.match(/(?:def |function |class |public |void |int |str |let |const )?(\w[\w\s]{3,40}?)(?:\(|:|\n|\.)/);
+      const topicMatch = q.question.match(
+        /(?:def |function |class |public |void |int |str |let |const )?(\w[\w\s]{3,40}?)(?:\(|:|\n|\.)/,
+      );
       const topic = topicMatch ? topicMatch[1].trim() : q.title;
       return { title: q.title, topic, language };
     });
@@ -301,9 +390,7 @@ export class QuizGeneratorService {
     });
 
     if (attempts.length < 20) {
-      return now.getDay() === 0 || now.getDay() === 3 || now.getDay() === 6
-        ? 'DIFICIL'
-        : 'MEDIO';
+      return now.getDay() === 0 || now.getDay() === 3 || now.getDay() === 6 ? 'DIFICIL' : 'MEDIO';
     }
 
     const correctAnswers = attempts.filter((attempt) => attempt.isCorrect).length;

@@ -19,6 +19,10 @@ export const DAILY_QUIZ_SYSTEM_PROMPT =
   'Seu objetivo é criar questões de prova rigorosas e tecnicamente impecáveis. ' +
   'Você nunca ignora erros de tipo ou exceções de runtime.';
 
+export const DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT =
+  'Você é um revisor técnico rigoroso de questões de programação. ' +
+  'Seu trabalho é verificar se uma questão tem exatamente uma resposta correta, sem ambiguidade técnica.';
+
 export function buildDailyQuizUserPrompt(params: DailyQuizPromptParams): string {
   const { difficulty, languageHint, suggestedTopic, recentQuizzes } = params;
 
@@ -26,7 +30,9 @@ export function buildDailyQuizUserPrompt(params: DailyQuizPromptParams): string 
     recentQuizzes.length > 0
       ? [
           'QUESTÕES RECENTES (NÃO REPITA estes temas, títulos ou estruturas de código):',
-          ...recentQuizzes.map((q, i) => `  ${i + 1}. [${q.language ?? '?'}] ${q.title} — ${q.topic}`),
+          ...recentQuizzes.map(
+            (q, i) => `  ${i + 1}. [${q.language ?? '?'}] ${q.title} — ${q.topic}`,
+          ),
           '',
         ].join('\n')
       : '';
@@ -42,14 +48,47 @@ export function buildDailyQuizUserPrompt(params: DailyQuizPromptParams): string 
     'REGRAS TÉCNICAS CRÍTICAS:',
     '1. PRECISÃO SEMÂNTICA: Se o código fornecido resultar em erro (TypeError, SyntaxError, ReferenceError, etc.), a resposta correta DEVE ser o erro correspondente.',
     '2. SEM ALUCINAÇÃO: Não invente saídas para códigos que falham. Analise rigorosamente os tipos e a sintaxe.',
-    '3. VARIEDADE OBRIGATÓRIA: A questão DEVE ser sobre um tópico diferente de todos os listados acima. Não use fatorial, soma de tipos mistos nem qualquer exemplo já citado.',
-    '4. FORMATO: Retorne apenas JSON válido no formato exato:',
+    '3. EVITE AMBIGUIDADE: Não use comportamento indefinido, dependente de implementação, dependente de versão ou de ambiente. Se uma linguagem tiver versões com diferenças relevantes, declare explicitamente a versão.',
+    '4. RESPOSTA ÚNICA: Exatamente uma alternativa deve estar correta. As outras três devem ser inequivocamente incorretas.',
+    '5. AUTOVERIFICAÇÃO: Antes de responder, resolva mentalmente o código, confira tipos, escopo, ordem de execução e exceções. Só então preencha correctIndex.',
+    '6. VARIEDADE OBRIGATÓRIA: A questão DEVE ser sobre um tópico diferente de todos os listados acima. Não use fatorial, soma de tipos mistos nem qualquer exemplo já citado.',
+    '7. FORMATO: Retorne apenas JSON válido no formato exato:',
     JSON_SCHEMA,
     'REGRAS DE FORMATAÇÃO:',
     '- Exatamente 4 alternativas, cada uma com o texto completo da resposta (nunca apenas "A", "B", "C" ou "D").',
     '- Explicações devem ser educativas e detalhadas (mínimo 15 palavras cada).',
     '- Não use markdown fora do JSON.',
     '- Se usar código na pergunta, use blocos formatados com \\n.',
+  ].join('\n');
+}
+
+export function buildDailyQuizValidationPrompt(quiz: {
+  title: string;
+  question: string;
+  difficulty: string;
+  options: string[];
+  correctIndex: number;
+  explanations: string[];
+}): string {
+  return [
+    'Valide tecnicamente o quiz abaixo.',
+    '',
+    'Critérios para aprovar:',
+    '- O enunciado precisa ser claro e sem ambiguidade.',
+    '- Deve haver exatamente uma alternativa correta.',
+    '- O correctIndex informado deve apontar para a alternativa realmente correta.',
+    '- As explicações precisam ser coerentes com a resposta correta.',
+    '- Reprove se houver comportamento indefinido, dependente de implementação, dependente de versão não declarada, ou se a saída/erro do código estiver incorreta.',
+    '',
+    'Retorne apenas JSON válido neste formato:',
+    '{',
+    '  "isValid": true,',
+    '  "correctIndex": 0,',
+    '  "reason": "Resumo curto da verificação técnica"',
+    '}',
+    '',
+    'Quiz:',
+    JSON.stringify(quiz, null, 2),
   ].join('\n');
 }
 
