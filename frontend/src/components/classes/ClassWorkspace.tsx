@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AlertTriangle,
   BarChart3,
   BookOpen,
   Calendar,
@@ -84,10 +83,7 @@ export const ClassWorkspace = ({ classroom, role, ranking = [] }: ClassWorkspace
 
   const board = usePostsBoard(user, classroom.id);
 
-  const unansweredPosts = board.posts.filter((post) => (post._count?.replies ?? 0) === 0).length;
   const studentCount = classroom._count?.students ?? students.length;
-  const activitiesCount = classroom._count?.activities ?? 0;
-  const riskStudentsCount = 0;
 
   const loadStudents = useCallback(async () => {
     setIsLoadingStudents(true);
@@ -196,15 +192,6 @@ export const ClassWorkspace = ({ classroom, role, ranking = [] }: ClassWorkspace
           </div>
         </div>
 
-        {isTeacherView ? (
-          <div className="grid gap-3 border-b border-slate-100 bg-slate-50/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <SummaryCard label="Alunos" value={studentCount} icon={Users} />
-            <SummaryCard label="Posts sem resposta" value={unansweredPosts} icon={MessageSquare} tone={unansweredPosts > 0 ? 'warning' : 'default'} />
-            <SummaryCard label="Atividades pendentes" value={activitiesCount} icon={BookOpen} />
-            <SummaryCard label="Alunos em risco" value={riskStudentsCount} icon={AlertTriangle} tone={riskStudentsCount > 0 ? 'danger' : 'default'} />
-          </div>
-        ) : null}
-
         <div className="overflow-x-auto border-b border-slate-100 px-4">
           <div className="flex min-w-max gap-1 py-2">
             {tabs.map((tab) => {
@@ -283,34 +270,6 @@ export const ClassWorkspace = ({ classroom, role, ranking = [] }: ClassWorkspace
         isConfirming={isRemovingStudent}
         body={studentToRemove ? `Remover ${studentToRemove.user.name} desta turma?` : null}
       />
-    </div>
-  );
-};
-
-const SummaryCard = ({
-  label,
-  value,
-  icon: Icon,
-  tone = 'default',
-}: {
-  label: string;
-  value: number;
-  icon: typeof Users;
-  tone?: 'default' | 'warning' | 'danger';
-}) => {
-  const toneClass = {
-    default: 'bg-white text-brand-900 ring-slate-200',
-    warning: 'bg-amber-50 text-amber-800 ring-amber-100',
-    danger: 'bg-rose-50 text-rose-800 ring-rose-100',
-  }[tone];
-
-  return (
-    <div className={cn('rounded-lg p-4 ring-1', toneClass)}>
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <Icon className="h-4 w-4" />
-        {label}
-      </div>
-      <p className="mt-2 text-2xl font-bold">{value}</p>
     </div>
   );
 };
