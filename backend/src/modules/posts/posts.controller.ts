@@ -39,7 +39,7 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
-  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Criar postagem para alunos' })
   @ApiBody({ type: CreatePostDto })
   @ApiResponse({ status: 201, description: 'Post criado com sucesso' })
@@ -88,6 +88,20 @@ export class PostsController {
     return this.postsService.remove(req.user.id, req.user.role, id);
   }
 
+  @Patch(':id/approve')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Aprovar postagem pendente' })
+  approvePost(@Request() req, @Param('id') id: string) {
+    return this.postsService.reviewPost(req.user.id, req.user.role, id, 'approve');
+  }
+
+  @Patch(':id/reject')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Rejeitar postagem pendente' })
+  rejectPost(@Request() req, @Param('id') id: string) {
+    return this.postsService.reviewPost(req.user.id, req.user.role, id, 'reject');
+  }
+
   @Post(':id/replies')
   @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Responder uma postagem' })
@@ -132,5 +146,27 @@ export class PostsController {
   @ApiResponse({ status: 200, description: 'Resposta removida' })
   removeReply(@Request() req, @Param('id') id: string, @Param('replyId') replyId: string) {
     return this.postsService.removeReply(req.user.id, req.user.role, id, replyId);
+  }
+
+  @Patch(':id/replies/:replyId/approve')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Aprovar resposta pendente' })
+  approveReply(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('replyId') replyId: string,
+  ) {
+    return this.postsService.reviewReply(req.user.id, req.user.role, id, replyId, 'approve');
+  }
+
+  @Patch(':id/replies/:replyId/reject')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Rejeitar resposta pendente' })
+  rejectReply(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('replyId') replyId: string,
+  ) {
+    return this.postsService.reviewReply(req.user.id, req.user.role, id, replyId, 'reject');
   }
 }

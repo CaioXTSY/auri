@@ -12,7 +12,7 @@ import {
   UpdatePostDto,
   UpdatePostReplyDto,
 } from './dto';
-import { NotificationType } from '@prisma/client';
+import { ModerationStatus, NotificationType, Role } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -43,17 +43,33 @@ export class PostsService {
 
     await this.validateClassExists(classId);
 
-    if (userRole !== 'PROFESSOR') {
+    if (userRole === 'ADMIN') {
       return;
     }
 
-    const ownClass = await this.prisma.class.findFirst({
-      where: { id: classId, createdById: userId },
-      select: { id: true },
-    });
+    if (userRole === 'PROFESSOR') {
+      const ownClass = await this.prisma.class.findFirst({
+        where: { id: classId, createdById: userId },
+        select: { id: true },
+      });
 
-    if (!ownClass) {
+      if (!ownClass) {
+        throw new ForbiddenException('Você não tem acesso aos posts desta turma');
+      }
+      return;
+    }
+
+    const [enrolled, settings] = await Promise.all([
+      this.isStudentEnrolled(userId, classId),
+      this.getClassSettings(classId),
+    ]);
+
+    if (!enrolled) {
       throw new ForbiddenException('Você não tem acesso aos posts desta turma');
+    }
+
+    if (!settings.allowStudentPosts) {
+      throw new ForbiddenException('Alunos não podem criar postagens nesta turma');
     }
   }
 
@@ -106,6 +122,11 @@ export class PostsService {
       userRole,
       createPostDto.classId,
     );
+    const settings = await this.getClassSettings(createPostDto.classId);
+    const status =
+      userRole === Role.ALUNO && settings.requirePostApproval
+        ? ModerationStatus.PENDING
+        : ModerationStatus.APPROVED;
 
     const post = await this.prisma.post.create({
       data: {
@@ -113,6 +134,7 @@ export class PostsService {
         content: createPostDto.content,
         classId: createPostDto.classId,
         authorId: userId,
+        status,
       },
       include: {
         class: {
@@ -127,7 +149,9 @@ export class PostsService {
       },
     });
 
-    await this.notifyClassStudentsAboutPost(post);
+    if (post.status === ModerationStatus.APPROVED) {
+      await this.notifyClassStudentsAboutPost(post);
+    }
 
     return post;
   }
@@ -157,9 +181,7 @@ export class PostsService {
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: {
-      classId?: string | { in: string[] };
-    } = {};
+    const where: any = {};
 
     if (query.classId) {
       if (userRole === 'ALUNO') {
@@ -191,6 +213,13 @@ export class PostsService {
       });
       const classIds = ownClasses.map((c) => c.id);
       where.classId = { in: classIds };
+    }
+
+    if (userRole === 'ALUNO') {
+      where.OR = [
+        { status: ModerationStatus.APPROVED },
+        { authorId: userId },
+      ];
     }
 
     const [data, total] = await Promise.all([
@@ -236,6 +265,14 @@ export class PostsService {
           select: { id: true, name: true, role: true, avatar: true },
         },
         replies: {
+          where: userRole === 'ALUNO'
+            ? {
+                OR: [
+                  { status: ModerationStatus.APPROVED },
+                  { authorId: userId },
+                ],
+              }
+            : undefined,
           orderBy: { createdAt: 'asc' },
           include: {
             author: {
@@ -251,6 +288,13 @@ export class PostsService {
     }
 
     await this.ensureCanReadPost(userId, userRole, post.classId);
+    if (
+      userRole === 'ALUNO' &&
+      post.status !== ModerationStatus.APPROVED &&
+      post.authorId !== userId
+    ) {
+      throw new ForbiddenException('Você não tem acesso a este post');
+    }
 
     return post;
   }
@@ -330,12 +374,24 @@ export class PostsService {
     }
 
     await this.ensureCanReadPost(userId, userRole, post.classId);
+    if (userRole === 'ALUNO') {
+      const settings = await this.getClassSettings(post.classId);
+      if (!settings.allowStudentReplies) {
+        throw new ForbiddenException('Alunos não podem responder postagens nesta turma');
+      }
+    }
+    const settings = await this.getClassSettings(post.classId);
+    const status =
+      userRole === Role.ALUNO && settings.requireReplyApproval
+        ? ModerationStatus.PENDING
+        : ModerationStatus.APPROVED;
 
     return this.prisma.postReply.create({
       data: {
         postId,
         authorId: userId,
         content: createReplyDto.content,
+        status,
       },
       include: {
         author: {
@@ -400,5 +456,115 @@ export class PostsService {
     });
 
     return { message: 'Resposta removida com sucesso' };
+  }
+
+  async reviewPost(
+    userId: string,
+    userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
+    postId: string,
+    action: 'approve' | 'reject',
+  ) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      include: {
+        class: { select: { id: true, name: true, createdById: true } },
+        author: { select: { name: true } },
+      },
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post não encontrado');
+    }
+
+    await this.ensureCanModerateClass(userId, userRole, post.classId);
+
+    const updated = await this.prisma.post.update({
+      where: { id: post.id },
+      data: {
+        status: action === 'approve' ? ModerationStatus.APPROVED : ModerationStatus.REJECTED,
+      },
+      include: {
+        class: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, role: true, avatar: true } },
+        _count: { select: { replies: true } },
+      },
+    });
+
+    if (updated.status === ModerationStatus.APPROVED) {
+      await this.notifyClassStudentsAboutPost({
+        id: updated.id,
+        title: updated.title,
+        classId: updated.classId,
+        class: updated.class,
+        author: updated.author,
+      });
+    }
+
+    return updated;
+  }
+
+  async reviewReply(
+    userId: string,
+    userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
+    postId: string,
+    replyId: string,
+    action: 'approve' | 'reject',
+  ) {
+    const reply = await this.prisma.postReply.findUnique({
+      where: { id: replyId },
+      include: {
+        post: { select: { id: true, classId: true } },
+        author: { select: { id: true, name: true, role: true, avatar: true } },
+      },
+    });
+
+    if (!reply || reply.postId !== postId) {
+      throw new NotFoundException('Resposta não encontrada');
+    }
+
+    await this.ensureCanModerateClass(userId, userRole, reply.post.classId);
+
+    return this.prisma.postReply.update({
+      where: { id: reply.id },
+      data: {
+        status: action === 'approve' ? ModerationStatus.APPROVED : ModerationStatus.REJECTED,
+      },
+      include: {
+        author: {
+          select: { id: true, name: true, role: true, avatar: true },
+        },
+      },
+    });
+  }
+
+  private async getClassSettings(classId: string) {
+    return this.prisma.classSettings.upsert({
+      where: { classId },
+      update: {},
+      create: { classId },
+    });
+  }
+
+  private async ensureCanModerateClass(
+    userId: string,
+    userRole: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
+    classId: string,
+  ) {
+    if (userRole === 'ADMIN') {
+      return;
+    }
+
+    if (userRole !== 'PROFESSOR') {
+      throw new ForbiddenException('Você não pode moderar esta turma');
+    }
+
+    const ownClass = await this.prisma.class.findFirst({
+      where: { id: classId, createdById: userId },
+      select: { id: true },
+    });
+
+    if (!ownClass) {
+      throw new ForbiddenException('Você não pode moderar esta turma');
+    }
   }
 }

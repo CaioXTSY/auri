@@ -8,6 +8,7 @@ export interface Class {
   code: string;
   status: 'ATIVA' | 'ENCERRADA';
   enrolledAt?: string;
+  settings?: ClassSettings | null;
   _count?: {
     students: number;
     activities: number;
@@ -34,6 +35,52 @@ export interface StudentInClass {
   };
 }
 
+export interface ClassSettings {
+  id: string;
+  classId: string;
+  allowStudentPosts: boolean;
+  allowStudentReplies: boolean;
+  requirePostApproval: boolean;
+  requireReplyApproval: boolean;
+  allowJoinByCode: boolean;
+  requireJoinApproval: boolean;
+  lockEnrollment: boolean;
+  activitiesEnabled: boolean;
+  allowLateSubmissions: boolean;
+  showRankingToStudents: boolean;
+}
+
+export type UpdateClassSettingsPayload = Partial<
+  Pick<
+    ClassSettings,
+    | 'allowStudentPosts'
+    | 'allowStudentReplies'
+    | 'requirePostApproval'
+    | 'requireReplyApproval'
+    | 'allowJoinByCode'
+    | 'requireJoinApproval'
+    | 'lockEnrollment'
+    | 'activitiesEnabled'
+    | 'allowLateSubmissions'
+    | 'showRankingToStudents'
+  >
+>;
+
+export interface ClassJoinRequest {
+  id: string;
+  classId: string;
+  userId: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string | null;
+    role: 'ADMIN' | 'PROFESSOR' | 'ALUNO';
+  };
+}
+
 export const classService = {
   getAllClasses: async (): Promise<Class[]> => {
     const response = await api.get<{ data: Class[] }>('/classes');
@@ -55,8 +102,8 @@ export const classService = {
     return response.data;
   },
 
-  joinClass: async (code: string): Promise<{ class: Class }> => {
-    const response = await api.post<{ class: Class }>('/classes/join', { code });
+  joinClass: async (code: string): Promise<{ class: Class; status?: 'PENDING_APPROVAL' }> => {
+    const response = await api.post<{ class: Class; status?: 'PENDING_APPROVAL' }>('/classes/join', { code });
     return response.data;
   },
 
@@ -67,5 +114,31 @@ export const classService = {
 
   removeStudent: async (classId: string, userId: string): Promise<void> => {
     await api.delete(`/classes/${classId}/students/${userId}`);
+  },
+
+  getSettings: async (classId: string): Promise<ClassSettings> => {
+    const response = await api.get<ClassSettings>(`/classes/${classId}/settings`);
+    return response.data;
+  },
+
+  updateSettings: async (
+    classId: string,
+    payload: UpdateClassSettingsPayload,
+  ): Promise<ClassSettings> => {
+    const response = await api.patch<ClassSettings>(`/classes/${classId}/settings`, payload);
+    return response.data;
+  },
+
+  getJoinRequests: async (classId: string): Promise<ClassJoinRequest[]> => {
+    const response = await api.get<ClassJoinRequest[]>(`/classes/${classId}/join-requests`);
+    return response.data;
+  },
+
+  approveJoinRequest: async (classId: string, requestId: string): Promise<void> => {
+    await api.post(`/classes/${classId}/join-requests/${requestId}/approve`);
+  },
+
+  rejectJoinRequest: async (classId: string, requestId: string): Promise<void> => {
+    await api.post(`/classes/${classId}/join-requests/${requestId}/reject`);
   },
 };

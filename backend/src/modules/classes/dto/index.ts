@@ -3,3 +3,4 @@ export * from './update-class.dto';
 export * from './enroll-student.dto';
 export * from './query-classes.dto';
 export * from './paginated-classes.dto';
+export * from './update-class-settings.dto';

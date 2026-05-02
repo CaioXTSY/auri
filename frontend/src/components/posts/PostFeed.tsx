@@ -1,4 +1,4 @@
-import { ArrowUp, ChevronDown, ChevronUp, Loader2, MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUp, Check, ChevronDown, ChevronUp, Loader2, MessageSquare, Pencil, Trash2, X } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import { MarkdownContent } from '@/components/ui/markdown-content';
@@ -19,6 +19,7 @@ interface PostFeedProps {
   isLoadingPosts: boolean;
   isLoadingPostDetails: boolean;
   isSendingReply: boolean;
+  canCreateReply?: boolean;
   replyContent: string;
   onReplyContentChange: (value: string) => void;
   onToggleComments: (postId: string) => void;
@@ -26,6 +27,10 @@ interface PostFeedProps {
   onRequestDeletePost: (postId: string) => void;
   onCreateReply: () => void;
   onRequestDeleteReply: (reply: PostReply) => void;
+  onApprovePost?: (postId: string) => void;
+  onRejectPost?: (postId: string) => void;
+  onApproveReply?: (reply: PostReply) => void;
+  onRejectReply?: (reply: PostReply) => void;
 }
 
 export const PostFeed = ({
@@ -38,6 +43,7 @@ export const PostFeed = ({
   isLoadingPosts,
   isLoadingPostDetails,
   isSendingReply,
+  canCreateReply = true,
   replyContent,
   onReplyContentChange,
   onToggleComments,
@@ -45,6 +51,10 @@ export const PostFeed = ({
   onRequestDeletePost,
   onCreateReply,
   onRequestDeleteReply,
+  onApprovePost,
+  onRejectPost,
+  onApproveReply,
+  onRejectReply,
 }: PostFeedProps) => {
   if (isLoadingPosts) {
     return (
@@ -87,10 +97,12 @@ export const PostFeed = ({
       {posts.map((post) => {
         const isExpanded = selectedPostId === post.id;
         const replyCount = post._count?.replies ?? 0;
+        const isPendingPost = post.status === 'PENDING';
+        const isRejectedPost = post.status === 'REJECTED';
 
         return (
           <SectionCard key={post.id} className="overflow-hidden">
-            <div className="h-1.5 bg-brand-900" />
+            <div className={cnStatusBar(post.status)} />
             <div className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
@@ -110,19 +122,32 @@ export const PostFeed = ({
                   </div>
                 </div>
 
-                {isProfessor && isExpanded && selectedPost && canEditSelectedPost ? (
-                  <div className="flex flex-shrink-0 gap-1">
-                    <button type="button" aria-label="Editar postagem" onClick={() => onStartEditPost(post)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button type="button" aria-label="Excluir postagem" onClick={() => onRequestDeletePost(post.id)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : null}
+                <div className="flex flex-shrink-0 items-center gap-1">
+                  <ModerationBadge status={post.status} />
+                  {isProfessor && isPendingPost ? (
+                    <>
+                      <button type="button" aria-label="Aprovar postagem" onClick={() => onApprovePost?.(post.id)} className="rounded-lg p-1.5 text-emerald-600 transition-colors hover:bg-emerald-50">
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button type="button" aria-label="Rejeitar postagem" onClick={() => onRejectPost?.(post.id)} className="rounded-lg p-1.5 text-rose-600 transition-colors hover:bg-rose-50">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </>
+                  ) : null}
+                  {isProfessor && isExpanded && selectedPost && canEditSelectedPost ? (
+                    <>
+                      <button type="button" aria-label="Editar postagem" onClick={() => onStartEditPost(post)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button type="button" aria-label="Excluir postagem" onClick={() => onRequestDeletePost(post.id)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  ) : null}
+                </div>
               </div>
 
-              <h3 className="mt-4 text-lg font-bold text-brand-900">{post.title}</h3>
+              <h3 className={`mt-4 text-lg font-bold ${isRejectedPost ? 'text-slate-500' : 'text-brand-900'}`}>{post.title}</h3>
               <div className="mt-3 text-sm leading-relaxed text-slate-700">
                 <MarkdownContent content={post.content} />
               </div>
@@ -173,6 +198,7 @@ export const PostFeed = ({
                       <div className="space-y-4">
                         {selectedPost.replies.map((reply) => {
                           const canDeleteReply = user?.role === 'ADMIN' || reply.authorId === user?.id;
+                          const isPendingReply = reply.status === 'PENDING';
                           return (
                             <div key={reply.id} className="group flex gap-3">
                               <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-600 ring-4 ring-white">
@@ -182,14 +208,29 @@ export const PostFeed = ({
                                 <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm shadow-slate-200/50">
                                   <div className="mb-2 flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                      <p className="truncate text-sm font-semibold text-slate-900">{reply.author.name}</p>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <p className="truncate text-sm font-semibold text-slate-900">{reply.author.name}</p>
+                                        <ModerationBadge status={reply.status} />
+                                      </div>
                                       <p className="text-[11px] text-slate-400">{formatRelativeDate(reply.createdAt)}</p>
                                     </div>
-                                    {canDeleteReply ? (
-                                      <button type="button" aria-label="Excluir comentário" onClick={() => onRequestDeleteReply(reply)} className="rounded-md p-1 text-slate-300 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100 focus:opacity-100">
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </button>
-                                    ) : null}
+                                    <div className="flex shrink-0 items-center gap-1">
+                                      {isProfessor && isPendingReply ? (
+                                        <>
+                                          <button type="button" aria-label="Aprovar resposta" onClick={() => onApproveReply?.(reply)} className="rounded-md p-1 text-emerald-600 transition-colors hover:bg-emerald-50">
+                                            <Check className="h-3.5 w-3.5" />
+                                          </button>
+                                          <button type="button" aria-label="Rejeitar resposta" onClick={() => onRejectReply?.(reply)} className="rounded-md p-1 text-rose-600 transition-colors hover:bg-rose-50">
+                                            <X className="h-3.5 w-3.5" />
+                                          </button>
+                                        </>
+                                      ) : null}
+                                      {canDeleteReply ? (
+                                        <button type="button" aria-label="Excluir comentário" onClick={() => onRequestDeleteReply(reply)} className="rounded-md p-1 text-slate-300 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100 focus:opacity-100">
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      ) : null}
+                                    </div>
                                   </div>
                                   <div className="text-sm leading-relaxed text-slate-700">
                                     <MarkdownContent content={reply.content} />
@@ -207,38 +248,44 @@ export const PostFeed = ({
                       </div>
                     )}
 
-                    <div className="mt-5 flex gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-200/60">
-                      <div className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
-                        {user?.avatar ? <img src={getAssetUrl(user.avatar) ?? ''} alt={user.name} className="h-full w-full object-cover" /> : getUserInitials(user?.name)}
-                      </div>
-                      <div className="flex min-w-0 flex-1 items-end gap-2">
-                        <div className="flex-1">
-                          <Label htmlFor={`reply-input-${post.id}`} className="sr-only">Adicionar comentário</Label>
-                          <textarea
-                            id={`reply-input-${post.id}`}
-                            rows={1}
-                            className="max-h-40 min-h-10 w-full resize-none border-0 bg-transparent px-0 py-2 text-sm leading-relaxed text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0"
-                            value={replyContent}
-                            onChange={(event) => onReplyContentChange(event.target.value)}
-                            onInput={(event) => {
-                              const element = event.currentTarget;
-                              element.style.height = 'auto';
-                              element.style.height = `${element.scrollHeight}px`;
-                            }}
-                            placeholder="Adicionar comentário..."
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter' && !event.shiftKey) {
-                                event.preventDefault();
-                                onCreateReply();
-                              }
-                            }}
-                          />
+                    {canCreateReply ? (
+                      <div className="mt-5 flex gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-200/60">
+                        <div className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+                          {user?.avatar ? <img src={getAssetUrl(user.avatar) ?? ''} alt={user.name} className="h-full w-full object-cover" /> : getUserInitials(user?.name)}
                         </div>
-                        <button type="button" aria-label="Enviar comentário" onClick={onCreateReply} disabled={!replyContent.trim() || isSendingReply} className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
-                          {isSendingReply ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
-                        </button>
+                        <div className="flex min-w-0 flex-1 items-end gap-2">
+                          <div className="flex-1">
+                            <Label htmlFor={`reply-input-${post.id}`} className="sr-only">Adicionar comentário</Label>
+                            <textarea
+                              id={`reply-input-${post.id}`}
+                              rows={1}
+                              className="max-h-40 min-h-10 w-full resize-none border-0 bg-transparent px-0 py-2 text-sm leading-relaxed text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0"
+                              value={replyContent}
+                              onChange={(event) => onReplyContentChange(event.target.value)}
+                              onInput={(event) => {
+                                const element = event.currentTarget;
+                                element.style.height = 'auto';
+                                element.style.height = `${element.scrollHeight}px`;
+                              }}
+                              placeholder="Adicionar comentário..."
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' && !event.shiftKey) {
+                                  event.preventDefault();
+                                  onCreateReply();
+                                }
+                              }}
+                            />
+                          </div>
+                          <button type="button" aria-label="Enviar comentário" onClick={onCreateReply} disabled={!replyContent.trim() || isSendingReply} className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
+                            {isSendingReply ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                        Respostas de alunos estão desativadas nesta turma.
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -248,4 +295,30 @@ export const PostFeed = ({
       })}
     </div>
   );
+};
+
+const cnStatusBar = (status?: PostItem['status']) => {
+  if (status === 'PENDING') return 'h-1.5 bg-amber-500';
+  if (status === 'REJECTED') return 'h-1.5 bg-slate-300';
+  return 'h-1.5 bg-brand-900';
+};
+
+const ModerationBadge = ({ status }: { status?: PostItem['status'] | PostReply['status'] }) => {
+  if (status === 'PENDING') {
+    return (
+      <span className="whitespace-nowrap rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-100">
+        Aguardando aprovação
+      </span>
+    );
+  }
+
+  if (status === 'REJECTED') {
+    return (
+      <span className="whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 ring-1 ring-slate-200">
+        Rejeitado
+      </span>
+    );
+  }
+
+  return null;
 };

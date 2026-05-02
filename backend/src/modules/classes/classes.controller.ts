@@ -22,6 +22,7 @@ import {
   CreateClassDto,
   UpdateClassDto,
   QueryClassesDto,
+  UpdateClassSettingsDto,
 } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -128,6 +129,65 @@ export class ClassesController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   findOne(@Param('id') id: string, @Request() req) {
     return this.classesService.findOne(id, req.user.id, req.user.role);
+  }
+
+  @Get(':id/settings')
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
+  @ApiOperation({ summary: 'Buscar configurações da turma' })
+  getSettings(@Param('id') id: string, @Request() req) {
+    return this.classesService.getSettings(id, req.user.id, req.user.role);
+  }
+
+  @Patch(':id/settings')
+  @Roles(Role.ADMIN, Role.PROFESSOR)
+  @ApiOperation({ summary: 'Atualizar configurações da turma' })
+  updateSettings(
+    @Param('id') id: string,
+    @Body() dto: UpdateClassSettingsDto,
+    @Request() req,
+  ) {
+    return this.classesService.updateSettings(id, dto, req.user.id, req.user.role);
+  }
+
+  @Get(':id/join-requests')
+  @Roles(Role.ADMIN, Role.PROFESSOR)
+  @ApiOperation({ summary: 'Listar solicitações pendentes de entrada' })
+  getJoinRequests(@Param('id') id: string, @Request() req) {
+    return this.classesService.listJoinRequests(id, req.user.id, req.user.role);
+  }
+
+  @Post(':id/join-requests/:requestId/approve')
+  @Roles(Role.ADMIN, Role.PROFESSOR)
+  @ApiOperation({ summary: 'Aprovar solicitação de entrada' })
+  approveJoinRequest(
+    @Param('id') id: string,
+    @Param('requestId') requestId: string,
+    @Request() req,
+  ) {
+    return this.classesService.reviewJoinRequest(
+      id,
+      requestId,
+      'approve',
+      req.user.id,
+      req.user.role,
+    );
+  }
+
+  @Post(':id/join-requests/:requestId/reject')
+  @Roles(Role.ADMIN, Role.PROFESSOR)
+  @ApiOperation({ summary: 'Rejeitar solicitação de entrada' })
+  rejectJoinRequest(
+    @Param('id') id: string,
+    @Param('requestId') requestId: string,
+    @Request() req,
+  ) {
+    return this.classesService.reviewJoinRequest(
+      id,
+      requestId,
+      'reject',
+      req.user.id,
+      req.user.role,
+    );
   }
 
   @Get(':id/students')

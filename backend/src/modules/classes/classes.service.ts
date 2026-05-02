@@ -13,8 +13,9 @@ import {
   EnrollStudentDto,
   QueryClassesDto,
   PaginatedClassesDto,
+  UpdateClassSettingsDto,
 } from './dto';
-import { Class, Role } from '@prisma/client';
+import { Class, JoinRequestStatus, Role } from '@prisma/client';
 
 @Injectable()
 export class ClassesService {
@@ -23,10 +24,11 @@ export class ClassesService {
     private gamificationService: GamificationService,
   ) {}
 
-  async findByCode(code: string): Promise<Class> {
+  async findByCode(code: string): Promise<any> {
     const classEntity = await this.prisma.class.findUnique({
       where: { code },
       include: {
+        settings: true,
         _count: {
           select: {
             students: true,
@@ -44,9 +46,18 @@ export class ClassesService {
 
   async joinClass(code: string, userId: string): Promise<any> {
     const classEntity = await this.findByCode(code);
+    const settings = classEntity.settings ?? await this.getOrCreateSettings(classEntity.id);
 
     if (classEntity.status !== 'ATIVA') {
       throw new BadRequestException('Não é possível entrar em uma turma encerrada');
+    }
+
+    if (settings.lockEnrollment) {
+      throw new BadRequestException('Novas matrículas estão bloqueadas nesta turma');
+    }
+
+    if (!settings.allowJoinByCode) {
+      throw new BadRequestException('Entrada por código está desativada nesta turma');
     }
 
     const existingEnrollment = await this.prisma.classStudent.findUnique({
@@ -60,6 +71,43 @@ export class ClassesService {
 
     if (existingEnrollment) {
       throw new ConflictException('Você já está matriculado nesta turma');
+    }
+
+    if (settings.requireJoinApproval) {
+      const request = await this.prisma.classJoinRequest.upsert({
+        where: {
+          classId_userId: {
+            classId: classEntity.id,
+            userId,
+          },
+        },
+        update: {
+          status: JoinRequestStatus.PENDING,
+          reviewedAt: null,
+          reviewedById: null,
+        },
+        create: {
+          classId: classEntity.id,
+          userId,
+        },
+        include: {
+          class: {
+            include: {
+              _count: {
+                select: {
+                  students: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return {
+        status: 'PENDING_APPROVAL',
+        request,
+        class: request.class,
+      };
     }
 
     const enrollment = await this.prisma.classStudent.create({
@@ -90,8 +138,12 @@ export class ClassesService {
       data: {
         ...createClassDto,
         createdById,
+        settings: {
+          create: {},
+        },
       },
       include: {
+        settings: true,
         _count: {
           select: {
             students: true,
@@ -160,6 +212,7 @@ export class ClassesService {
           [sortBy]: sortOrder,
         },
         include: {
+          settings: true,
           _count: {
             select: {
               students: true,
@@ -177,6 +230,7 @@ export class ClassesService {
     const classEntity = await this.prisma.class.findUnique({
       where: { id },
       include: {
+        settings: true,
         students: {
           select: {
             enrolledAt: true,
@@ -213,6 +267,116 @@ export class ClassesService {
     }
 
     return classEntity;
+  }
+
+  async getSettings(classId: string, userId?: string, userRole?: Role) {
+    await this.ensureCanAccessClass(classId, userId, userRole);
+    return this.getOrCreateSettings(classId);
+  }
+
+  async updateSettings(
+    classId: string,
+    dto: UpdateClassSettingsDto,
+    userId?: string,
+    userRole?: Role,
+  ) {
+    await this.ensureCanManageClass(classId, userId, userRole);
+    await this.getOrCreateSettings(classId);
+
+    return this.prisma.classSettings.update({
+      where: { classId },
+      data: dto,
+    });
+  }
+
+  async listJoinRequests(classId: string, userId?: string, userRole?: Role) {
+    await this.ensureCanManageClass(classId, userId, userRole);
+
+    return this.prisma.classJoinRequest.findMany({
+      where: { classId, status: JoinRequestStatus.PENDING },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            role: true,
+          },
+        },
+      },
+    });
+  }
+
+  async reviewJoinRequest(
+    classId: string,
+    requestId: string,
+    action: 'approve' | 'reject',
+    reviewerId?: string,
+    reviewerRole?: Role,
+  ) {
+    await this.ensureCanManageClass(classId, reviewerId, reviewerRole);
+
+    const request = await this.prisma.classJoinRequest.findFirst({
+      where: { id: requestId, classId },
+      include: {
+        user: {
+          select: { id: true, role: true },
+        },
+      },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Solicitação não encontrada');
+    }
+
+    if (request.status !== JoinRequestStatus.PENDING) {
+      throw new BadRequestException('Solicitação já revisada');
+    }
+
+    if (action === 'reject') {
+      return this.prisma.classJoinRequest.update({
+        where: { id: request.id },
+        data: {
+          status: JoinRequestStatus.REJECTED,
+          reviewedAt: new Date(),
+          reviewedById: reviewerId,
+        },
+      });
+    }
+
+    if (request.user.role !== Role.ALUNO) {
+      throw new BadRequestException('Apenas alunos podem entrar em turmas');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.classStudent.upsert({
+        where: {
+          classId_userId: {
+            classId,
+            userId: request.userId,
+          },
+        },
+        update: {},
+        create: {
+          classId,
+          userId: request.userId,
+        },
+      }),
+      this.prisma.classJoinRequest.update({
+        where: { id: request.id },
+        data: {
+          status: JoinRequestStatus.APPROVED,
+          reviewedAt: new Date(),
+          reviewedById: reviewerId,
+        },
+      }),
+    ]);
+
+    await this.gamificationService.checkClassJoinAchievements(request.userId);
+
+    return { message: 'Solicitação aprovada' };
   }
 
   async findStudentsByClass(classId: string, userId?: string, userRole?: Role) {
@@ -476,5 +640,64 @@ export class ClassesService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  private async getOrCreateSettings(classId: string) {
+    return this.prisma.classSettings.upsert({
+      where: { classId },
+      update: {},
+      create: { classId },
+    });
+  }
+
+  private async ensureCanAccessClass(classId: string, userId?: string, userRole?: Role) {
+    const classEntity = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        id: true,
+        createdById: true,
+        students: userRole === Role.ALUNO && userId
+          ? {
+              where: { userId },
+              select: { userId: true },
+            }
+          : false,
+      },
+    });
+
+    if (!classEntity) {
+      throw new NotFoundException('Turma não encontrada');
+    }
+
+    if (userRole === Role.ADMIN) {
+      return classEntity;
+    }
+
+    if (userRole === Role.PROFESSOR && classEntity.createdById === userId) {
+      return classEntity;
+    }
+
+    if (userRole === Role.ALUNO && classEntity.students.length > 0) {
+      return classEntity;
+    }
+
+    throw new ForbiddenException('Você não tem acesso a esta turma');
+  }
+
+  private async ensureCanManageClass(classId: string, userId?: string, userRole?: Role) {
+    const classEntity = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: { id: true, createdById: true },
+    });
+
+    if (!classEntity) {
+      throw new NotFoundException('Turma não encontrada');
+    }
+
+    if (userRole === Role.ADMIN || (userRole === Role.PROFESSOR && classEntity.createdById === userId)) {
+      return classEntity;
+    }
+
+    throw new ForbiddenException('Você não pode gerenciar esta turma');
   }
 }

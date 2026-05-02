@@ -233,6 +233,56 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
     }
   };
 
+  const handleApprovePost = async (postId: string) => {
+    setError(null);
+    try {
+      await postsService.approvePost(postId);
+      await loadPosts({ silent: true });
+      if (selectedPostIdRef.current === postId) {
+        await loadPostDetails(postId);
+      }
+    } catch {
+      setError('Não foi possível aprovar a postagem.');
+    }
+  };
+
+  const handleRejectPost = async (postId: string) => {
+    setError(null);
+    try {
+      await postsService.rejectPost(postId);
+      await loadPosts({ silent: true });
+      if (selectedPostIdRef.current === postId) {
+        await loadPostDetails(postId);
+      }
+    } catch {
+      setError('Não foi possível rejeitar a postagem.');
+    }
+  };
+
+  const handleApproveReply = async (reply: PostReply) => {
+    if (!selectedPost) return;
+    setError(null);
+    try {
+      await postsService.approveReply(selectedPost.id, reply.id);
+      await loadPostDetails(selectedPost.id);
+      await loadPosts({ silent: true });
+    } catch {
+      setError('Não foi possível aprovar a resposta.');
+    }
+  };
+
+  const handleRejectReply = async (reply: PostReply) => {
+    if (!selectedPost) return;
+    setError(null);
+    try {
+      await postsService.rejectReply(selectedPost.id, reply.id);
+      await loadPostDetails(selectedPost.id);
+      await loadPosts({ silent: true });
+    } catch {
+      setError('Não foi possível rejeitar a resposta.');
+    }
+  };
+
   const insertTemplate = (template: string) => {
     setPostContent((current) => `${current}${current.endsWith('\n') ? '' : '\n'}${template}`);
   };
@@ -270,6 +320,10 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
     handleDeletePost,
     handleCreateReply,
     handleDeleteReply,
+    handleApprovePost,
+    handleRejectPost,
+    handleApproveReply,
+    handleRejectReply,
     insertTemplate,
     toggleComments,
   };

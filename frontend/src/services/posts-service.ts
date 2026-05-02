@@ -17,6 +17,7 @@ export interface PostReply {
   postId: string;
   authorId: string;
   content: string;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
   author: PostAuthor;
@@ -28,6 +29,7 @@ export interface PostItem {
   authorId: string;
   title: string;
   content: string;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
   class: PostClassInfo;
@@ -108,6 +110,26 @@ export const postsService = {
 
   removeReply: async (postId: string, replyId: string) => {
     const response = await api.delete<{ message: string }>(`/posts/${postId}/replies/${replyId}`);
+    return response.data;
+  },
+
+  approvePost: async (id: string) => {
+    const response = await api.patch<PostItem>(`/posts/${id}/approve`);
+    return response.data;
+  },
+
+  rejectPost: async (id: string) => {
+    const response = await api.patch<PostItem>(`/posts/${id}/reject`);
+    return response.data;
+  },
+
+  approveReply: async (postId: string, replyId: string) => {
+    const response = await api.patch<PostReply>(`/posts/${postId}/replies/${replyId}/approve`);
+    return response.data;
+  },
+
+  rejectReply: async (postId: string, replyId: string) => {
+    const response = await api.patch<PostReply>(`/posts/${postId}/replies/${replyId}/reject`);
     return response.data;
   },
 };

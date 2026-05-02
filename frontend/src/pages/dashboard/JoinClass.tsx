@@ -37,7 +37,11 @@ export const JoinClass = () => {
 
     try {
       const result = await classService.joinClass(data.code);
-      notify({ title: `Voce entrou na turma "${result.class.name}"`, variant: 'success' });
+      if (result.status === 'PENDING_APPROVAL') {
+        notify({ title: `Solicitação enviada para "${result.class.name}"`, variant: 'success' });
+      } else {
+        notify({ title: `Você entrou na turma "${result.class.name}"`, variant: 'success' });
+      }
       navigate('/dashboard/classes');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
