@@ -42,10 +42,14 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
 
   const isProfessor = user?.role === 'PROFESSOR' || user?.role === 'ADMIN';
   const isEditingPostRef = useRef(isEditingPost);
+  const selectedPostIdRef = useRef(selectedPostId);
   isEditingPostRef.current = isEditingPost;
+  selectedPostIdRef.current = selectedPostId;
 
-  const loadPosts = useCallback(async () => {
-    setIsLoadingPosts(true);
+  const loadPosts = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setIsLoadingPosts(true);
+    }
     setError(null);
     try {
       const response = await postsService.list({
@@ -54,19 +58,22 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
         classId: classId || undefined,
       });
       setPosts(response.data);
+      const currentSelectedPostId = selectedPostIdRef.current;
       if (response.data.length === 0) {
         setSelectedPost(null);
         setSelectedPostId(null);
-      } else if (selectedPostId && !response.data.some((post) => post.id === selectedPostId)) {
+      } else if (currentSelectedPostId && !response.data.some((post) => post.id === currentSelectedPostId)) {
         setSelectedPost(null);
         setSelectedPostId(null);
       }
     } catch {
       setError('Não foi possível carregar as postagens.');
     } finally {
-      setIsLoadingPosts(false);
+      if (!options?.silent) {
+        setIsLoadingPosts(false);
+      }
     }
-  }, [classId, selectedPostId]);
+  }, [classId]);
 
   const loadPostDetails = useCallback(async (postId: string) => {
     setIsLoadingPostDetails(true);
@@ -204,7 +211,7 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
       await postsService.createReply(selectedPost.id, { content: replyContent });
       setReplyContent('');
       await loadPostDetails(selectedPost.id);
-      await loadPosts();
+      await loadPosts({ silent: true });
     } catch {
       setError('Não foi possível enviar o comentário.');
     } finally {
@@ -220,7 +227,7 @@ export const usePostsBoard = (user: User | null, classId?: string) => {
     try {
       await postsService.removeReply(selectedPost.id, reply.id);
       await loadPostDetails(selectedPost.id);
-      await loadPosts();
+      await loadPosts({ silent: true });
     } catch {
       setError('Não foi possível remover o comentário.');
     }
