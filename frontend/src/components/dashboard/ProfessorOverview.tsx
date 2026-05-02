@@ -113,7 +113,7 @@ export const ProfessorOverview = ({ firstName }: ProfessorOverviewProps) => {
               >
                 <div className="mb-3 flex items-start justify-between">
                   <span className="inline-flex items-center rounded-full border border-brand-100 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
-                    {cls.semester} • {cls.year}
+                    {cls.year}
                   </span>
                   <span className={`mt-1 h-2 w-2 rounded-full ${cls.status === 'ATIVA' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                 </div>

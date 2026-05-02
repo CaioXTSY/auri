@@ -416,7 +416,7 @@ export const StudentDashboardOverview = ({
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-slate-900">{classroom.name}</p>
                         <p className="mt-1 text-xs text-slate-500">
-                          {classroom.semester} {classroom.year}
+                          {classroom.year}
                         </p>
                       </div>
                       <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${

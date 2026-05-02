@@ -77,7 +77,7 @@ export const AdminClasses = () => {
               <TableHead>
                 <tr>
                   <TableHeaderCell>Nome</TableHeaderCell>
-                  <TableHeaderCell>Semestre</TableHeaderCell>
+                  <TableHeaderCell>Ano</TableHeaderCell>
                   <TableHeaderCell>Código</TableHeaderCell>
                   <TableHeaderCell>Alunos</TableHeaderCell>
                   <TableHeaderCell>Status</TableHeaderCell>
@@ -89,7 +89,7 @@ export const AdminClasses = () => {
                   <TableRow key={classItem.id}>
                     <TableCell className="font-medium text-slate-800">{classItem.name}</TableCell>
                     <TableCell className="text-slate-600">
-                      {classItem.semester} / {classItem.year}
+                      {classItem.year}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-slate-600">
                       {classItem.code}

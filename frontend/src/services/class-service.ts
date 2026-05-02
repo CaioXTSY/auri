@@ -3,7 +3,6 @@ import api from '@/lib/api';
 export interface Class {
   id: string;
   name: string;
-  semester: string;
   year: number;
   code: string;
   status: 'ATIVA' | 'ENCERRADA';
@@ -17,7 +16,6 @@ export interface Class {
 
 export interface CreateClassDto {
   name: string;
-  semester: string;
   year: number;
   settings?: UpdateClassSettingsPayload;
 }

@@ -135,7 +135,6 @@ export class AdminService {
         select: {
           id: true,
           name: true,
-          semester: true,
           year: true,
           _count: { select: { students: true } },
         },
@@ -157,7 +156,7 @@ export class AdminService {
       topClasses: classes.map((c) => ({
         id: c.id,
         name: c.name,
-        label: `${c.semester} / ${c.year}`,
+        label: String(c.year),
         students: c._count.students,
       })),
       topAchievements: achievements.map((a) => ({

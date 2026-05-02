@@ -164,7 +164,6 @@ export class ClassesService {
       page = 1,
       limit = 10,
       name,
-      semester,
       year,
       status,
       sortBy = 'createdAt',
@@ -181,10 +180,6 @@ export class ClassesService {
       where.name = {
         contains: name,
       };
-    }
-
-    if (semester) {
-      where.semester = semester;
     }
 
     if (year) {
@@ -572,7 +567,6 @@ export class ClassesService {
           select: {
             id: true,
             name: true,
-            semester: true,
             year: true,
           },
         },

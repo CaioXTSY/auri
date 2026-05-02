@@ -271,7 +271,7 @@ export const ClassWorkspace = ({ classroom, role, ranking = [] }: ClassWorkspace
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
-              {classroom.semester} · {classroom.year}
+              {classroom.year}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <GraduationCap className="h-4 w-4" />

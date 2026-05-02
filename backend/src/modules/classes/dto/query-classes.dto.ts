@@ -34,14 +34,6 @@ export class QueryClassesDto {
   name?: string;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por semestre',
-    example: '2024/1',
-  })
-  @IsString()
-  @IsOptional()
-  semester?: string;
-
-  @ApiPropertyOptional({
     description: 'Filtrar por ano',
     example: 2024,
   })
@@ -62,11 +54,11 @@ export class QueryClassesDto {
   @ApiPropertyOptional({
     description: 'Campo para ordenação',
     example: 'name',
-    enum: ['name', 'semester', 'year', 'createdAt'],
+    enum: ['name', 'year', 'createdAt'],
   })
   @IsString()
   @IsOptional()
-  sortBy?: 'name' | 'semester' | 'year' | 'createdAt' = 'createdAt';
+  sortBy?: 'name' | 'year' | 'createdAt' = 'createdAt';
 
   @ApiPropertyOptional({
     description: 'Ordem de ordenação',

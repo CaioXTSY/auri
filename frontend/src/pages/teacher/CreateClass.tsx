@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 
 const createClassSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
-  semester: z.string().min(1, 'Informe o semestre (ex: 2024.1)'),
   year: z.coerce.number().min(2024, 'Ano invalido'),
   allowStudentPosts: z.boolean(),
   allowStudentReplies: z.boolean(),
@@ -41,7 +40,6 @@ export const CreateClass = () => {
     resolver: zodResolver(createClassSchema) as never,
     defaultValues: {
       year: new Date().getFullYear(),
-      semester: `${new Date().getFullYear()}.${new Date().getMonth() < 6 ? '1' : '2'}`,
       allowStudentPosts: true,
       allowStudentReplies: true,
       requirePostApproval: false,
@@ -60,10 +58,9 @@ export const CreateClass = () => {
     setError(null);
 
     try {
-      const { name, semester, year, ...settings } = data;
+      const { name, year, ...settings } = data;
       await classService.createClass({
         name,
-        semester,
         year,
         settings,
       });
@@ -118,22 +115,12 @@ export const CreateClass = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4" data-tour="create-class-period">
-                <div className="space-y-2">
-                  <Label htmlFor="semester">Semestre</Label>
-                  <Input id="semester" placeholder="Ex: 2024.1" {...register('semester')} />
-                  {errors.semester && (
-                    <p className="text-xs text-red-500">{errors.semester.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="year">Ano</Label>
-                  <Input id="year" type="number" {...register('year')} />
-                  {errors.year && (
-                    <p className="text-xs text-red-500">{errors.year.message}</p>
-                  )}
-                </div>
+              <div className="space-y-2" data-tour="create-class-period">
+                <Label htmlFor="year">Ano</Label>
+                <Input id="year" type="number" {...register('year')} />
+                {errors.year && (
+                  <p className="text-xs text-red-500">{errors.year.message}</p>
+                )}
               </div>
 
               <div className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4">

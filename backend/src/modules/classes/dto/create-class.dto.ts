@@ -14,14 +14,6 @@ export class CreateClassDto {
   name: string;
 
   @ApiProperty({
-    description: 'Semestre',
-    example: '2024/1',
-  })
-  @IsString()
-  @IsNotEmpty()
-  semester: string;
-
-  @ApiProperty({
     description: 'Ano',
     example: 2024,
   })

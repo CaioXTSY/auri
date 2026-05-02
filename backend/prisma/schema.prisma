@@ -86,7 +86,6 @@ model User {
 model Class {
   id          String   @id @default(uuid())
   name        String
-  semester    String
   year        Int
   code        String   @unique @default(cuid())
   status      String   @default("ATIVA")

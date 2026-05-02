@@ -96,7 +96,7 @@ export const MyClasses = () => {
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 transition-all group-hover:shadow-md group-hover:border-accent-200">
                 <div className="flex justify-between items-start mb-4">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-100">
-                    {classroom.semester} • {classroom.year}
+                    {classroom.year}
                   </span>
                   {classroom.status === 'ATIVA' ? (
                     <span className="w-2 h-2 rounded-full bg-emerald-500" title="Ativa" />
@@ -110,7 +110,7 @@ export const MyClasses = () => {
                 </h3>
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>{classroom.semester} • {classroom.year}</span>
+                  <span>{classroom.year}</span>
                   <span className="group-hover:translate-x-1 transition-transform text-brand-600 font-medium">
                     Acessar &rarr;
                   </span>
