@@ -10,41 +10,58 @@ type Block =
   | { type: 'text'; value: string }
   | { type: 'code'; value: string; language?: string };
 
+const normalizeFencedCode = (content: string) =>
+  content
+    .replace(/[ \t]+```/g, '\n```')
+    .replace(/```([a-zA-Z0-9_-]+)[ \t]+/g, '```$1\n')
+    .replace(/```[ \t]+/g, '```\n');
+
+const formatCodeBlock = (code: string) => {
+  if (code.includes('\n')) return code.replace(/\n$/, '');
+
+  return code
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([{};])\s*/g, '$1\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+};
+
 const parseBlocks = (content: string): Block[] => {
   const blocks: Block[] = [];
+  const normalizedContent = normalizeFencedCode(content);
   const regex = /```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(content)) !== null) {
+  while ((match = regex.exec(normalizedContent)) !== null) {
     const [fullMatch, language, code] = match;
     const start = match.index;
 
     if (start > lastIndex) {
       blocks.push({
         type: 'text',
-        value: content.slice(lastIndex, start),
+        value: normalizedContent.slice(lastIndex, start),
       });
     }
 
     blocks.push({
       type: 'code',
       language: language?.trim() || undefined,
-      value: code.replace(/\n$/, ''),
+      value: formatCodeBlock(code),
     });
 
     lastIndex = start + fullMatch.length;
   }
 
-  if (lastIndex < content.length) {
+  if (lastIndex < normalizedContent.length) {
     blocks.push({
       type: 'text',
-      value: content.slice(lastIndex),
+      value: normalizedContent.slice(lastIndex),
     });
   }
 
   if (blocks.length === 0) {
-    blocks.push({ type: 'text', value: content });
+    blocks.push({ type: 'text', value: normalizedContent });
   }
 
   return blocks;

@@ -5,6 +5,7 @@ import { MISSIONS_PAGE_SIZE } from '@/constants/app';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,75 @@ const getStatusStyle = (status: MissionStatus) => {
   if (status === 'EM_PROGRESSO') return 'border-blue-200 bg-blue-50 text-blue-700';
   if (status === 'EXPIRADA') return 'border-slate-200 bg-slate-100 text-slate-500';
   return 'border-amber-200 bg-amber-50 text-amber-700';
+};
+
+const getPageNumbers = (current: number, total: number) => {
+  const start = Math.max(1, current - 2);
+  const end = Math.min(total, start + 4);
+  const adjustedStart = Math.max(1, end - 4);
+
+  return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
+};
+
+interface PaginationControlsProps {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+}
+
+const PaginationControls = ({
+  page,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+}: PaginationControlsProps) => {
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, totalItems);
+
+  return (
+    <div className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 sm:flex-row sm:items-center">
+      <span>
+        Mostrando {start} a {end} de {totalItems}
+      </span>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={page <= 1}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        {getPageNumbers(page, totalPages).map((pageNumber) => (
+          <button
+            key={pageNumber}
+            type="button"
+            onClick={() => onPageChange(pageNumber)}
+            className={cn(
+              'h-8 min-w-8 rounded-lg border px-2 font-semibold transition-colors',
+              pageNumber === page
+                ? 'border-brand-900 bg-brand-900 text-white'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50',
+            )}
+            aria-current={pageNumber === page ? 'page' : undefined}
+          >
+            {pageNumber}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={page >= totalPages}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export const MissionsPage = () => {
@@ -381,9 +451,14 @@ export const MissionsPage = () => {
                   data-tour={index === 0 ? 'mission-card' : undefined}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
+                    <div className="min-w-0 flex-1 space-y-2">
                       <h3 className="text-lg font-bold text-slate-900">{mission.title}</h3>
-                      <p className="text-sm text-slate-500">{mission.description}</p>
+                      <div className="max-h-72 overflow-auto pr-1 text-sm leading-relaxed text-slate-600">
+                        <MarkdownContent
+                          content={mission.description}
+                          className="space-y-2 [&_pre]:text-[11px]"
+                        />
+                      </div>
                     </div>
                     <span
                       className={cn(
@@ -442,31 +517,13 @@ export const MissionsPage = () => {
         )}
 
         {!isLoading && tab === 'available' && filteredAvailable.length > 0 && (
-          <div className="flex flex-col justify-between gap-3 text-sm text-slate-500 sm:flex-row sm:items-center">
-            <span>
-              Mostrando {(availablePageSafe - 1) * pageSize + 1} a{' '}
-              {Math.min(availablePageSafe * pageSize, filteredAvailable.length)} de{' '}
-              {filteredAvailable.length}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setAvailablePage((page) => Math.max(1, page - 1))}
-                disabled={availablePageSafe <= 1}
-                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Anterior
-              </button>
-              <button
-                type="button"
-                onClick={() => setAvailablePage((page) => Math.min(availableTotalPages, page + 1))}
-                disabled={availablePageSafe >= availableTotalPages}
-                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Próxima
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            page={availablePageSafe}
+            totalPages={availableTotalPages}
+            totalItems={filteredAvailable.length}
+            pageSize={pageSize}
+            onPageChange={setAvailablePage}
+          />
         )}
 
         {!isLoading && tab === 'history' && (
@@ -477,9 +534,14 @@ export const MissionsPage = () => {
                 className="space-y-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <div className="min-w-0 flex-1 space-y-2">
                     <h3 className="text-lg font-bold text-slate-900">{entry.mission.title}</h3>
-                    <p className="text-sm text-slate-500">{entry.mission.description}</p>
+                    <div className="max-h-72 overflow-auto pr-1 text-sm leading-relaxed text-slate-600">
+                      <MarkdownContent
+                        content={entry.mission.description}
+                        className="space-y-2 [&_pre]:text-[11px]"
+                      />
+                    </div>
                   </div>
                   <span
                     className={cn(
@@ -506,31 +568,13 @@ export const MissionsPage = () => {
         )}
 
         {!isLoading && tab === 'history' && filteredHistory.length > 0 && (
-          <div className="flex flex-col justify-between gap-3 text-sm text-slate-500 sm:flex-row sm:items-center">
-            <span>
-              Mostrando {(historyPageSafe - 1) * pageSize + 1} a{' '}
-              {Math.min(historyPageSafe * pageSize, filteredHistory.length)} de{' '}
-              {filteredHistory.length}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}
-                disabled={historyPageSafe <= 1}
-                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Anterior
-              </button>
-              <button
-                type="button"
-                onClick={() => setHistoryPage((page) => Math.min(historyTotalPages, page + 1))}
-                disabled={historyPageSafe >= historyTotalPages}
-                className="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Próxima
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            page={historyPageSafe}
+            totalPages={historyTotalPages}
+            totalItems={filteredHistory.length}
+            pageSize={pageSize}
+            onPageChange={setHistoryPage}
+          />
         )}
       </div>
     </DashboardLayout>
