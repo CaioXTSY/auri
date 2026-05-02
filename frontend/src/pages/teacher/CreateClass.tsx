@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { classService } from '@/services/class-service';
+import { classService, type UpdateClassSettingsPayload } from '@/services/class-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,16 @@ const createClassSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
   semester: z.string().min(1, 'Informe o semestre (ex: 2024.1)'),
   year: z.coerce.number().min(2024, 'Ano invalido'),
+  allowStudentPosts: z.boolean(),
+  allowStudentReplies: z.boolean(),
+  requirePostApproval: z.boolean(),
+  requireReplyApproval: z.boolean(),
+  allowJoinByCode: z.boolean(),
+  requireJoinApproval: z.boolean(),
+  lockEnrollment: z.boolean(),
+  activitiesEnabled: z.boolean(),
+  allowLateSubmissions: z.boolean(),
+  showRankingToStudents: z.boolean(),
 });
 
 type CreateClassForm = z.infer<typeof createClassSchema>;
@@ -32,6 +42,16 @@ export const CreateClass = () => {
     defaultValues: {
       year: new Date().getFullYear(),
       semester: `${new Date().getFullYear()}.${new Date().getMonth() < 6 ? '1' : '2'}`,
+      allowStudentPosts: true,
+      allowStudentReplies: true,
+      requirePostApproval: false,
+      requireReplyApproval: false,
+      allowJoinByCode: true,
+      requireJoinApproval: false,
+      lockEnrollment: false,
+      activitiesEnabled: false,
+      allowLateSubmissions: false,
+      showRankingToStudents: true,
     },
   });
 
@@ -40,7 +60,13 @@ export const CreateClass = () => {
     setError(null);
 
     try {
-      await classService.createClass(data);
+      const { name, semester, year, ...settings } = data;
+      await classService.createClass({
+        name,
+        semester,
+        year,
+        settings,
+      });
       navigate('/dashboard/teacher/classes');
     } catch (err: unknown) {
       console.error(err);
@@ -110,6 +136,44 @@ export const CreateClass = () => {
                 </div>
               </div>
 
+              <div className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-brand-900">Configurações iniciais</h2>
+                  <p className="mt-1 text-sm text-slate-500">Esses ajustes podem ser alterados depois na turma.</p>
+                </div>
+
+                <CreateSettingsGroup
+                  title="Participação"
+                  items={[
+                    ['allowStudentPosts', 'Alunos podem criar postagens'],
+                    ['allowStudentReplies', 'Alunos podem responder postagens'],
+                    ['requirePostApproval', 'Professor precisa aprovar novas postagens'],
+                    ['requireReplyApproval', 'Professor precisa aprovar respostas'],
+                  ]}
+                  register={register}
+                />
+
+                <CreateSettingsGroup
+                  title="Matrícula"
+                  items={[
+                    ['allowJoinByCode', 'Permitir entrada por código'],
+                    ['requireJoinApproval', 'Exigir aprovação do professor para entrar'],
+                    ['lockEnrollment', 'Bloquear novas matrículas'],
+                  ]}
+                  register={register}
+                />
+
+                <CreateSettingsGroup
+                  title="Atividades"
+                  items={[
+                    ['activitiesEnabled', 'Habilitar atividades nesta turma'],
+                    ['allowLateSubmissions', 'Permitir entrega atrasada'],
+                    ['showRankingToStudents', 'Mostrar ranking da turma para alunos'],
+                  ]}
+                  register={register}
+                />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4">
                 <Button
                   type="button"
@@ -142,3 +206,33 @@ export const CreateClass = () => {
     </DashboardLayout>
   );
 };
+
+type CreateSettingKey = keyof UpdateClassSettingsPayload;
+
+const CreateSettingsGroup = ({
+  title,
+  items,
+  register,
+}: {
+  title: string;
+  items: [CreateSettingKey, string][];
+  register: ReturnType<typeof useForm<CreateClassForm>>['register'];
+}) => (
+  <div className="rounded-lg border border-slate-200 bg-white">
+    <div className="border-b border-slate-100 px-4 py-3">
+      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+    </div>
+    <div className="divide-y divide-slate-100">
+      {items.map(([key, label]) => (
+        <label key={key} className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3">
+          <span className="text-sm font-medium text-slate-700">{label}</span>
+          <input
+            type="checkbox"
+            className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-900 accent-brand-900 focus:ring-brand-900"
+            {...register(key)}
+          />
+        </label>
+      ))}
+    </div>
+  </div>
+);

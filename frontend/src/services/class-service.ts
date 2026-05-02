@@ -19,6 +19,7 @@ export interface CreateClassDto {
   name: string;
   semester: string;
   year: number;
+  settings?: UpdateClassSettingsPayload;
 }
 
 export interface StudentInClass {

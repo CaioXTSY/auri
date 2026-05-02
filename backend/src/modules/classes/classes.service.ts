@@ -134,12 +134,14 @@ export class ClassesService {
   }
 
   async create(createClassDto: CreateClassDto, createdById: string): Promise<Class> {
+    const { settings, ...classData } = createClassDto;
+
     return this.prisma.class.create({
       data: {
-        ...createClassDto,
+        ...classData,
         createdById,
         settings: {
-          create: {},
+          create: settings ?? {},
         },
       },
       include: {
@@ -466,10 +468,21 @@ export class ClassesService {
       throw new ForbiddenException('Você não pode editar esta turma');
     }
 
+    const { settings, ...classData } = updateClassDto;
+
+    if (settings) {
+      await this.getOrCreateSettings(id);
+      await this.prisma.classSettings.update({
+        where: { classId: id },
+        data: settings,
+      });
+    }
+
     return this.prisma.class.update({
       where: { id },
-      data: updateClassDto,
+      data: classData,
       include: {
+        settings: true,
         _count: {
           select: {
             students: true,
