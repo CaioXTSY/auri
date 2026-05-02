@@ -77,9 +77,21 @@ export const ClassWorkspace = ({ classroom, role, ranking = [] }: ClassWorkspace
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
   const isTeacherView = role === 'PROFESSOR' || role === 'ADMIN';
+  const [settings, setSettings] = useState<ClassSettings | null>(classroom.settings ?? null);
   const tabs = useMemo<WorkspaceTab[]>(
-    () => (isTeacherView ? ['mural', 'activities', 'students', 'progress', 'settings'] : ['mural', 'activities', 'students', 'progress']),
-    [isTeacherView],
+    () => {
+      if (isTeacherView) {
+        return ['mural', 'activities', 'students', 'progress', 'settings'];
+      }
+
+      const studentTabs: WorkspaceTab[] = ['mural', 'students'];
+      if (settings?.activitiesEnabled !== false) {
+        studentTabs.splice(1, 0, 'activities');
+        studentTabs.push('progress');
+      }
+      return studentTabs;
+    },
+    [isTeacherView, settings?.activitiesEnabled],
   );
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('mural');
   const [copiedCode, setCopiedCode] = useState(false);
@@ -88,7 +100,6 @@ export const ClassWorkspace = ({ classroom, role, ranking = [] }: ClassWorkspace
   const [studentsError, setStudentsError] = useState<string | null>(null);
   const [studentToRemove, setStudentToRemove] = useState<StudentInClass | null>(null);
   const [isRemovingStudent, setIsRemovingStudent] = useState(false);
-  const [settings, setSettings] = useState<ClassSettings | null>(classroom.settings ?? null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [savingSetting, setSavingSetting] = useState<keyof UpdateClassSettingsPayload | null>(null);
   const [joinRequests, setJoinRequests] = useState<ClassJoinRequest[]>([]);
