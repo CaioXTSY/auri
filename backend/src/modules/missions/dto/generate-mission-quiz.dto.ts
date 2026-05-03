@@ -105,11 +105,4 @@ export class GenerateMissionQuizDto {
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({
-    description: 'Fim da disponibilidade. Padrao: 7 dias apos o inicio.',
-    example: '2026-05-10T23:59:59Z',
-  })
-  @IsOptional()
-  @IsDateString()
-  endDate?: string;
 }

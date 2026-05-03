@@ -108,7 +108,6 @@ export interface GenerateMissionQuizPayload {
   type?: 'SEMANAL' | 'PERSONALIZADA';
   points?: number;
   startDate?: string;
-  endDate?: string;
 }
 
 export interface BroadcastPayload {

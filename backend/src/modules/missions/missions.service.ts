@@ -42,8 +42,7 @@ export class MissionsService {
       const existing = await this.prisma.mission.findFirst({
         where: {
           type: 'DIARIA',
-          startDate: { gte: startOfDay },
-          endDate: { lte: endOfDay },
+          startDate: { gte: startOfDay, lte: endOfDay },
         },
         select: { id: true },
       });
@@ -83,7 +82,6 @@ export class MissionsService {
     if (filters?.active) {
       const now = new Date();
       where.startDate = { lte: now };
-      where.endDate = { gte: now };
     }
 
     // Professor só vê as próprias missões
@@ -184,14 +182,13 @@ export class MissionsService {
         where: {
           classId: null,
           startDate: { lte: now },
-          endDate: { gte: now },
           ...(classId ? { classId } : {}),
         },
         include: {
           class: { select: { id: true, name: true } },
           quiz: { select: { id: true } },
         },
-        orderBy: { endDate: 'asc' },
+        orderBy: { startDate: 'desc' },
       });
 
       return missions.map((mission) => ({
@@ -224,12 +221,12 @@ export class MissionsService {
           AND: [
             { OR: visibilityScope },
             { startDate: { lte: now } },
-            { endDate: { gte: now } },
           ],
         },
         {
           AND: [
             { OR: visibilityScope },
+            { startDate: { lte: now } },
             { type: MissionType.DIARIA },
             { quiz: { isNot: null } },
             {
@@ -249,7 +246,7 @@ export class MissionsService {
         quiz: { select: { id: true } },
         userMissions: { where: { userId } },
       },
-      orderBy: { endDate: 'asc' },
+      orderBy: { startDate: 'desc' },
     });
 
     return missions.map((mission) => ({

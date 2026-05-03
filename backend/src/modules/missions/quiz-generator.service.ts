@@ -13,6 +13,8 @@ import {
 import { getDailyQuizDateWindow } from './daily-quiz-date';
 import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
 
+const PERMANENT_MISSION_END_DATE = new Date('2099-12-31T23:59:59.999Z');
+
 type GeneratedQuiz = {
   title: string;
   question: string;
@@ -80,12 +82,6 @@ export class QuizGeneratorService {
 
     const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
     const startDate = params.startDate ? new Date(params.startDate) : new Date();
-    const endDate = params.endDate ? new Date(params.endDate) : this.addDays(startDate, 7);
-
-    if (startDate >= endDate) {
-      throw new BadRequestException('A data de inicio deve ser anterior a data de termino');
-    }
-
     const recentQuizzes = await this.getRecentQuizSummariesByCount(15);
     const prompt = this.buildAdminQuizPrompt(params, recentQuizzes);
     const content = await this.requestQuizGeneration(apiKey, model, prompt);
@@ -117,7 +113,7 @@ export class QuizGeneratorService {
           type: missionType,
           points,
           startDate,
-          endDate,
+          endDate: PERMANENT_MISSION_END_DATE,
           createdById,
         },
       });
@@ -161,7 +157,6 @@ export class QuizGeneratorService {
         type: 'DIARIA',
         classId: null,
         startDate: { gte: startOfDay },
-        endDate: { lte: endOfDay },
         quiz: { isNot: null },
       },
       include: { quiz: true },
@@ -223,7 +218,7 @@ export class QuizGeneratorService {
             type: 'DIARIA',
             points,
             startDate: startOfDay,
-            endDate: endOfDay,
+            endDate: PERMANENT_MISSION_END_DATE,
           },
         });
 
@@ -566,12 +561,6 @@ export class QuizGeneratorService {
       DIFICIL: 140,
     };
     return pointsByDifficulty[difficulty];
-  }
-
-  private addDays(date: Date, days: number) {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
   }
 
   private compactText(text: string, maxLength: number) {

@@ -42,8 +42,8 @@ export class MissionQuizService {
     }
 
     const now = new Date();
-    if (now < mission.startDate || now > mission.endDate) {
-      throw new BadRequestException('Esta missão não está mais disponível');
+    if (now < mission.startDate) {
+      throw new BadRequestException('Esta missão ainda não está disponível');
     }
 
     if (mission.classId) {
@@ -89,9 +89,9 @@ export class MissionQuizService {
     const now = new Date();
     if (
       mission.type !== MissionType.DIARIA &&
-      (now < mission.startDate || now > mission.endDate)
+      now < mission.startDate
     ) {
-      throw new BadRequestException('Esta missão não está mais disponível');
+      throw new BadRequestException('Esta missão ainda não está disponível');
     }
 
     if (mission.classId) {
@@ -156,9 +156,9 @@ export class MissionQuizService {
     const now = new Date();
     if (
       mission.type !== MissionType.DIARIA &&
-      (now < mission.startDate || now > mission.endDate)
+      now < mission.startDate
     ) {
-      throw new BadRequestException('Esta missão não está mais disponível');
+      throw new BadRequestException('Esta missão ainda não está disponível');
     }
 
     const options = Array.isArray(mission.quiz.options) ? mission.quiz.options : [];
@@ -348,10 +348,6 @@ export class MissionQuizService {
       throw new BadRequestException('Esta missão já foi concluída');
     }
 
-    if (userMission.status === MissionStatus.EXPIRADA) {
-      throw new BadRequestException('Esta missão expirou');
-    }
-
     const completedMission = await this.prisma.userMission.update({
       where: { userId_missionId: { userId, missionId } },
       data: {
@@ -386,7 +382,6 @@ export class MissionQuizService {
         type: MissionType.DIARIA,
         classId: null,
         startDate: { gte: startOfDay },
-        endDate: { lte: endOfDay },
         quiz: { isNot: null },
       },
       include: { quiz: true },

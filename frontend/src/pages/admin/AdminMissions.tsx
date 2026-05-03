@@ -30,10 +30,8 @@ const initialGenerationForm = {
   audience: 'alunos de graduação em computação',
   learningObjective: '',
   extraInstructions: '',
-  type: 'PERSONALIZADA' as NonNullable<GenerateMissionQuizPayload['type']>,
   points: '',
   startDate: '',
-  endDate: '',
 };
 
 export const AdminMissions = () => {
@@ -83,7 +81,7 @@ export const AdminMissions = () => {
       const payload: GenerateMissionQuizPayload = {
         theme: generationForm.theme.trim(),
         difficulty: generationForm.difficulty,
-        type: generationForm.type,
+        type: 'PERSONALIZADA',
         ...(generationForm.language.trim() ? { language: generationForm.language.trim() } : {}),
         ...(generationForm.audience.trim() ? { audience: generationForm.audience.trim() } : {}),
         ...(generationForm.learningObjective.trim()
@@ -94,7 +92,6 @@ export const AdminMissions = () => {
           : {}),
         ...(generationForm.points.trim() ? { points: Number(generationForm.points) } : {}),
         ...(generationForm.startDate ? { startDate: toIsoDate(generationForm.startDate) } : {}),
-        ...(generationForm.endDate ? { endDate: toIsoDate(generationForm.endDate) } : {}),
       };
 
       const created = await adminService.generateMissionQuiz(payload);
@@ -215,23 +212,6 @@ export const AdminMissions = () => {
                 />
               </Field>
 
-              <Field htmlFor="mission-type" label="Tipo">
-                <select
-                  id="mission-type"
-                  value={generationForm.type}
-                  onChange={(event) =>
-                    updateGenerationField(
-                      'type',
-                      event.target.value as NonNullable<GenerateMissionQuizPayload['type']>,
-                    )
-                  }
-                  className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm"
-                >
-                  <option value="PERSONALIZADA">Personalizada</option>
-                  <option value="SEMANAL">Semanal</option>
-                </select>
-              </Field>
-
               <Field htmlFor="mission-points" label="Pontos">
                 <Input
                   id="mission-points"
@@ -253,14 +233,6 @@ export const AdminMissions = () => {
                 />
               </Field>
 
-              <Field htmlFor="mission-end-date" label="Fim">
-                <Input
-                  id="mission-end-date"
-                  type="datetime-local"
-                  value={generationForm.endDate}
-                  onChange={(event) => updateGenerationField('endDate', event.target.value)}
-                />
-              </Field>
             </div>
 
             <Field htmlFor="mission-extra-instructions" label="Instruções extras">
@@ -315,7 +287,7 @@ export const AdminMissions = () => {
                   <TableHeaderCell>Tipo</TableHeaderCell>
                   <TableHeaderCell>Pontos</TableHeaderCell>
                   <TableHeaderCell>Início</TableHeaderCell>
-                  <TableHeaderCell>Fim</TableHeaderCell>
+                  <TableHeaderCell>Disponibilidade</TableHeaderCell>
                   <TableHeaderCell>Quiz</TableHeaderCell>
                   <TableHeaderCell className="text-right">Ações</TableHeaderCell>
                 </tr>
@@ -329,9 +301,7 @@ export const AdminMissions = () => {
                     <TableCell className="text-slate-600">
                       {new Date(mission.startDate).toLocaleDateString('pt-BR')}
                     </TableCell>
-                    <TableCell className="text-slate-600">
-                      {new Date(mission.endDate).toLocaleDateString('pt-BR')}
-                    </TableCell>
+                    <TableCell className="text-slate-600">Permanente</TableCell>
                     <TableCell className="text-slate-600">{mission.hasQuiz ? 'Sim' : 'Não'}</TableCell>
                     <TableCell className="text-right">
                       <button
