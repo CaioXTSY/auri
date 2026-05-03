@@ -25,6 +25,7 @@ export interface Mission {
   endDate: string;
   class?: MissionClassInfo | null;
   userStatus?: MissionUserStatus | null;
+  hasQuiz?: boolean;
 }
 
 export interface UserMission {

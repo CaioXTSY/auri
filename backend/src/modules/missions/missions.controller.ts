@@ -16,6 +16,7 @@ import { UpdateMissionDto } from './dto/update-mission.dto';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { QueryMissionsDto } from './dto/query-missions.dto';
 import { QueryUserMissionsDto } from './dto/query-user-missions.dto';
+import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -45,6 +46,20 @@ export class MissionsController {
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   create(@Body() createMissionDto: CreateMissionDto, @Request() req) {
     return this.missionsService.create(createMissionDto, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Post('generate-quiz')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Gerar questao com IA e criar missao global (Admin)' })
+  @ApiBody({ type: GenerateMissionQuizDto })
+  @ApiResponse({ status: 201, description: 'Missao com quiz gerada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados invalidos ou falha na geracao' })
+  @ApiResponse({ status: 401, description: 'Nao autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissao' })
+  generateQuizMission(@Body() generateMissionQuizDto: GenerateMissionQuizDto, @Request() req) {
+    return this.missionsService.generateQuizMission(generateMissionQuizDto, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -5,12 +5,15 @@ import { UpdateMissionDto } from './dto/update-mission.dto';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { MissionType } from '@prisma/client';
 import { MissionQuizService } from './mission-quiz.service';
+import { QuizGeneratorService } from './quiz-generator.service';
+import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
 
 @Injectable()
 export class MissionsService {
   constructor(
     private prisma: PrismaService,
     private missionQuizService: MissionQuizService,
+    private quizGeneratorService: QuizGeneratorService,
   ) {}
 
   async create(createMissionDto: CreateMissionDto, createdById: string) {
@@ -88,16 +91,26 @@ export class MissionsService {
       where.createdById = userId;
     }
 
-    return this.prisma.mission.findMany({
+    const missions = await this.prisma.mission.findMany({
       where,
       include: {
         class: { select: { id: true, name: true } },
+        quiz: { select: { id: true } },
         userMissions: {
           select: { id: true, userId: true, status: true, progress: true },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return missions.map((mission) => ({
+      ...mission,
+      hasQuiz: Boolean(mission.quiz),
+    }));
+  }
+
+  generateQuizMission(generateMissionQuizDto: GenerateMissionQuizDto, createdById: string) {
+    return this.quizGeneratorService.generateAdminQuizMission(generateMissionQuizDto, createdById);
   }
 
   async findOne(id: string, userId?: string, userRole?: string) {
@@ -176,12 +189,14 @@ export class MissionsService {
         },
         include: {
           class: { select: { id: true, name: true } },
+          quiz: { select: { id: true } },
         },
         orderBy: { endDate: 'asc' },
       });
 
       return missions.map((mission) => ({
         ...mission,
+        hasQuiz: Boolean(mission.quiz),
         userStatus: null,
       }));
     }
@@ -231,6 +246,7 @@ export class MissionsService {
       where,
       include: {
         class: { select: { id: true, name: true } },
+        quiz: { select: { id: true } },
         userMissions: { where: { userId } },
       },
       orderBy: { endDate: 'asc' },
@@ -238,6 +254,7 @@ export class MissionsService {
 
     return missions.map((mission) => ({
       ...mission,
+      hasQuiz: Boolean(mission.quiz),
       userStatus: mission.userMissions[0] || null,
       userMissions: undefined,
     }));

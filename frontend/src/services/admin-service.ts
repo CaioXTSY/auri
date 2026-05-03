@@ -95,6 +95,20 @@ export interface AdminMissionListItem {
   endDate: string;
   classId: string | null;
   createdAt: string;
+  hasQuiz?: boolean;
+}
+
+export interface GenerateMissionQuizPayload {
+  theme: string;
+  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
+  language?: string;
+  audience?: string;
+  learningObjective?: string;
+  extraInstructions?: string;
+  type?: 'SEMANAL' | 'PERSONALIZADA';
+  points?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface BroadcastPayload {
@@ -177,6 +191,11 @@ export const adminService = {
   listMissions: async () => {
     const { data } = await api.get<AdminMissionListItem[] | { data: AdminMissionListItem[] }>('/missions');
     return Array.isArray(data) ? data : data.data;
+  },
+
+  generateMissionQuiz: async (payload: GenerateMissionQuizPayload): Promise<AdminMissionListItem> => {
+    const { data } = await api.post<AdminMissionListItem>('/missions/generate-quiz', payload);
+    return data;
   },
 
   deleteMission: async (id: string): Promise<void> => {

@@ -442,7 +442,7 @@ export const MissionsPage = () => {
             {paginatedAvailable.map((mission, index) => {
               const status = mission.userStatus?.status ?? 'NAO_INICIADA';
               const showActionTour =
-                index === 0 && (mission.type === 'DIARIA' || status === 'EM_PROGRESSO');
+                index === 0 && (mission.hasQuiz || mission.type === 'DIARIA' || status === 'EM_PROGRESSO');
 
               return (
                 <div
@@ -488,7 +488,7 @@ export const MissionsPage = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    {status === 'EM_PROGRESSO' && mission.type !== 'DIARIA' && (
+                    {status === 'EM_PROGRESSO' && mission.type !== 'DIARIA' && !mission.hasQuiz && (
                       <Button
                         type="button"
                         className="bg-brand-900 text-white hover:bg-brand-800"
@@ -498,7 +498,7 @@ export const MissionsPage = () => {
                         Concluir
                       </Button>
                     )}
-                    {mission.type === 'DIARIA' && (
+                    {(mission.hasQuiz || mission.type === 'DIARIA') && (
                       <Button
                         type="button"
                         variant="outline"

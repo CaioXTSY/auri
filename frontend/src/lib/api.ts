@@ -6,26 +6,40 @@ const BASE_URL = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/api
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 30_000,
-  withCredentials: true, // envia cookies (refresh_token HttpOnly) automaticamente
+  withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+api.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
-  if (config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
-  } else if (!config.headers['Content-Type']) {
-    config.headers['Content-Type'] = 'application/json';
-  }
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    } else if (!config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json';
+    }
 
-  return config;
-}, (error) => Promise.reject(error));
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+
+const authPublicPaths = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/refresh',
+];
+
+const isPublicAuthRequest = (url?: string) =>
+  Boolean(url && authPublicPaths.some((path) => url.includes(path)));
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -41,8 +55,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // evita loop infinito no próprio endpoint de refresh
-      if (originalRequest.url?.includes('/auth/refresh')) {
+      if (isPublicAuthRequest(originalRequest.url)) {
         useAuthStore.getState().logout();
         return Promise.reject(error);
       }
