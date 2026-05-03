@@ -83,14 +83,43 @@ export class QuizGeneratorService {
     const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
     const startDate = params.startDate ? new Date(params.startDate) : new Date();
     const recentQuizzes = await this.getRecentQuizSummariesByCount(15);
-    const prompt = this.buildAdminQuizPrompt(params, recentQuizzes);
-    const content = await this.requestQuizGeneration(apiKey, model, prompt);
-    const quiz = this.normalizeGeneratedQuiz(content, params.difficulty);
-    const validation = await this.validateGeneratedQuiz(apiKey, model, quiz);
+    const basePrompt = this.buildAdminQuizPrompt(params, recentQuizzes);
+    let prompt = basePrompt;
+    let content = '';
+    let quiz: GeneratedQuiz | null = null;
+    let lastRejectionReason = '';
+    let rejectedQuiz: GeneratedQuiz | null = null;
 
-    if (!validation.isValid || validation.correctIndex !== quiz.correctIndex) {
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      prompt =
+        attempt === 1
+          ? basePrompt
+          : this.buildAdminQuizRepairPrompt(params, recentQuizzes, rejectedQuiz, lastRejectionReason);
+
+      content = await this.requestQuizGeneration(apiKey, model, prompt);
+      quiz = this.normalizeGeneratedQuiz(content, params.difficulty);
+      const validation = await this.validateGeneratedQuiz(apiKey, model, quiz);
+
+      if (validation.isValid && validation.correctIndex === quiz.correctIndex) {
+        lastRejectionReason = '';
+        break;
+      }
+
+      lastRejectionReason =
+        validation.reason ||
+        `correctIndex validado=${validation.correctIndex}, correctIndex gerado=${quiz.correctIndex}`;
+      rejectedQuiz = quiz;
+      this.logger.warn(
+        `Questao admin rejeitada pela validacao na tentativa ${attempt}: ${lastRejectionReason}`,
+      );
+      quiz = null;
+    }
+
+    if (!quiz) {
       throw new BadRequestException(
-        `Questao rejeitada pela validacao tecnica: ${validation.reason || 'sem motivo informado'}`,
+        `Nao foi possivel gerar uma questao valida apos 5 tentativas. Ultima rejeicao: ${
+          lastRejectionReason || 'sem motivo informado'
+        }`,
       );
     }
 
@@ -451,6 +480,39 @@ export class QuizGeneratorService {
     ]
       .filter(Boolean)
       .join('\n');
+  }
+
+  private buildAdminQuizRepairPrompt(
+    params: GenerateMissionQuizDto,
+    recentQuizzes: RecentQuizSummary[],
+    rejectedQuiz: GeneratedQuiz | null,
+    rejectionReason: string,
+  ) {
+    return [
+      this.buildAdminQuizPrompt(params, recentQuizzes),
+      '',
+      'A TENTATIVA ANTERIOR FOI REJEITADA PELO REVISOR TECNICO.',
+      `Motivo da rejeicao: ${rejectionReason || 'sem motivo informado'}`,
+      rejectedQuiz
+        ? [
+            '',
+            'QUESTAO REJEITADA:',
+            JSON.stringify(rejectedQuiz, null, 2),
+            '',
+            'TAREFA:',
+            'Corrija profundamente a questao rejeitada OU gere uma nova questao sobre o mesmo tema.',
+            'Se corrigir, refaca a execucao passo a passo e ajuste question, options, correctIndex e explanations para ficarem totalmente consistentes.',
+            'Se gerar uma nova, escolha um exemplo mais simples e verificavel.',
+          ].join('\n')
+        : 'Gere uma questao nova, mais simples e verificavel.',
+      '',
+      'ANTES DE RESPONDER:',
+      '1. Resolva o enunciado internamente passo a passo.',
+      '2. Confira cada indice, fatia, tipo, escopo e excecao.',
+      '3. Garanta que correctIndex aponta para a unica alternativa correta.',
+      '4. Garanta que a explicacao da alternativa correta descreve exatamente a execucao real.',
+      '5. Retorne apenas o JSON final.',
+    ].join('\n');
   }
 
   private async acquireGenerationLock(lockName: string) {

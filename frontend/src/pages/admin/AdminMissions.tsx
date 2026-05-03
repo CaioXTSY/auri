@@ -8,6 +8,7 @@ import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
+import axios from 'axios';
 import {
   Table,
   TableCell,
@@ -71,6 +72,16 @@ export const AdminMissions = () => {
 
   const toIsoDate = (value: string) => (value ? new Date(value).toISOString() : undefined);
 
+  const getApiErrorMessage = (error: unknown) => {
+    if (!axios.isAxiosError(error)) return 'Não foi possível gerar a questão.';
+
+    const message = error.response?.data?.message;
+    if (Array.isArray(message)) return message.join(' ');
+    if (typeof message === 'string') return message;
+
+    return 'Não foi possível gerar a questão.';
+  };
+
   const handleGenerate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -90,7 +101,9 @@ export const AdminMissions = () => {
         ...(generationForm.extraInstructions.trim()
           ? { extraInstructions: generationForm.extraInstructions.trim() }
           : {}),
-        ...(generationForm.points.trim() ? { points: Number(generationForm.points) } : {}),
+        ...(generationForm.points.trim() && Number.isFinite(Number(generationForm.points))
+          ? { points: Number(generationForm.points) }
+          : {}),
         ...(generationForm.startDate ? { startDate: toIsoDate(generationForm.startDate) } : {}),
       };
 
@@ -98,8 +111,8 @@ export const AdminMissions = () => {
       setMissions((current) => [created, ...current]);
       setGenerationForm(initialGenerationForm);
       setSuccess(`Questão gerada: ${created.title}`);
-    } catch {
-      setError('Não foi possível gerar a questão. Verifique a chave da OpenAI e tente de novo.');
+    } catch (error) {
+      setError(getApiErrorMessage(error));
     } finally {
       setIsGenerating(false);
     }
