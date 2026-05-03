@@ -4,11 +4,15 @@ import {
   BookOpen, Zap, Shield, Users, GraduationCap, Flag,
   Trophy, Code, ExternalLink, Menu, X,
   ChevronRight, Bell, Hash,
+  Settings, UserCog,
 } from 'lucide-react';
 
-const API_URL = 'https://api-auri.caiots.dev/api/v1';
-const SOCKET_URL = 'https://api-auri.caiots.dev';
-const SWAGGER_URL = 'https://api-auri.caiots.dev/api/v1/docs';
+const API_ORIGIN = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001')
+  .replace(/\/api\/v\d+\/?$/, '')
+  .replace(/\/+$/, '');
+const API_URL = `${API_ORIGIN}/api/v1`;
+const SOCKET_URL = API_ORIGIN;
+const SWAGGER_URL = `${API_URL}/docs`;
 
 interface NavSection {
   id: string;
@@ -71,6 +75,16 @@ const nav: NavSection[] = [
     items: [
       { id: 'codigo-turma', label: 'Código de acesso' },
       { id: 'postagens', label: 'Postagens da turma' },
+      { id: 'configuracoes-turma', label: 'Configurações e matrícula' },
+    ],
+  },
+  {
+    id: 'atividades',
+    label: 'Atividades',
+    icon: Code,
+    items: [
+      { id: 'status-atividades', label: 'Status atual' },
+      { id: 'submissoes-codigo', label: 'Submissões de código' },
     ],
   },
   {
@@ -98,6 +112,15 @@ const nav: NavSection[] = [
     label: 'Notificações',
     icon: Bell,
     items: [{ id: 'realtime', label: 'Tempo real (WebSocket)' }],
+  },
+  {
+    id: 'admin',
+    label: 'Admin',
+    icon: UserCog,
+    items: [
+      { id: 'painel-admin', label: 'Painel administrativo' },
+      { id: 'endpoints-admin', label: 'Endpoints admin' },
+    ],
   },
   {
     id: 'api',
@@ -422,6 +445,8 @@ export const Docs = () => {
                 <Endpoint method="POST" path="/auth/register" description="Criar nova conta" />
                 <Endpoint method="POST" path="/auth/login" description="Fazer login e obter token" />
                 <Endpoint method="POST" path="/auth/refresh" description="Renovar access token pelo cookie" />
+                <Endpoint method="POST" path="/auth/forgot-password" description="Enviar link de recuperação" />
+                <Endpoint method="POST" path="/auth/reset-password" description="Redefinir senha com token" />
                 <Endpoint method="POST" path="/auth/logout" description="Encerrar sessão" />
                 <Endpoint method="GET" path="/users/me" description="Dados do usuário autenticado" />
               </div>
@@ -444,6 +469,21 @@ export const Docs = () => {
     "role": "ALUNO"
   }
 }`}
+              />
+              <CodeBlock
+                language="curl"
+                code={`# Solicitar reset de senha
+curl -X POST ${API_URL}/auth/forgot-password \\
+  -H "Content-Type: application/json" \\
+  -d '{ "email": "joao@escola.edu.br" }'
+
+# Redefinir senha
+curl -X POST ${API_URL}/auth/reset-password \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "token": "token-recebido-por-email",
+    "newPassword": "novaSenhaSegura123"
+  }'`}
               />
             </SubSection>
           </Section>
@@ -503,8 +543,9 @@ export const Docs = () => {
 
             <SubSection id="gerenciar-turma" title="Gerenciando alunos">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                Na página da turma, você visualiza todos os alunos inscritos, seus níveis, XP total,
-                missões completadas e posição no ranking. É possível remover um aluno da turma se necessário.
+                Na página da turma, você visualiza alunos matriculados, mural, configurações,
+                solicitações de entrada e ranking da turma. O acompanhamento detalhado por atividades
+                ainda depende do módulo de atividades.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Endpoint method="GET" path="/classes/:id/students" description="Alunos da turma" />
@@ -518,24 +559,75 @@ export const Docs = () => {
           <Section id="turmas" title="Turmas">
             <SubSection id="codigo-turma" title="Código de acesso">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                Cada turma possui um código alfanumérico único gerado automaticamente. Este código
-                pode ser compartilhado diretamente com os alunos. Não há limite de alunos por padrão.
+                Cada turma possui um código único gerado automaticamente. Este código pode ser
+                compartilhado com os alunos quando a entrada por código estiver habilitada.
               </p>
               <Callout type="info">
-                O código de uma turma não expira. Para "fechar" uma turma, o professor pode encerrá-la pelo painel.
+                Professores podem exigir aprovação para entrada, bloquear novas matrículas ou desativar
+                a entrada por código nas configurações da turma.
               </Callout>
             </SubSection>
 
             <SubSection id="postagens" title="Postagens da turma">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                Professores podem publicar postagens dentro de cada turma. Alunos, professores e admins
-                podem visualizar e responder, criando um espaço de discussão contextualizado.
+                Alunos, professores e admins podem publicar e responder no mural da turma. A permissão
+                de postagem dos alunos e a moderação dependem das configurações da turma.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Endpoint method="GET" path="/posts" description="Listar postagens (por turma)" />
-                <Endpoint method="POST" path="/posts" description="Criar postagem (Professor/Admin)" />
+                <Endpoint method="POST" path="/posts" description="Criar postagem" />
                 <Endpoint method="POST" path="/posts/:id/replies" description="Responder postagem" />
+                <Endpoint method="PATCH" path="/posts/:id/approve" description="Aprovar postagem pendente" />
+                <Endpoint method="PATCH" path="/posts/:id/reject" description="Rejeitar postagem pendente" />
                 <Endpoint method="DELETE" path="/posts/:id" description="Excluir postagem" />
+              </div>
+            </SubSection>
+
+            <SubSection id="configuracoes-turma" title="Configurações e matrícula">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
+                Professores e admins controlam como a turma aceita alunos, se alunos podem postar,
+                se posts/respostas precisam de aprovação e se o ranking fica visível para alunos.
+              </p>
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/classes/:id/settings" description="Buscar configurações da turma" />
+                <Endpoint method="PATCH" path="/classes/:id/settings" description="Atualizar configurações" />
+                <Endpoint method="GET" path="/classes/:id/join-requests" description="Solicitações pendentes" />
+                <Endpoint method="POST" path="/classes/:id/join-requests/:requestId/approve" description="Aprovar entrada" />
+                <Endpoint method="POST" path="/classes/:id/join-requests/:requestId/reject" description="Rejeitar entrada" />
+              </div>
+            </SubSection>
+          </Section>
+
+          {/* ── Atividades ── */}
+          <Section id="atividades" title="Atividades">
+            <SubSection id="status-atividades" title="Status atual">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
+                A interface de turma já reserva uma aba para atividades, mas o módulo de atividades
+                de programação ainda não está implementado no backend. Hoje a plataforma cobre turmas,
+                mural, missões, quiz diário, gamificação, notificações e administração.
+              </p>
+              <Callout type="warning">
+                Atividades de programação ainda são escopo futuro: não existem endpoints, modelos Prisma
+                nem telas completas para criar exercícios corrigíveis.
+              </Callout>
+            </SubSection>
+
+            <SubSection id="submissoes-codigo" title="Submissões de código">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
+                Submissões de código, execução de testes, correção automática e histórico de tentativas
+                ainda não estão disponíveis neste MVP.
+              </p>
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-5">
+                <div className="flex items-start gap-3">
+                  <Settings className="mt-0.5 h-5 w-5 text-slate-400" />
+                  <div>
+                    <p className="font-sans font-semibold text-brand-900">Planejado para evolução</p>
+                    <p className="mt-1 font-serif text-sm leading-relaxed text-slate-500">
+                      Quando implementado, este módulo deve incluir criação de atividades, editor de código,
+                      submissões, resultados de testes e painel de acompanhamento do professor.
+                    </p>
+                  </div>
+                </div>
               </div>
             </SubSection>
           </Section>
@@ -676,6 +768,35 @@ socket.on('notification', (payload) => {
             </SubSection>
           </Section>
 
+          {/* ── Admin ── */}
+          <Section id="admin" title="Admin">
+            <SubSection id="painel-admin" title="Painel administrativo">
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
+                Usuários com papel <strong>ADMIN</strong> acessam uma área dedicada para acompanhar
+                métricas da plataforma, gerenciar usuários, turmas, missões, conquistas, notificações
+                e auditar gerações de IA.
+              </p>
+              <Callout type="info">
+                As rotas administrativas do frontend ficam em <code className="bg-slate-100 px-1 rounded text-xs">/admin</code> e são protegidas por papel.
+              </Callout>
+            </SubSection>
+
+            <SubSection id="endpoints-admin" title="Endpoints admin">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <Endpoint method="GET" path="/admin/stats" description="Visão geral da plataforma" />
+                <Endpoint method="GET" path="/admin/stats/timeseries" description="Séries dos últimos 30 dias" />
+                <Endpoint method="GET" path="/admin/stats/top" description="Top turmas e conquistas" />
+                <Endpoint method="GET" path="/admin/ai-generations" description="Listar gerações de IA" />
+                <Endpoint method="GET" path="/admin/ai-generations/:id" description="Detalhe de geração de IA" />
+                <Endpoint method="GET" path="/admin/achievements" description="Listar conquistas" />
+                <Endpoint method="POST" path="/admin/achievements" description="Criar conquista" />
+                <Endpoint method="PATCH" path="/admin/achievements/:id" description="Atualizar conquista" />
+                <Endpoint method="DELETE" path="/admin/achievements/:id" description="Remover conquista" />
+                <Endpoint method="POST" path="/admin/notifications/broadcast" description="Enviar notificação em massa" />
+              </div>
+            </SubSection>
+          </Section>
+
           {/* ── API Reference ── */}
           <Section id="api" title="Referência da API">
             <SubSection id="swagger" title="Swagger / OpenAPI">
@@ -712,6 +833,7 @@ socket.on('notification', (payload) => {
                   <ul className="font-sans text-sm text-slate-600 space-y-2">
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">JSON</span>Todas as requisições e respostas usam <code className="bg-slate-100 px-1 rounded text-xs">application/json</code>.</li>
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Auth</span>Endpoints protegidos exigem <code className="bg-slate-100 px-1 rounded text-xs">Authorization: Bearer token</code>.</li>
+                    <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Cookie</span>O refresh token fica em cookie HttpOnly e é enviado automaticamente em <code className="bg-slate-100 px-1 rounded text-xs">/auth/refresh</code>.</li>
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Erros</span>Respostas de erro seguem o padrão <code className="bg-slate-100 px-1 rounded text-xs">{'{ "message": "..." }'}</code>.</li>
                     <li className="flex gap-2"><span className="text-brand-600 font-mono font-semibold">Paginação</span>Listas paginadas aceitam <code className="bg-slate-100 px-1 rounded text-xs">?page=1&limit=10</code>.</li>
                   </ul>
