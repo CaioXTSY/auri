@@ -7,6 +7,7 @@ import { MissionType } from '@prisma/client';
 import { MissionQuizService } from './mission-quiz.service';
 import { QuizGeneratorService } from './quiz-generator.service';
 import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
+import { ApproveMissionQuizDto } from './dto/approve-mission-quiz.dto';
 
 @Injectable()
 export class MissionsService {
@@ -109,6 +110,14 @@ export class MissionsService {
 
   generateQuizMission(generateMissionQuizDto: GenerateMissionQuizDto, createdById: string) {
     return this.quizGeneratorService.generateAdminQuizMission(generateMissionQuizDto, createdById);
+  }
+
+  generateQuizPreview(generateMissionQuizDto: GenerateMissionQuizDto) {
+    return this.quizGeneratorService.generateAdminQuizPreview(generateMissionQuizDto);
+  }
+
+  approveGeneratedQuiz(approveMissionQuizDto: ApproveMissionQuizDto, createdById: string) {
+    return this.quizGeneratorService.approveAdminQuizMission(approveMissionQuizDto, createdById);
   }
 
   async findOne(id: string, userId?: string, userRole?: string) {

@@ -22,6 +22,7 @@ import {
 import {
   adminService,
   type AdminMissionQuizDetail,
+  type AdminMissionQuizPreview,
   type AdminMissionListItem,
   type GenerateMissionQuizPayload,
 } from '@/services/admin-service';
@@ -51,6 +52,8 @@ export const AdminMissions = () => {
   const [quizToView, setQuizToView] = useState<AdminMissionQuizDetail | null>(null);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
+  const [draftToReview, setDraftToReview] = useState<AdminMissionQuizPreview | null>(null);
+  const [isApprovingDraft, setIsApprovingDraft] = useState(false);
 
   const load = async () => {
     setIsLoading(true);
@@ -113,14 +116,31 @@ export const AdminMissions = () => {
         ...(generationForm.startDate ? { startDate: toIsoDate(generationForm.startDate) } : {}),
       };
 
-      const created = await adminService.generateMissionQuiz(payload);
-      setMissions((current) => [created, ...current]);
-      setGenerationForm(initialGenerationForm);
-      setSuccess(`Questão gerada: ${created.title}`);
+      const preview = await adminService.previewMissionQuiz(payload);
+      setDraftToReview(preview);
     } catch (error) {
       setError(getApiErrorMessage(error));
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleApproveDraft = async () => {
+    if (!draftToReview || isApprovingDraft) return;
+    setError(null);
+    setSuccess(null);
+    setIsApprovingDraft(true);
+
+    try {
+      const created = await adminService.approveMissionQuiz(draftToReview);
+      setMissions((current) => [created, ...current]);
+      setGenerationForm(initialGenerationForm);
+      setDraftToReview(null);
+      setSuccess(`Questão aprovada e adicionada: ${created.title}`);
+    } catch (error) {
+      setError(getApiErrorMessage(error));
+    } finally {
+      setIsApprovingDraft(false);
     }
   };
 
@@ -184,7 +204,7 @@ export const AdminMissions = () => {
                 ) : (
                   <Sparkles className="mr-2 h-4 w-4" />
                 )}
-                {isGenerating ? 'Gerando...' : 'Gerar missão'}
+                {isGenerating ? 'Gerando...' : 'Gerar prévia'}
               </Button>
             </div>
 
@@ -364,6 +384,108 @@ export const AdminMissions = () => {
             </Table>
           </TableContainer>
         )}
+
+        <ModalDialog
+          open={Boolean(draftToReview)}
+          title={draftToReview?.title ?? 'Revisar questão'}
+          description="Confira a questão antes de adicioná-la ao banco permanente de missões."
+          onClose={() => {
+            if (isApprovingDraft) return;
+            setDraftToReview(null);
+          }}
+          panelClassName="max-w-4xl"
+          closeOnOverlay={!isApprovingDraft}
+          footer={
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="border-slate-200 text-slate-600"
+                onClick={() => setDraftToReview(null)}
+                disabled={isApprovingDraft}
+              >
+                Recusar
+              </Button>
+              <Button
+                type="button"
+                className="bg-brand-900 text-white hover:bg-brand-800"
+                onClick={handleApproveDraft}
+                disabled={isApprovingDraft}
+              >
+                {isApprovingDraft ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adicionando...
+                  </>
+                ) : (
+                  'Aprovar e adicionar'
+                )}
+              </Button>
+            </div>
+          }
+        >
+          {draftToReview ? (
+            <div className="space-y-5">
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full border border-slate-200 px-2.5 py-1 font-semibold uppercase tracking-wide text-slate-600">
+                  {draftToReview.difficulty}
+                </span>
+                <span className="rounded-full border border-slate-200 px-2.5 py-1 font-semibold uppercase tracking-wide text-slate-600">
+                  {draftToReview.points} XP
+                </span>
+                <span className="rounded-full border border-slate-200 px-2.5 py-1 font-semibold uppercase tracking-wide text-slate-600">
+                  Prévia
+                </span>
+              </div>
+
+              <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-relaxed text-slate-700">
+                <MarkdownContent content={draftToReview.question} />
+              </div>
+
+              <div className="space-y-3">
+                {draftToReview.options.map((option, index) => {
+                  const isCorrect = index === draftToReview.correctIndex;
+
+                  return (
+                    <div
+                      key={`${option}-${index}`}
+                      className={`rounded-md border px-4 py-3 ${
+                        isCorrect
+                          ? 'border-emerald-300 bg-emerald-50'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
+                            isCorrect
+                              ? 'border-emerald-500 text-emerald-700'
+                              : 'border-slate-300 text-slate-500'
+                          }`}
+                        >
+                          {String.fromCharCode(65 + index)}
+                        </span>
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-800">{option}</p>
+                            {isCorrect ? (
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+                                Correta
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="text-xs leading-relaxed text-slate-600">
+                            <MarkdownContent content={String(draftToReview.explanations[index] ?? '')} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </ModalDialog>
 
         <ModalDialog
           open={quizModalOpen}

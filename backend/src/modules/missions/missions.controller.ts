@@ -17,6 +17,7 @@ import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { QueryMissionsDto } from './dto/query-missions.dto';
 import { QueryUserMissionsDto } from './dto/query-user-missions.dto';
 import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
+import { ApproveMissionQuizDto } from './dto/approve-mission-quiz.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -60,6 +61,34 @@ export class MissionsController {
   @ApiResponse({ status: 403, description: 'Sem permissao' })
   generateQuizMission(@Body() generateMissionQuizDto: GenerateMissionQuizDto, @Request() req) {
     return this.missionsService.generateQuizMission(generateMissionQuizDto, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Post('generate-quiz/preview')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Gerar prévia de questão com IA para revisão (Admin)' })
+  @ApiBody({ type: GenerateMissionQuizDto })
+  @ApiResponse({ status: 201, description: 'Prévia de quiz gerada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos ou falha na geração' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  generateQuizPreview(@Body() generateMissionQuizDto: GenerateMissionQuizDto) {
+    return this.missionsService.generateQuizPreview(generateMissionQuizDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Post('generate-quiz/approve')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Aprovar prévia e criar missão global com quiz (Admin)' })
+  @ApiBody({ type: ApproveMissionQuizDto })
+  @ApiResponse({ status: 201, description: 'Missão com quiz criada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos para aprovação' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  approveGeneratedQuiz(@Body() approveMissionQuizDto: ApproveMissionQuizDto, @Request() req) {
+    return this.missionsService.approveGeneratedQuiz(approveMissionQuizDto, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

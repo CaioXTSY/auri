@@ -12,6 +12,7 @@ import {
 } from './prompts/daily-quiz.prompt';
 import { getDailyQuizDateWindow } from './daily-quiz-date';
 import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
+import { ApproveMissionQuizDto } from './dto/approve-mission-quiz.dto';
 
 const PERMANENT_MISSION_END_DATE = new Date('2099-12-31T23:59:59.999Z');
 
@@ -75,6 +76,72 @@ export class QuizGeneratorService {
   }
 
   async generateAdminQuizMission(params: GenerateMissionQuizDto, createdById: string) {
+    const draft = await this.generateAdminQuizDraft(params);
+    return this.createAdminQuizMissionFromDraft(
+      draft.quiz,
+      draft.points,
+      draft.startDate,
+      draft.missionType,
+      createdById,
+      draft.prompt,
+      draft.content,
+    );
+  }
+
+  async generateAdminQuizPreview(params: GenerateMissionQuizDto) {
+    const draft = await this.generateAdminQuizDraft(params);
+    const aiGeneration = await this.prisma.aIGeneration.create({
+      data: {
+        type: 'MISSION_QUIZ_PREVIEW',
+        prompt: draft.prompt,
+        response: draft.content,
+      },
+    });
+
+    return {
+      aiGenerationId: aiGeneration.id,
+      ...draft.quiz,
+      points: draft.points,
+      type: draft.missionType,
+      startDate: draft.startDate,
+      endDate: PERMANENT_MISSION_END_DATE,
+    };
+  }
+
+  async approveAdminQuizMission(dto: ApproveMissionQuizDto, createdById: string) {
+    const quiz: GeneratedQuiz = {
+      title: dto.title.trim(),
+      question: dto.question.trim(),
+      difficulty: dto.difficulty,
+      options: dto.options.map((option) => option.trim()),
+      correctIndex: dto.correctIndex,
+      explanations: dto.explanations.map((explanation) => explanation.trim()),
+    };
+
+    this.validateQuizShape(quiz);
+
+    const mission = await this.createAdminQuizMissionFromDraft(
+      quiz,
+      dto.points ?? this.getPointsForDifficulty(quiz.difficulty),
+      dto.startDate ? new Date(dto.startDate) : new Date(),
+      dto.type === 'SEMANAL' ? 'SEMANAL' : 'PERSONALIZADA',
+      createdById,
+      null,
+      null,
+      dto.aiGenerationId,
+    );
+
+    if (dto.aiGenerationId) {
+      await this.prisma.aIGeneration.update({
+        where: { id: dto.aiGenerationId },
+        data: { type: 'MISSION_QUIZ' },
+      });
+    }
+
+    return mission;
+  }
+
+  private async generateAdminQuizDraft(params: GenerateMissionQuizDto) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey) {
       throw new BadRequestException('OPENAI_API_KEY nao configurada');
@@ -124,16 +191,35 @@ export class QuizGeneratorService {
     }
 
     const points = params.points ?? this.getPointsForDifficulty(quiz.difficulty);
-    const missionType = params.type ?? 'PERSONALIZADA';
+    const missionType: 'SEMANAL' | 'PERSONALIZADA' =
+      params.type === 'SEMANAL' ? 'SEMANAL' : 'PERSONALIZADA';
 
+    return { quiz, points, missionType, startDate, prompt, content };
+  }
+
+  private async createAdminQuizMissionFromDraft(
+    quiz: GeneratedQuiz,
+    points: number,
+    startDate: Date,
+    missionType: 'SEMANAL' | 'PERSONALIZADA',
+    createdById: string,
+    prompt: string | null,
+    content: string | null,
+    existingAiGenerationId?: string,
+  ) {
     const mission = await this.prisma.$transaction(async (tx) => {
-      const aiGeneration = await tx.aIGeneration.create({
-        data: {
-          type: 'MISSION_QUIZ',
-          prompt,
-          response: content,
-        },
-      });
+      const aiGeneration =
+        existingAiGenerationId
+          ? await tx.aIGeneration.findUnique({ where: { id: existingAiGenerationId } })
+          : prompt && content
+            ? await tx.aIGeneration.create({
+                data: {
+                  type: 'MISSION_QUIZ',
+                  prompt,
+                  response: content,
+                },
+              })
+            : null;
 
       const created = await tx.mission.create({
         data: {
@@ -156,7 +242,7 @@ export class QuizGeneratorService {
           options: quiz.options,
           explanations: quiz.explanations,
           correctIndex: quiz.correctIndex,
-          aiGenerationId: aiGeneration.id,
+          aiGenerationId: aiGeneration?.id,
         },
       });
 
@@ -339,25 +425,7 @@ export class QuizGeneratorService {
         ? difficultyRaw
         : fallbackDifficulty;
 
-    if (!title || !question || options.length !== 4 || explanations.length !== 4) {
-      throw new BadRequestException(
-        `Estrutura invalida no quiz gerado: title="${title}", optionsLen=${options.length}, explanationsLen=${explanations.length}`,
-      );
-    }
-
-    if (title.length > 200) {
-      throw new BadRequestException(`title do quiz excede 200 caracteres (${title.length})`);
-    }
-
-    if (question.length > 2000) {
-      throw new BadRequestException(`question do quiz excede 2000 caracteres (${question.length})`);
-    }
-
-    if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
-      throw new BadRequestException(`correctIndex invalido no quiz gerado: ${correctIndex}`);
-    }
-
-    return {
+    const quiz = {
       title,
       question,
       difficulty,
@@ -365,6 +433,29 @@ export class QuizGeneratorService {
       correctIndex,
       explanations,
     };
+
+    this.validateQuizShape(quiz);
+    return quiz;
+  }
+
+  private validateQuizShape(quiz: GeneratedQuiz) {
+    if (!quiz.title || !quiz.question || quiz.options.length !== 4 || quiz.explanations.length !== 4) {
+      throw new BadRequestException(
+        `Estrutura invalida no quiz: title="${quiz.title}", optionsLen=${quiz.options.length}, explanationsLen=${quiz.explanations.length}`,
+      );
+    }
+
+    if (quiz.title.length > 200) {
+      throw new BadRequestException(`title do quiz excede 200 caracteres (${quiz.title.length})`);
+    }
+
+    if (quiz.question.length > 2000) {
+      throw new BadRequestException(`question do quiz excede 2000 caracteres (${quiz.question.length})`);
+    }
+
+    if (!Number.isInteger(quiz.correctIndex) || quiz.correctIndex < 0 || quiz.correctIndex > 3) {
+      throw new BadRequestException(`correctIndex invalido no quiz: ${quiz.correctIndex}`);
+    }
   }
 
   private async validateGeneratedQuiz(
