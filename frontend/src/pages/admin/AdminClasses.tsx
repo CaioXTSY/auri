@@ -14,7 +14,51 @@ import {
 } from '@/components/ui/table';
 import { adminService } from '@/services/admin-service';
 import { classService, type Class } from '@/services/class-service';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const ClassesTableSkeleton = () => (
+  <TableContainer>
+    <Table>
+      <TableHead>
+        <tr>
+          <TableHeaderCell>Nome</TableHeaderCell>
+          <TableHeaderCell>Ano</TableHeaderCell>
+          <TableHeaderCell>Código</TableHeaderCell>
+          <TableHeaderCell>Alunos</TableHeaderCell>
+          <TableHeaderCell>Status</TableHeaderCell>
+          <TableHeaderCell className="text-right">Ações</TableHeaderCell>
+        </tr>
+      </TableHead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <TableRow key={index}>
+            <TableCell>
+              <Skeleton className="h-4 w-44 max-w-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-12" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-28" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-8" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </TableCell>
+            <TableCell>
+              <div className="flex justify-end">
+                <Skeleton className="h-4 w-14" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </tbody>
+    </Table>
+  </TableContainer>
+);
 
 export const AdminClasses = () => {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -66,9 +110,7 @@ export const AdminClasses = () => {
         {error ? <ErrorState message={error} /> : null}
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
-          </div>
+          <ClassesTableSkeleton />
         ) : classes.length === 0 ? (
           <EmptyState message="Nenhuma turma cadastrada." />
         ) : (

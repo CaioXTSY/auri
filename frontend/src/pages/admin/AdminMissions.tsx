@@ -12,6 +12,7 @@ import { MarkdownContent } from '@/components/ui/markdown-content';
 import { ModalDialog } from '@/components/ui/modal-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableCell,
@@ -64,6 +65,84 @@ const missionTypeFilters = [
   { value: 'SEMANAL', label: 'Semanais' },
   { value: 'PERSONALIZADA', label: 'Personalizadas' },
 ];
+
+const AdminMissionsTableSkeleton = () => (
+  <TableContainer>
+    <Table>
+      <TableHead>
+        <tr>
+          {['Título', 'Tipo', 'Pontos', 'Início', 'Disponibilidade', 'Quiz', 'Ações'].map((header) => (
+            <TableHeaderCell key={header} className={header === 'Ações' ? 'text-right' : undefined}>
+              {header}
+            </TableHeaderCell>
+          ))}
+        </tr>
+      </TableHead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <TableRow key={index}>
+            <TableCell>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-48 max-w-full" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-10" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-20" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-24" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-10" />
+            </TableCell>
+            <TableCell>
+              <div className="flex justify-end gap-3">
+                <Skeleton className="h-4 w-8" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </tbody>
+    </Table>
+  </TableContainer>
+);
+
+const QuizDetailSkeleton = () => (
+  <div className="space-y-5">
+    <div className="flex flex-wrap gap-2">
+      <Skeleton className="h-6 w-20 rounded-full" />
+      <Skeleton className="h-6 w-16 rounded-full" />
+      <Skeleton className="h-6 w-28 rounded-full" />
+    </div>
+    <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-4">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="mt-3 h-4 w-5/6" />
+      <Skeleton className="mt-3 h-4 w-2/3" />
+    </div>
+    <div className="space-y-3">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="rounded-md border border-slate-200 bg-white px-4 py-3">
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="mt-3 h-3 w-full" />
+              <Skeleton className="mt-2 h-3 w-4/5" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export const AdminMissions = () => {
   const [missions, setMissions] = useState<AdminMissionListItem[]>([]);
@@ -270,9 +349,7 @@ export const AdminMissions = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
-          </div>
+          <AdminMissionsTableSkeleton />
         ) : filtered.length === 0 ? (
           <EmptyState message="Nenhuma missão encontrada para o filtro atual." />
         ) : (
@@ -494,9 +571,7 @@ export const AdminMissions = () => {
           }
         >
           {isQuizLoading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
-            </div>
+            <QuizDetailSkeleton />
           ) : quizError ? (
             <ErrorState message={quizError} />
           ) : quizToView ? (

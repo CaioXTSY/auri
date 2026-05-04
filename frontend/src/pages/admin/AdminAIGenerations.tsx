@@ -13,7 +13,54 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { adminService, type AIGenerationListItem, type AIGenerationDetail } from '@/services/admin-service';
-import { Loader2, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const AIGenerationsTableSkeleton = () => (
+  <TableContainer>
+    <Table>
+      <TableHead>
+        <tr>
+          <TableHeaderCell>Tipo</TableHeaderCell>
+          <TableHeaderCell>Prompt (preview)</TableHeaderCell>
+          <TableHeaderCell>Criado em</TableHeaderCell>
+          <TableHeaderCell className="text-right">Ações</TableHeaderCell>
+        </tr>
+      </TableHead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <TableRow key={index}>
+            <TableCell>
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-96 max-w-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-32" />
+            </TableCell>
+            <TableCell>
+              <div className="flex justify-end">
+                <Skeleton className="h-4 w-8" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </tbody>
+    </Table>
+  </TableContainer>
+);
+
+const AIGenerationDetailSkeleton = () => (
+  <div className="space-y-4">
+    {Array.from({ length: 3 }).map((_, index) => (
+      <SectionCard key={index} className="p-4">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="mt-3 h-28 w-full" />
+      </SectionCard>
+    ))}
+  </div>
+);
 
 export const AdminAIGenerations = () => {
   const [items, setItems] = useState<AIGenerationListItem[]>([]);
@@ -48,7 +95,7 @@ export const AdminAIGenerations = () => {
         />
 
         {isLoading ? (
-          <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
+          <AIGenerationsTableSkeleton />
         ) : (
           <TableContainer>
             <Table>
@@ -103,7 +150,7 @@ export const AdminAIGenerations = () => {
               </button>
             </div>
             {isLoadingDetail || !selected ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-brand-600" /></div>
+              <AIGenerationDetailSkeleton />
             ) : (
               <>
                 <SectionCard className="p-4">

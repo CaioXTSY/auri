@@ -18,9 +18,46 @@ import {
 import { adminService, type AdminUserListItem } from '@/services/admin-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Role = 'ADMIN' | 'PROFESSOR' | 'ALUNO';
+
+const UsersTableSkeleton = () => (
+  <TableContainer>
+    <Table>
+      <TableHead>
+        <tr>
+          <TableHeaderCell>Nome</TableHeaderCell>
+          <TableHeaderCell>Email</TableHeaderCell>
+          <TableHeaderCell>Perfil</TableHeaderCell>
+          <TableHeaderCell className="text-right">Ações</TableHeaderCell>
+        </tr>
+      </TableHead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <TableRow key={index}>
+            <TableCell>
+              <Skeleton className="h-4 w-36" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-52 max-w-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </TableCell>
+            <TableCell>
+              <div className="flex justify-end gap-3">
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </tbody>
+    </Table>
+  </TableContainer>
+);
 
 export const AdminUsers = () => {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
@@ -153,9 +190,7 @@ export const AdminUsers = () => {
         {error ? <ErrorState message={error} /> : null}
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
-          </div>
+          <UsersTableSkeleton />
         ) : users.length === 0 ? (
           <EmptyState message="Nenhum usuário encontrado para os filtros atuais." />
         ) : (

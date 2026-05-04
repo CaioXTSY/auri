@@ -17,7 +17,8 @@ import {
 import { adminService, type Achievement, type CreateAchievementPayload } from '@/services/admin-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const EMPTY: CreateAchievementPayload = {
   name: '',
@@ -27,6 +28,54 @@ const EMPTY: CreateAchievementPayload = {
   condition: '',
   rarity: 'COMUM',
 };
+
+const AchievementsTableSkeleton = () => (
+  <TableContainer>
+    <Table>
+      <TableHead>
+        <tr>
+          <TableHeaderCell>Nome</TableHeaderCell>
+          <TableHeaderCell>Categoria</TableHeaderCell>
+          <TableHeaderCell>Condição</TableHeaderCell>
+          <TableHeaderCell>Pontos</TableHeaderCell>
+          <TableHeaderCell>Raridade</TableHeaderCell>
+          <TableHeaderCell>Desbloqueios</TableHeaderCell>
+          <TableHeaderCell className="text-right">Ações</TableHeaderCell>
+        </tr>
+      </TableHead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <TableRow key={index}>
+            <TableCell>
+              <Skeleton className="h-4 w-40 max-w-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-24" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-44 max-w-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-10" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-20" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-8" />
+            </TableCell>
+            <TableCell>
+              <div className="flex justify-end gap-3">
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </tbody>
+    </Table>
+  </TableContainer>
+);
 
 export const AdminAchievements = () => {
   const [items, setItems] = useState<Achievement[]>([]);
@@ -125,9 +174,7 @@ export const AdminAchievements = () => {
         {error ? <ErrorState message={error} /> : null}
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
-          </div>
+          <AchievementsTableSkeleton />
         ) : items.length === 0 ? (
           <EmptyState message="Nenhuma conquista cadastrada." />
         ) : (
