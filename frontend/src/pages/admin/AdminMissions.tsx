@@ -58,6 +58,13 @@ const exampleMissionForm = {
   points: '140',
 };
 
+const missionTypeFilters = [
+  { value: '', label: 'Todos' },
+  { value: 'DIARIA', label: 'Diárias' },
+  { value: 'SEMANAL', label: 'Semanais' },
+  { value: 'PERSONALIZADA', label: 'Personalizadas' },
+];
+
 export const AdminMissions = () => {
   const [missions, setMissions] = useState<AdminMissionListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -226,28 +233,41 @@ export const AdminMissions = () => {
           </div>
         </SectionCard>
 
-        <SectionCard className="p-4">
-          <Field htmlFor="missions-type-filter" label="Filtrar por tipo" className="max-w-sm">
-            <select
-              id="missions-type-filter"
-              value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value)}
-              className="h-10 rounded-md border border-slate-200 px-3 text-sm"
-            >
-              <option value="">Todos os tipos</option>
-              <option value="DIARIA">Diária</option>
-              <option value="SEMANAL">Semanal</option>
-              <option value="PERSONALIZADA">Personalizada</option>
-            </select>
-          </Field>
-        </SectionCard>
-
         {error ? <ErrorState message={error} /> : null}
         {success ? (
           <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             {success}
           </div>
         ) : null}
+
+        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Missões cadastradas</h2>
+            <p className="text-xs text-slate-500">
+              {filtered.length} de {missions.length} missões
+            </p>
+          </div>
+          <div className="inline-flex w-full gap-1 rounded-md border border-slate-200 bg-slate-50 p-1 sm:w-auto">
+            {missionTypeFilters.map((filter) => {
+              const isActive = typeFilter === filter.value;
+
+              return (
+                <button
+                  key={filter.value || 'all'}
+                  type="button"
+                  onClick={() => setTypeFilter(filter.value)}
+                  className={`h-9 flex-1 rounded px-3 text-xs font-semibold transition sm:flex-none ${
+                    isActive
+                      ? 'bg-white text-brand-900 shadow-sm'
+                      : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {isLoading ? (
           <div className="flex justify-center py-12">
