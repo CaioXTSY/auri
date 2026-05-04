@@ -328,6 +328,40 @@ export class MissionsService {
     return this.missionQuizService.getMissionQuiz(missionId, userId);
   }
 
+  async getMissionQuizDetails(missionId: string, userId?: string, userRole?: string) {
+    const mission = await this.findOne(missionId, userId, userRole);
+    const quiz = await this.prisma.missionQuiz.findUnique({
+      where: { missionId },
+      select: {
+        id: true,
+        missionId: true,
+        title: true,
+        question: true,
+        difficulty: true,
+        options: true,
+        explanations: true,
+        correctIndex: true,
+        createdAt: true,
+      },
+    });
+
+    if (!quiz) {
+      throw new NotFoundException('Quiz da missão não encontrado');
+    }
+
+    return {
+      ...quiz,
+      mission: {
+        id: mission.id,
+        title: mission.title,
+        type: mission.type,
+        points: mission.points,
+        startDate: mission.startDate,
+        endDate: mission.endDate,
+      },
+    };
+  }
+
   answerMissionQuiz(missionId: string, userId: string, answerQuizDto: AnswerQuizDto) {
     return this.missionQuizService.answerMissionQuiz(missionId, userId, answerQuizDto);
   }

@@ -110,6 +110,26 @@ export interface GenerateMissionQuizPayload {
   startDate?: string;
 }
 
+export interface AdminMissionQuizDetail {
+  id: string;
+  missionId: string;
+  title: string;
+  question: string;
+  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
+  options: string[];
+  explanations: string[];
+  correctIndex: number;
+  createdAt: string;
+  mission: {
+    id: string;
+    title: string;
+    type: 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA';
+    points: number;
+    startDate: string;
+    endDate: string;
+  };
+}
+
 export interface BroadcastPayload {
   type: 'SISTEMA' | 'CONQUISTA' | 'MISSAO' | 'RANKING';
   title: string;
@@ -194,6 +214,11 @@ export const adminService = {
 
   generateMissionQuiz: async (payload: GenerateMissionQuizPayload): Promise<AdminMissionListItem> => {
     const { data } = await api.post<AdminMissionListItem>('/missions/generate-quiz', payload);
+    return data;
+  },
+
+  getMissionQuiz: async (id: string): Promise<AdminMissionQuizDetail> => {
+    const { data } = await api.get<AdminMissionQuizDetail>(`/missions/${id}/quiz/admin`);
     return data;
   },
 

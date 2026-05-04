@@ -467,16 +467,25 @@ export class QuizGeneratorService {
       '5. As alternativas incorretas devem ser plausiveis, mas inequivocamente erradas.',
       '6. A explicacao de cada alternativa deve ensinar o motivo de estar correta ou errada.',
       '7. Retorne apenas JSON valido no formato exato esperado pelo sistema.',
+      '8. Se usar codigo, o enunciado DEVE conter bloco fenced Markdown com linguagem, usando quebras de linha e indentacao reais dentro da string JSON.',
+      '9. Nao coloque codigo em uma unica linha. Nao remova indentacao de blocos Python, JavaScript, Java, C ou C++.',
       '',
       'FORMATO JSON:',
       '{',
       '  "title": "Titulo curto e claro",',
-      '  "question": "Enunciado completo com codigo se necessario",',
+      '  "question": "Enunciado completo. Se houver codigo, use: ```python\\ndef exemplo():\\n    return 1\\n```",',
       '  "difficulty": "FACIL" | "MEDIO" | "DIFICIL",',
       '  "options": ["Alternativa 1", "Alternativa 2", "Alternativa 3", "Alternativa 4"],',
       '  "correctIndex": 0,',
       '  "explanations": ["Explicacao da 1", "Explicacao da 2", "Explicacao da 3", "Explicacao da 4"]',
       '}',
+      '',
+      'REGRAS DE FORMATACAO:',
+      '- Exatamente 4 alternativas, cada uma com o texto completo da resposta.',
+      '- Explicacoes devem ser educativas e detalhadas, com no minimo 15 palavras cada.',
+      '- Nao use markdown fora dos campos JSON.',
+      '- Se usar codigo na pergunta, use blocos formatados com \\n e preserve indentacao.',
+      '- Para Python, linhas dentro de funcoes, if, for, while, try, class etc. devem ter 4 espacos de indentacao.',
     ]
       .filter(Boolean)
       .join('\n');
@@ -511,7 +520,8 @@ export class QuizGeneratorService {
       '2. Confira cada indice, fatia, tipo, escopo e excecao.',
       '3. Garanta que correctIndex aponta para a unica alternativa correta.',
       '4. Garanta que a explicacao da alternativa correta descreve exatamente a execucao real.',
-      '5. Retorne apenas o JSON final.',
+      '5. Se houver codigo, preserve quebras de linha e indentacao em bloco fenced Markdown.',
+      '6. Retorne apenas o JSON final.',
     ].join('\n');
   }
 

@@ -207,6 +207,19 @@ export class MissionsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
+  @Get(':id/quiz/admin')
+  @Roles('ADMIN', 'PROFESSOR')
+  @ApiOperation({ summary: 'Obter quiz completo da missão para revisão (Admin/Professor)' })
+  @ApiResponse({ status: 200, description: 'Quiz completo retornado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  @ApiResponse({ status: 404, description: 'Quiz da missão não encontrado' })
+  getMissionQuizDetails(@Param('id') id: string, @Request() req) {
+    return this.missionsService.getMissionQuizDetails(id, req.user.id, req.user.role);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Post(':id/quiz/answer')
   @Roles('ALUNO')
   @ApiOperation({ summary: 'Responder quiz da missão (Aluno)' })
