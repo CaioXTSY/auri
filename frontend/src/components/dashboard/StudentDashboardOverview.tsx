@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, GraduationCap, Medal, MessageSquareText, Sparkles, Target, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MarkdownContent } from '@/components/ui/markdown-content';
-import { ProgressBar } from '@/components/ui/progress-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { STREAK_MILESTONES } from '@/constants/app';
 import { formatRelativeDate, getUserInitials } from '@/hooks/use-posts-board';
@@ -70,9 +69,6 @@ export const StudentDashboardOverview = ({
     levelInfo && levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel > 0
       ? levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel
       : 0;
-  const progress = levelInfo?.progressToNextLevel
-    ? Math.min(100, Math.max(0, Math.round(levelInfo.progressToNextLevel)))
-    : 0;
   const { nextMilestone, daysLeft, segmentProgress } = getStreakSegment(streakCurrent);
 
   return (
@@ -167,13 +163,6 @@ export const StudentDashboardOverview = ({
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Nível Atual</p>
                   <p className="mt-1 text-4xl font-display font-bold text-accent-600">Nível {level}</p>
                   {levelInfo ? <p className="mt-1 text-xs text-slate-500">{currentXp} XP de {nextLevelXp} XP para o próximo nível</p> : null}
-                </div>
-                <div className="max-w-xs flex-1">
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Progresso</span>
-                    <span className="text-xs font-semibold text-brand-900">{progress}%</span>
-                  </div>
-                  <ProgressBar value={progress} variant="xp" size="md" />
                 </div>
               </div>
             </div>
