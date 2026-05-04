@@ -74,22 +74,8 @@ export const AdminDashboardCharts = ({
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title="Top 5 turmas por alunos">
-          {tops.topClasses.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-500">Sem dados.</p>
-          ) : (
-            <RankedBarList
-              items={tops.topClasses.map((item) => ({
-                label: item.name,
-                value: item.students,
-              }))}
-              colorClassName="bg-indigo-500"
-              valueSuffix=" alunos"
-            />
-          )}
-        </ChartCard>
 
-        <ChartCard title="Top 5 conquistas desbloqueadas">
+        <ChartCard title="Conquistas mais desbloqueadas">
           {tops.topAchievements.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500">Sem dados.</p>
           ) : (
