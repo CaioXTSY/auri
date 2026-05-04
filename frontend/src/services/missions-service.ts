@@ -81,6 +81,14 @@ export interface MissionQuizAnswerResponse {
   pointsAwarded: number;
 }
 
+export interface RandomQuizMission {
+  id: string;
+  title: string;
+  type: MissionType;
+  points: number;
+  class?: MissionClassInfo | null;
+}
+
 export const missionsService = {
   getAvailable: async (classId?: string): Promise<Mission[]> => {
     const response = await api.get<Mission[]>('/missions/available', {
@@ -98,6 +106,11 @@ export const missionsService = {
 
   getMyStats: async (): Promise<MissionStats> => {
     const response = await api.get<MissionStats>('/missions/my-stats');
+    return response.data;
+  },
+
+  getRandomQuizMission: async (): Promise<RandomQuizMission> => {
+    const response = await api.get<RandomQuizMission>('/missions/random-quiz');
     return response.data;
   },
 

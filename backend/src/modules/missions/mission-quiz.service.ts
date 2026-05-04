@@ -334,6 +334,58 @@ export class MissionQuizService {
     };
   }
 
+  async getRandomQuizMission(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        classEnrollments: { select: { classId: true } },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Sessão inválida. Faça login novamente.');
+    }
+
+    const now = new Date();
+    const userClassIds = user.classEnrollments.map((enrollment) => enrollment.classId);
+
+    const candidates = await this.prisma.mission.findMany({
+      where: {
+        startDate: { lte: now },
+        quiz: { isNot: null },
+        quizAttempts: {
+          none: {
+            userId,
+            isCorrect: true,
+          },
+        },
+        OR: [
+          { classId: null },
+          { classId: { in: userClassIds } },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        points: true,
+        class: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (candidates.length === 0) {
+      throw new NotFoundException('Nenhuma questão aleatória disponível no momento');
+    }
+
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    return candidates[randomIndex];
+  }
+
   async completeMission(missionId: string, userId: string) {
     const userMission = await this.prisma.userMission.findUnique({
       where: { userId_missionId: { userId, missionId } },

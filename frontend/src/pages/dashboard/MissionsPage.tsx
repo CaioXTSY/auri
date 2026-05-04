@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CalendarDays, Flag, Loader2, Trophy } from 'lucide-react';
+import { CalendarDays, Dices, Flag, Loader2, Trophy } from 'lucide-react';
 import { MISSIONS_PAGE_SIZE } from '@/constants/app';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
@@ -124,6 +124,7 @@ export const MissionsPage = () => {
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
   const [availablePage, setAvailablePage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
+  const [isOpeningRandomQuiz, setIsOpeningRandomQuiz] = useState(false);
   const { notify } = useToast();
   const pageSize = MISSIONS_PAGE_SIZE;
 
@@ -196,6 +197,21 @@ export const MissionsPage = () => {
 
   const openMissionQuiz = (missionId: string) => {
     setActiveMissionId(missionId);
+  };
+
+  const handleOpenRandomQuiz = async () => {
+    setIsOpeningRandomQuiz(true);
+    setError(null);
+
+    try {
+      const mission = await missionsService.getRandomQuizMission();
+      setActiveMissionId(mission.id);
+    } catch {
+      setError('Não há uma questão aleatória disponível para você agora.');
+      notify({ title: 'Nenhuma questão aleatória disponível', variant: 'error' });
+    } finally {
+      setIsOpeningRandomQuiz(false);
+    }
   };
 
   const handleCompleteMission = async (missionId: string) => {
@@ -284,6 +300,24 @@ export const MissionsPage = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              className="bg-brand-900 text-white hover:bg-brand-800"
+              onClick={handleOpenRandomQuiz}
+              disabled={isOpeningRandomQuiz}
+            >
+              {isOpeningRandomQuiz ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sorteando...
+                </>
+              ) : (
+                <>
+                  <Dices className="mr-2 h-4 w-4" />
+                  Questão aleatória
+                </>
+              )}
+            </Button>
             <Button
               type="button"
               variant="outline"

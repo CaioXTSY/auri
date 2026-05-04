@@ -425,6 +425,10 @@ export class MissionsService {
     return this.missionQuizService.getDailyQuizForUser(userId);
   }
 
+  getRandomQuizMission(userId: string) {
+    return this.missionQuizService.getRandomQuizMission(userId);
+  }
+
   completeMission(missionId: string, userId: string) {
     return this.missionQuizService.completeMission(missionId, userId);
   }

@@ -139,6 +139,19 @@ export class MissionsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('random-quiz')
+  @Roles('ALUNO')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obter uma questão aleatória disponível para o aluno' })
+  @ApiResponse({ status: 200, description: 'Questão aleatória retornada com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
+  @ApiResponse({ status: 404, description: 'Nenhuma questão disponível' })
+  getRandomQuizMission(@Request() req) {
+    return this.missionsService.getRandomQuizMission(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Get(':id')
   @Roles('ADMIN', 'PROFESSOR')
