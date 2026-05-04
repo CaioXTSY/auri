@@ -9,25 +9,18 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  IsUUID,
   Max,
   MaxLength,
   Min,
 } from 'class-validator';
-import { GeneratedMissionType } from './generate-mission-quiz.dto';
 
-export class ApproveMissionQuizDto {
-  @ApiPropertyOptional({ description: 'ID da geração de IA criada na prévia' })
-  @IsOptional()
-  @IsUUID()
-  aiGenerationId?: string;
-
-  @ApiProperty({ description: 'Título da questão', maxLength: 200 })
+export class CreateManualMissionQuizDto {
+  @ApiProperty({ description: 'Titulo da missão e da questão', maxLength: 200 })
   @IsString()
   @MaxLength(200)
   title: string;
 
-  @ApiProperty({ description: 'Enunciado da questão' })
+  @ApiProperty({ description: 'Enunciado completo da questão' })
   @IsString()
   question: string;
 
@@ -54,11 +47,6 @@ export class ApproveMissionQuizDto {
   @Min(0)
   @Max(3)
   correctIndex: number;
-
-  @ApiPropertyOptional({ enum: GeneratedMissionType, default: GeneratedMissionType.PERSONALIZADA })
-  @IsOptional()
-  @IsEnum(GeneratedMissionType)
-  type?: GeneratedMissionType;
 
   @ApiPropertyOptional({ description: 'Pontos da missão', minimum: 0, maximum: 1000 })
   @IsOptional()

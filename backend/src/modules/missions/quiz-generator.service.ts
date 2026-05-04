@@ -11,8 +11,6 @@ import {
   DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT,
 } from './prompts/daily-quiz.prompt';
 import { getDailyQuizDateWindow } from './daily-quiz-date';
-import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
-import { ApproveMissionQuizDto } from './dto/approve-mission-quiz.dto';
 
 const PERMANENT_MISSION_END_DATE = new Date('2099-12-31T23:59:59.999Z');
 
@@ -23,13 +21,6 @@ type GeneratedQuiz = {
   options: string[];
   correctIndex: number;
   explanations: string[];
-};
-
-type RecentQuizSummary = {
-  title: string;
-  question: string;
-  topic: string;
-  language: string | null;
 };
 
 @Injectable()
@@ -73,192 +64,6 @@ export class QuizGeneratorService {
       await this.releaseGenerationLock(lockName);
       this.generationLock = false;
     }
-  }
-
-  async generateAdminQuizMission(params: GenerateMissionQuizDto, createdById: string) {
-    const draft = await this.generateAdminQuizDraft(params);
-    return this.createAdminQuizMissionFromDraft(
-      draft.quiz,
-      draft.points,
-      draft.startDate,
-      draft.missionType,
-      createdById,
-      draft.prompt,
-      draft.content,
-    );
-  }
-
-  async generateAdminQuizPreview(params: GenerateMissionQuizDto) {
-    const draft = await this.generateAdminQuizDraft(params);
-    const aiGeneration = await this.prisma.aIGeneration.create({
-      data: {
-        type: 'MISSION_QUIZ_PREVIEW',
-        prompt: draft.prompt,
-        response: draft.content,
-      },
-    });
-
-    return {
-      aiGenerationId: aiGeneration.id,
-      ...draft.quiz,
-      points: draft.points,
-      type: draft.missionType,
-      startDate: draft.startDate,
-      endDate: PERMANENT_MISSION_END_DATE,
-    };
-  }
-
-  async approveAdminQuizMission(dto: ApproveMissionQuizDto, createdById: string) {
-    const quiz: GeneratedQuiz = {
-      title: dto.title.trim(),
-      question: dto.question.trim(),
-      difficulty: dto.difficulty,
-      options: dto.options.map((option) => option.trim()),
-      correctIndex: dto.correctIndex,
-      explanations: dto.explanations.map((explanation) => explanation.trim()),
-    };
-
-    this.validateQuizShape(quiz);
-
-    const mission = await this.createAdminQuizMissionFromDraft(
-      quiz,
-      dto.points ?? this.getPointsForDifficulty(quiz.difficulty),
-      dto.startDate ? new Date(dto.startDate) : new Date(),
-      dto.type === 'SEMANAL' ? 'SEMANAL' : 'PERSONALIZADA',
-      createdById,
-      null,
-      null,
-      dto.aiGenerationId,
-    );
-
-    if (dto.aiGenerationId) {
-      await this.prisma.aIGeneration.update({
-        where: { id: dto.aiGenerationId },
-        data: { type: 'MISSION_QUIZ' },
-      });
-    }
-
-    return mission;
-  }
-
-  private async generateAdminQuizDraft(params: GenerateMissionQuizDto) {
-    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
-    if (!apiKey) {
-      throw new BadRequestException('OPENAI_API_KEY nao configurada');
-    }
-
-    const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
-    const startDate = params.startDate ? new Date(params.startDate) : new Date();
-    const recentQuizzes = await this.getRecentQuizSummariesByCount(15);
-    const basePrompt = this.buildAdminQuizPrompt(params, recentQuizzes);
-    let prompt = basePrompt;
-    let content = '';
-    let quiz: GeneratedQuiz | null = null;
-    let lastRejectionReason = '';
-    let rejectedQuiz: GeneratedQuiz | null = null;
-
-    for (let attempt = 1; attempt <= 5; attempt++) {
-      prompt =
-        attempt === 1
-          ? basePrompt
-          : this.buildAdminQuizRepairPrompt(params, recentQuizzes, rejectedQuiz, lastRejectionReason);
-
-      content = await this.requestQuizGeneration(apiKey, model, prompt);
-      quiz = this.normalizeGeneratedQuiz(content, params.difficulty);
-      const validation = await this.validateGeneratedQuiz(apiKey, model, quiz);
-
-      if (validation.isValid && validation.correctIndex === quiz.correctIndex) {
-        lastRejectionReason = '';
-        break;
-      }
-
-      lastRejectionReason =
-        validation.reason ||
-        `correctIndex validado=${validation.correctIndex}, correctIndex gerado=${quiz.correctIndex}`;
-      rejectedQuiz = quiz;
-      this.logger.warn(
-        `Questao admin rejeitada pela validacao na tentativa ${attempt}: ${lastRejectionReason}`,
-      );
-      quiz = null;
-    }
-
-    if (!quiz) {
-      throw new BadRequestException(
-        `Nao foi possivel gerar uma questao valida apos 5 tentativas. Ultima rejeicao: ${
-          lastRejectionReason || 'sem motivo informado'
-        }`,
-      );
-    }
-
-    const points = params.points ?? this.getPointsForDifficulty(quiz.difficulty);
-    const missionType: 'SEMANAL' | 'PERSONALIZADA' =
-      params.type === 'SEMANAL' ? 'SEMANAL' : 'PERSONALIZADA';
-
-    return { quiz, points, missionType, startDate, prompt, content };
-  }
-
-  private async createAdminQuizMissionFromDraft(
-    quiz: GeneratedQuiz,
-    points: number,
-    startDate: Date,
-    missionType: 'SEMANAL' | 'PERSONALIZADA',
-    createdById: string,
-    prompt: string | null,
-    content: string | null,
-    existingAiGenerationId?: string,
-  ) {
-    const mission = await this.prisma.$transaction(async (tx) => {
-      const aiGeneration =
-        existingAiGenerationId
-          ? await tx.aIGeneration.findUnique({ where: { id: existingAiGenerationId } })
-          : prompt && content
-            ? await tx.aIGeneration.create({
-                data: {
-                  type: 'MISSION_QUIZ',
-                  prompt,
-                  response: content,
-                },
-              })
-            : null;
-
-      const created = await tx.mission.create({
-        data: {
-          title: quiz.title,
-          description: quiz.question,
-          type: missionType,
-          points,
-          startDate,
-          endDate: PERMANENT_MISSION_END_DATE,
-          createdById,
-        },
-      });
-
-      await tx.missionQuiz.create({
-        data: {
-          missionId: created.id,
-          title: quiz.title,
-          question: quiz.question,
-          difficulty: quiz.difficulty,
-          options: quiz.options,
-          explanations: quiz.explanations,
-          correctIndex: quiz.correctIndex,
-          aiGenerationId: aiGeneration?.id,
-        },
-      });
-
-      return tx.mission.findUniqueOrThrow({
-        where: { id: created.id },
-        include: {
-          class: { select: { id: true, name: true } },
-          quiz: { select: { id: true, difficulty: true } },
-        },
-      });
-    });
-
-    return {
-      ...mission,
-      hasQuiz: true,
-    };
   }
 
   private async doGenerateDaily(apiKey: string) {
@@ -524,98 +329,6 @@ export class QuizGeneratorService {
     return JSON.parse(match[0]);
   }
 
-  private buildAdminQuizPrompt(params: GenerateMissionQuizDto, recentQuizzes: RecentQuizSummary[]) {
-    const recentBlock =
-      recentQuizzes.length > 0
-        ? [
-            'ULTIMAS 15 QUESTOES DA PLATAFORMA (NAO REPITA tema, titulo, estrutura, codigo ou pegadinha):',
-            ...recentQuizzes.map(
-              (q, i) =>
-                `  ${i + 1}. [${q.language ?? '?'}] ${q.title} - ${q.topic} - ${this.compactText(q.question, 180)}`,
-            ),
-            '',
-          ].join('\n')
-        : '';
-
-    return [
-      'Gere uma questao de multipla escolha para virar uma missao da plataforma AURI.',
-      'A questao sera acessada por alunos na pagina de missoes, entao ela deve ser autocontida.',
-      `Tema obrigatorio: ${params.theme}.`,
-      `Dificuldade alvo: ${params.difficulty}.`,
-      `Linguagem preferida: ${params.language?.trim() || 'escolha a mais adequada ao tema'}.`,
-      `Publico alvo: ${params.audience?.trim() || 'alunos de graduacao em computacao'}.`,
-      `Objetivo pedagogico: ${params.learningObjective?.trim() || 'avaliar raciocinio tecnico e entendimento conceitual'}.`,
-      params.extraInstructions?.trim()
-        ? `Instrucoes extras do admin: ${params.extraInstructions.trim()}.`
-        : '',
-      '',
-      recentBlock,
-      'REGRAS TECNICAS:',
-      '1. Nao crie questao parecida com nenhuma das ultimas 15 questoes listadas.',
-      '2. Se houver codigo que gera erro, a alternativa correta deve ser o erro real.',
-      '3. Evite comportamento dependente de versao, ambiente ou implementacao. Declare versao quando isso importar.',
-      '4. Exatamente uma alternativa deve estar correta.',
-      '5. As alternativas incorretas devem ser plausiveis, mas inequivocamente erradas.',
-      '6. A explicacao de cada alternativa deve ensinar o motivo de estar correta ou errada.',
-      '7. Retorne apenas JSON valido no formato exato esperado pelo sistema.',
-      '8. Se usar codigo, o enunciado DEVE conter bloco fenced Markdown com linguagem, usando quebras de linha e indentacao reais dentro da string JSON.',
-      '9. Nao coloque codigo em uma unica linha. Nao remova indentacao de blocos Python, JavaScript, Java, C ou C++.',
-      '',
-      'FORMATO JSON:',
-      '{',
-      '  "title": "Titulo curto e claro",',
-      '  "question": "Enunciado completo. Se houver codigo, use: ```python\\ndef exemplo():\\n    return 1\\n```",',
-      '  "difficulty": "FACIL" | "MEDIO" | "DIFICIL",',
-      '  "options": ["Alternativa 1", "Alternativa 2", "Alternativa 3", "Alternativa 4"],',
-      '  "correctIndex": 0,',
-      '  "explanations": ["Explicacao da 1", "Explicacao da 2", "Explicacao da 3", "Explicacao da 4"]',
-      '}',
-      '',
-      'REGRAS DE FORMATACAO:',
-      '- Exatamente 4 alternativas, cada uma com o texto completo da resposta.',
-      '- Explicacoes devem ser educativas e detalhadas, com no minimo 15 palavras cada.',
-      '- Nao use markdown fora dos campos JSON.',
-      '- Se usar codigo na pergunta, use blocos formatados com \\n e preserve indentacao.',
-      '- Para Python, linhas dentro de funcoes, if, for, while, try, class etc. devem ter 4 espacos de indentacao.',
-    ]
-      .filter(Boolean)
-      .join('\n');
-  }
-
-  private buildAdminQuizRepairPrompt(
-    params: GenerateMissionQuizDto,
-    recentQuizzes: RecentQuizSummary[],
-    rejectedQuiz: GeneratedQuiz | null,
-    rejectionReason: string,
-  ) {
-    return [
-      this.buildAdminQuizPrompt(params, recentQuizzes),
-      '',
-      'A TENTATIVA ANTERIOR FOI REJEITADA PELO REVISOR TECNICO.',
-      `Motivo da rejeicao: ${rejectionReason || 'sem motivo informado'}`,
-      rejectedQuiz
-        ? [
-            '',
-            'QUESTAO REJEITADA:',
-            JSON.stringify(rejectedQuiz, null, 2),
-            '',
-            'TAREFA:',
-            'Corrija profundamente a questao rejeitada OU gere uma nova questao sobre o mesmo tema.',
-            'Se corrigir, refaca a execucao passo a passo e ajuste question, options, correctIndex e explanations para ficarem totalmente consistentes.',
-            'Se gerar uma nova, escolha um exemplo mais simples e verificavel.',
-          ].join('\n')
-        : 'Gere uma questao nova, mais simples e verificavel.',
-      '',
-      'ANTES DE RESPONDER:',
-      '1. Resolva o enunciado internamente passo a passo.',
-      '2. Confira cada indice, fatia, tipo, escopo e excecao.',
-      '3. Garanta que correctIndex aponta para a unica alternativa correta.',
-      '4. Garanta que a explicacao da alternativa correta descreve exatamente a execucao real.',
-      '5. Se houver codigo, preserve quebras de linha e indentacao em bloco fenced Markdown.',
-      '6. Retorne apenas o JSON final.',
-    ].join('\n');
-  }
-
   private async acquireGenerationLock(lockName: string) {
     try {
       const rows = await this.prisma.$queryRaw<{ acquired: number | bigint | null }[]>(
@@ -657,19 +370,6 @@ export class QuizGeneratorService {
     return quizzes.map((q) => {
       const { language, topic } = this.summarizeQuizQuestion(q.title, q.question);
       return { title: q.title, topic, language };
-    });
-  }
-
-  private async getRecentQuizSummariesByCount(take: number): Promise<RecentQuizSummary[]> {
-    const quizzes = await this.prisma.missionQuiz.findMany({
-      select: { title: true, question: true },
-      orderBy: { createdAt: 'desc' },
-      take,
-    });
-
-    return quizzes.map((q) => {
-      const { language, topic } = this.summarizeQuizQuestion(q.title, q.question);
-      return { title: q.title, question: q.question, topic, language };
     });
   }
 
@@ -726,8 +426,4 @@ export class QuizGeneratorService {
     return pointsByDifficulty[difficulty];
   }
 
-  private compactText(text: string, maxLength: number) {
-    const compacted = text.replace(/\s+/g, ' ').trim();
-    return compacted.length > maxLength ? `${compacted.slice(0, maxLength - 3)}...` : compacted;
-  }
 }

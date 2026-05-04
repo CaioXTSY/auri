@@ -6,8 +6,9 @@ import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { MissionType } from '@prisma/client';
 import { MissionQuizService } from './mission-quiz.service';
 import { QuizGeneratorService } from './quiz-generator.service';
-import { GenerateMissionQuizDto } from './dto/generate-mission-quiz.dto';
-import { ApproveMissionQuizDto } from './dto/approve-mission-quiz.dto';
+import { CreateManualMissionQuizDto } from './dto/create-manual-mission-quiz.dto';
+
+const PERMANENT_MISSION_END_DATE = new Date('2099-12-31T23:59:59.999Z');
 
 @Injectable()
 export class MissionsService {
@@ -108,16 +109,57 @@ export class MissionsService {
     }));
   }
 
-  generateQuizMission(generateMissionQuizDto: GenerateMissionQuizDto, createdById: string) {
-    return this.quizGeneratorService.generateAdminQuizMission(generateMissionQuizDto, createdById);
-  }
+  async createManualQuizMission(createManualQuizDto: CreateManualMissionQuizDto, createdById: string) {
+    const title = createManualQuizDto.title.trim();
+    const question = createManualQuizDto.question.trim();
+    const options = createManualQuizDto.options.map((option) => option.trim());
+    const explanations = createManualQuizDto.explanations.map((explanation) => explanation.trim());
 
-  generateQuizPreview(generateMissionQuizDto: GenerateMissionQuizDto) {
-    return this.quizGeneratorService.generateAdminQuizPreview(generateMissionQuizDto);
-  }
+    if (!title || !question || options.some((option) => !option)) {
+      throw new BadRequestException('Título, enunciado e alternativas são obrigatórios');
+    }
 
-  approveGeneratedQuiz(approveMissionQuizDto: ApproveMissionQuizDto, createdById: string) {
-    return this.quizGeneratorService.approveAdminQuizMission(approveMissionQuizDto, createdById);
+    const points = createManualQuizDto.points ?? this.getPointsForDifficulty(createManualQuizDto.difficulty);
+    const startDate = createManualQuizDto.startDate ? new Date(createManualQuizDto.startDate) : new Date();
+
+    const mission = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.mission.create({
+        data: {
+          title,
+          description: question,
+          type: MissionType.PERSONALIZADA,
+          points,
+          startDate,
+          endDate: PERMANENT_MISSION_END_DATE,
+          createdById,
+        },
+      });
+
+      await tx.missionQuiz.create({
+        data: {
+          missionId: created.id,
+          title,
+          question,
+          difficulty: createManualQuizDto.difficulty,
+          options,
+          explanations,
+          correctIndex: createManualQuizDto.correctIndex,
+        },
+      });
+
+      return tx.mission.findUniqueOrThrow({
+        where: { id: created.id },
+        include: {
+          class: { select: { id: true, name: true } },
+          quiz: { select: { id: true, difficulty: true } },
+        },
+      });
+    });
+
+    return {
+      ...mission,
+      hasQuiz: true,
+    };
   }
 
   async findOne(id: string, userId?: string, userRole?: string) {
@@ -385,5 +427,14 @@ export class MissionsService {
 
   completeMission(missionId: string, userId: string) {
     return this.missionQuizService.completeMission(missionId, userId);
+  }
+
+  private getPointsForDifficulty(difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL') {
+    const pointsByDifficulty = {
+      FACIL: 40,
+      MEDIO: 85,
+      DIFICIL: 140,
+    };
+    return pointsByDifficulty[difficulty];
   }
 }

@@ -1,4 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
+import axios from 'axios';
+import { Eye, Loader2, Plus, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
@@ -10,7 +12,6 @@ import { MarkdownContent } from '@/components/ui/markdown-content';
 import { ModalDialog } from '@/components/ui/modal-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
-import axios from 'axios';
 import {
   Table,
   TableCell,
@@ -21,29 +22,48 @@ import {
 } from '@/components/ui/table';
 import {
   adminService,
-  type AdminMissionQuizDetail,
-  type AdminMissionQuizPreview,
   type AdminMissionListItem,
-  type GenerateMissionQuizPayload,
+  type AdminMissionQuizDetail,
+  type CreateManualMissionQuizPayload,
 } from '@/services/admin-service';
-import { Eye, Loader2, Sparkles, Trash2 } from 'lucide-react';
 
-const initialGenerationForm = {
-  theme: '',
-  difficulty: 'MEDIO' as GenerateMissionQuizPayload['difficulty'],
-  language: '',
-  audience: 'alunos de graduação em computação',
-  learningObjective: '',
-  extraInstructions: '',
+const initialMissionForm = {
+  title: '',
+  question: '',
+  difficulty: 'MEDIO' as CreateManualMissionQuizPayload['difficulty'],
+  options: ['', '', '', ''],
+  explanations: ['', '', '', ''],
+  correctIndex: 0,
   points: '',
-  startDate: '',
+};
+
+const exampleMissionForm = {
+  title: 'Escopo, closures e mutabilidade em Python',
+  question:
+    'Considere o código Python abaixo, que combina função aninhada, estado compartilhado e uma lista mutável:\n\n```python\ndef montar_registrador():\n    historico = []\n    total = 0\n\n    def registrar(valor):\n        nonlocal total\n        historico.append(valor)\n        if valor % 2 == 0:\n            total += valor\n        else:\n            total += len(historico)\n        return total\n\n    return registrar, historico\n\nregistrar, dados = montar_registrador()\nprint(registrar(3))\nprint(registrar(4))\ndados.append(10)\nprint(registrar(5))\nprint(dados)\n```\n\nQual alternativa descreve corretamente as saídas e a razão principal do resultado?',
+  difficulty: 'DIFICIL' as CreateManualMissionQuizPayload['difficulty'],
+  options: [
+    '1, 5, 8 e [3, 4, 10, 5]',
+    '1, 5, 9 e [3, 4, 10, 5]',
+    '3, 7, 12 e [3, 4, 10, 5]',
+    '1, 5, 9 e [3, 4, 5]',
+  ],
+  explanations: [
+    'Incorreta. A terceira chamada soma len(historico), que vale 4 após o append interno de 5, não 3.',
+    'Correta. total começa em 0; registrar(3) soma len([3]) = 1; registrar(4) soma 4; dados aponta para a mesma lista historico, então append(10) afeta o tamanho antes de registrar(5), que soma len([3,4,10,5]) = 4.',
+    'Incorreta. Valores ímpares não são somados diretamente; o código soma o tamanho atual do histórico.',
+    'Incorreta. dados referencia a mesma lista historico, então o append externo de 10 permanece visível no resultado final.',
+  ],
+  correctIndex: 1,
+  points: '140',
 };
 
 export const AdminMissions = () => {
   const [missions, setMissions] = useState<AdminMissionListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [generationForm, setGenerationForm] = useState(initialGenerationForm);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [missionForm, setMissionForm] = useState(initialMissionForm);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +72,6 @@ export const AdminMissions = () => {
   const [quizToView, setQuizToView] = useState<AdminMissionQuizDetail | null>(null);
   const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
-  const [draftToReview, setDraftToReview] = useState<AdminMissionQuizPreview | null>(null);
-  const [isApprovingDraft, setIsApprovingDraft] = useState(false);
 
   const load = async () => {
     setIsLoading(true);
@@ -72,75 +90,72 @@ export const AdminMissions = () => {
     load();
   }, []);
 
-  const updateGenerationField = <K extends keyof typeof generationForm>(
+  const updateMissionField = <K extends keyof typeof missionForm>(
     field: K,
-    value: (typeof generationForm)[K],
+    value: (typeof missionForm)[K],
   ) => {
-    setGenerationForm((current) => ({ ...current, [field]: value }));
+    setMissionForm((current) => ({ ...current, [field]: value }));
   };
 
-  const toIsoDate = (value: string) => (value ? new Date(value).toISOString() : undefined);
+  const updateOption = (index: number, value: string) => {
+    setMissionForm((current) => ({
+      ...current,
+      options: current.options.map((option, optionIndex) => (optionIndex === index ? value : option)),
+    }));
+  };
+
+  const updateExplanation = (index: number, value: string) => {
+    setMissionForm((current) => ({
+      ...current,
+      explanations: current.explanations.map((explanation, explanationIndex) =>
+        explanationIndex === index ? value : explanation,
+      ),
+    }));
+  };
 
   const getApiErrorMessage = (error: unknown) => {
-    if (!axios.isAxiosError(error)) return 'Não foi possível gerar a questão.';
+    if (!axios.isAxiosError(error)) return 'Não foi possível criar a questão.';
 
     const message = error.response?.data?.message;
     if (Array.isArray(message)) return message.join(' ');
     if (typeof message === 'string') return message;
 
-    return 'Não foi possível gerar a questão.';
+    return 'Não foi possível criar a questão.';
   };
 
-  const handleGenerate = async (event: FormEvent<HTMLFormElement>) => {
+  const canCreate =
+    missionForm.title.trim() &&
+    missionForm.question.trim() &&
+    missionForm.options.every((option) => option.trim());
+
+  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setSuccess(null);
-    setIsGenerating(true);
+    setIsCreating(true);
 
     try {
-      const payload: GenerateMissionQuizPayload = {
-        theme: generationForm.theme.trim(),
-        difficulty: generationForm.difficulty,
-        type: 'PERSONALIZADA',
-        ...(generationForm.language.trim() ? { language: generationForm.language.trim() } : {}),
-        ...(generationForm.audience.trim() ? { audience: generationForm.audience.trim() } : {}),
-        ...(generationForm.learningObjective.trim()
-          ? { learningObjective: generationForm.learningObjective.trim() }
+      const payload: CreateManualMissionQuizPayload = {
+        title: missionForm.title.trim(),
+        question: missionForm.question.trim(),
+        difficulty: missionForm.difficulty,
+        options: missionForm.options.map((option) => option.trim()),
+        explanations: missionForm.explanations.map((explanation) => explanation.trim()),
+        correctIndex: missionForm.correctIndex,
+        ...(missionForm.points.trim() && Number.isFinite(Number(missionForm.points))
+          ? { points: Number(missionForm.points) }
           : {}),
-        ...(generationForm.extraInstructions.trim()
-          ? { extraInstructions: generationForm.extraInstructions.trim() }
-          : {}),
-        ...(generationForm.points.trim() && Number.isFinite(Number(generationForm.points))
-          ? { points: Number(generationForm.points) }
-          : {}),
-        ...(generationForm.startDate ? { startDate: toIsoDate(generationForm.startDate) } : {}),
       };
 
-      const preview = await adminService.previewMissionQuiz(payload);
-      setDraftToReview(preview);
-    } catch (error) {
-      setError(getApiErrorMessage(error));
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleApproveDraft = async () => {
-    if (!draftToReview || isApprovingDraft) return;
-    setError(null);
-    setSuccess(null);
-    setIsApprovingDraft(true);
-
-    try {
-      const created = await adminService.approveMissionQuiz(draftToReview);
+      const created = await adminService.createManualMissionQuiz(payload);
       setMissions((current) => [created, ...current]);
-      setGenerationForm(initialGenerationForm);
-      setDraftToReview(null);
-      setSuccess(`Questão aprovada e adicionada: ${created.title}`);
+      setMissionForm(initialMissionForm);
+      setIsCreateModalOpen(false);
+      setSuccess(`Questão criada: ${created.title}`);
     } catch (error) {
       setError(getApiErrorMessage(error));
     } finally {
-      setIsApprovingDraft(false);
+      setIsCreating(false);
     }
   };
 
@@ -177,131 +192,38 @@ export const AdminMissions = () => {
   const filtered = typeFilter ? missions.filter((mission) => mission.type === typeFilter) : missions;
   const quizModalOpen = isQuizLoading || Boolean(quizToView) || Boolean(quizError);
 
+  const closeCreateModal = () => {
+    if (isCreating) return;
+    setIsCreateModalOpen(false);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <PageHeader
           title="Missões"
-          description="Gere questões com IA, visualize e remova missões cadastradas na plataforma."
+          description="Crie questões manuais, visualize e remova missões cadastradas na plataforma."
         />
 
         <SectionCard className="p-5">
-          <form onSubmit={handleGenerate} className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Gerar questão</h2>
+                <h2 className="text-base font-bold text-slate-900">Criar questão manual</h2>
                 <p className="text-sm text-slate-500">
-                  A IA recebe estes campos e as últimas 15 questões para evitar repetição.
+                  A missão criada fica disponível permanentemente no banco de missões da plataforma.
                 </p>
               </div>
-              <Button
-                type="submit"
-                disabled={isGenerating || !generationForm.theme.trim()}
-                className="bg-brand-900 text-white hover:bg-brand-800"
-              >
-                {isGenerating ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
-                )}
-                {isGenerating ? 'Gerando...' : 'Gerar prévia'}
-              </Button>
             </div>
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              <Field htmlFor="mission-theme" label="Tema" className="lg:col-span-2">
-                <Input
-                  id="mission-theme"
-                  value={generationForm.theme}
-                  onChange={(event) => updateGenerationField('theme', event.target.value)}
-                  placeholder="ex: recursão, arrays, ponteiros, grafos"
-                  maxLength={120}
-                  required
-                />
-              </Field>
-
-              <Field htmlFor="mission-difficulty" label="Dificuldade">
-                <select
-                  id="mission-difficulty"
-                  value={generationForm.difficulty}
-                  onChange={(event) =>
-                    updateGenerationField(
-                      'difficulty',
-                      event.target.value as GenerateMissionQuizPayload['difficulty'],
-                    )
-                  }
-                  className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm"
-                >
-                  <option value="FACIL">Fácil</option>
-                  <option value="MEDIO">Médio</option>
-                  <option value="DIFICIL">Difícil</option>
-                </select>
-              </Field>
-
-              <Field htmlFor="mission-language" label="Linguagem">
-                <Input
-                  id="mission-language"
-                  value={generationForm.language}
-                  onChange={(event) => updateGenerationField('language', event.target.value)}
-                  placeholder="ex: Python, JavaScript"
-                  maxLength={40}
-                />
-              </Field>
-
-              <Field htmlFor="mission-audience" label="Público-alvo">
-                <Input
-                  id="mission-audience"
-                  value={generationForm.audience}
-                  onChange={(event) => updateGenerationField('audience', event.target.value)}
-                  maxLength={200}
-                />
-              </Field>
-
-              <Field htmlFor="mission-objective" label="Objetivo">
-                <Input
-                  id="mission-objective"
-                  value={generationForm.learningObjective}
-                  onChange={(event) => updateGenerationField('learningObjective', event.target.value)}
-                  placeholder="ex: rastrear fluxo de execução"
-                  maxLength={240}
-                />
-              </Field>
-
-              <Field htmlFor="mission-points" label="Pontos">
-                <Input
-                  id="mission-points"
-                  type="number"
-                  min={0}
-                  max={1000}
-                  value={generationForm.points}
-                  onChange={(event) => updateGenerationField('points', event.target.value)}
-                  placeholder="auto"
-                />
-              </Field>
-
-              <Field htmlFor="mission-start-date" label="Início">
-                <Input
-                  id="mission-start-date"
-                  type="datetime-local"
-                  value={generationForm.startDate}
-                  onChange={(event) => updateGenerationField('startDate', event.target.value)}
-                />
-              </Field>
-
-            </div>
-
-            <Field htmlFor="mission-extra-instructions" label="Instruções extras">
-              <textarea
-                id="mission-extra-instructions"
-                value={generationForm.extraInstructions}
-                onChange={(event) => updateGenerationField('extraInstructions', event.target.value)}
-                placeholder="ex: use um bloco de código curto, evite pegadinhas de sintaxe"
-                rows={3}
-                maxLength={600}
-                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
-              />
-            </Field>
-          </form>
+            <Button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-brand-900 text-white hover:bg-brand-800"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nova questão
+            </Button>
+          </div>
         </SectionCard>
 
         <SectionCard className="p-4">
@@ -386,105 +308,142 @@ export const AdminMissions = () => {
         )}
 
         <ModalDialog
-          open={Boolean(draftToReview)}
-          title={draftToReview?.title ?? 'Revisar questão'}
-          description="Confira a questão antes de adicioná-la ao banco permanente de missões."
-          onClose={() => {
-            if (isApprovingDraft) return;
-            setDraftToReview(null);
-          }}
-          panelClassName="max-w-4xl"
-          closeOnOverlay={!isApprovingDraft}
+          open={isCreateModalOpen}
+          title="Criar questão manual"
+          description="Preencha os campos da questão e marque a alternativa correta."
+          onClose={closeCreateModal}
+          closeOnOverlay={!isCreating}
+          panelClassName="max-w-5xl"
           footer={
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
               <Button
                 type="button"
                 variant="outline"
                 className="border-slate-200 text-slate-600"
-                onClick={() => setDraftToReview(null)}
-                disabled={isApprovingDraft}
+                onClick={() => setMissionForm(exampleMissionForm)}
+                disabled={isCreating}
               >
-                Recusar
+                Usar exemplo
               </Button>
-              <Button
-                type="button"
-                className="bg-brand-900 text-white hover:bg-brand-800"
-                onClick={handleApproveDraft}
-                disabled={isApprovingDraft}
-              >
-                {isApprovingDraft ? (
-                  <>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-slate-200 text-slate-600"
+                  onClick={closeCreateModal}
+                  disabled={isCreating}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  form="manual-mission-form"
+                  disabled={isCreating || !canCreate}
+                  className="bg-brand-900 text-white hover:bg-brand-800"
+                >
+                  {isCreating ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adicionando...
-                  </>
-                ) : (
-                  'Aprovar e adicionar'
-                )}
-              </Button>
+                  ) : (
+                    <Plus className="mr-2 h-4 w-4" />
+                  )}
+                  {isCreating ? 'Criando...' : 'Criar questão'}
+                </Button>
+              </div>
             </div>
           }
         >
-          {draftToReview ? (
-            <div className="space-y-5">
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full border border-slate-200 px-2.5 py-1 font-semibold uppercase tracking-wide text-slate-600">
-                  {draftToReview.difficulty}
-                </span>
-                <span className="rounded-full border border-slate-200 px-2.5 py-1 font-semibold uppercase tracking-wide text-slate-600">
-                  {draftToReview.points} XP
-                </span>
-                <span className="rounded-full border border-slate-200 px-2.5 py-1 font-semibold uppercase tracking-wide text-slate-600">
-                  Prévia
-                </span>
-              </div>
+          <form id="manual-mission-form" onSubmit={handleCreate} className="space-y-5">
+            <div className="grid gap-4 lg:grid-cols-3">
+              <Field htmlFor="mission-title" label="Título" className="lg:col-span-2">
+                <Input
+                  id="mission-title"
+                  value={missionForm.title}
+                  onChange={(event) => updateMissionField('title', event.target.value)}
+                  placeholder="ex: Escopo e mutabilidade em Python"
+                  maxLength={200}
+                  required
+                />
+              </Field>
 
-              <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-relaxed text-slate-700">
-                <MarkdownContent content={draftToReview.question} />
-              </div>
+              <Field htmlFor="mission-difficulty" label="Dificuldade">
+                <select
+                  id="mission-difficulty"
+                  value={missionForm.difficulty}
+                  onChange={(event) =>
+                    updateMissionField(
+                      'difficulty',
+                      event.target.value as CreateManualMissionQuizPayload['difficulty'],
+                    )
+                  }
+                  className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm"
+                >
+                  <option value="FACIL">Fácil</option>
+                  <option value="MEDIO">Médio</option>
+                  <option value="DIFICIL">Difícil</option>
+                </select>
+              </Field>
 
-              <div className="space-y-3">
-                {draftToReview.options.map((option, index) => {
-                  const isCorrect = index === draftToReview.correctIndex;
+              <Field htmlFor="mission-points" label="Pontos">
+                <Input
+                  id="mission-points"
+                  type="number"
+                  min={0}
+                  max={1000}
+                  value={missionForm.points}
+                  onChange={(event) => updateMissionField('points', event.target.value)}
+                  placeholder="auto"
+                />
+              </Field>
 
-                  return (
-                    <div
-                      key={`${option}-${index}`}
-                      className={`rounded-md border px-4 py-3 ${
-                        isCorrect
-                          ? 'border-emerald-300 bg-emerald-50'
-                          : 'border-slate-200 bg-white'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
-                            isCorrect
-                              ? 'border-emerald-500 text-emerald-700'
-                              : 'border-slate-300 text-slate-500'
-                          }`}
-                        >
-                          {String.fromCharCode(65 + index)}
-                        </span>
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-800">{option}</p>
-                            {isCorrect ? (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
-                                Correta
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="text-xs leading-relaxed text-slate-600">
-                            <MarkdownContent content={String(draftToReview.explanations[index] ?? '')} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          ) : null}
+
+            <Field htmlFor="mission-question" label="Enunciado">
+              <textarea
+                id="mission-question"
+                value={missionForm.question}
+                onChange={(event) => updateMissionField('question', event.target.value)}
+                placeholder="Escreva o enunciado completo. Você pode usar Markdown e blocos de código."
+                rows={8}
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                required
+              />
+            </Field>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              {missionForm.options.map((option, index) => (
+                <div key={index} className="space-y-3 rounded-md border border-slate-200 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-slate-800">
+                      Alternativa {String.fromCharCode(65 + index)}
+                    </p>
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input
+                        type="radio"
+                        name="correctIndex"
+                        checked={missionForm.correctIndex === index}
+                        onChange={() => updateMissionField('correctIndex', index)}
+                        className="h-4 w-4"
+                      />
+                      Correta
+                    </label>
+                  </div>
+                  <Input
+                    value={option}
+                    onChange={(event) => updateOption(index, event.target.value)}
+                    placeholder={`Texto da alternativa ${String.fromCharCode(65 + index)}`}
+                    required
+                  />
+                  <textarea
+                    value={missionForm.explanations[index]}
+                    onChange={(event) => updateExplanation(index, event.target.value)}
+                    placeholder="Explicação desta alternativa"
+                    rows={3}
+                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </form>
         </ModalDialog>
 
         <ModalDialog

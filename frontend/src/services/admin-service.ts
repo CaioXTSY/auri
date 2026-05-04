@@ -98,14 +98,13 @@ export interface AdminMissionListItem {
   hasQuiz?: boolean;
 }
 
-export interface GenerateMissionQuizPayload {
-  theme: string;
+export interface CreateManualMissionQuizPayload {
+  title: string;
+  question: string;
   difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
-  language?: string;
-  audience?: string;
-  learningObjective?: string;
-  extraInstructions?: string;
-  type?: 'SEMANAL' | 'PERSONALIZADA';
+  options: string[];
+  explanations: string[];
+  correctIndex: number;
   points?: number;
   startDate?: string;
 }
@@ -130,19 +129,6 @@ export interface AdminMissionQuizDetail {
   };
 }
 
-export interface AdminMissionQuizPreview {
-  aiGenerationId: string;
-  title: string;
-  question: string;
-  difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL';
-  options: string[];
-  explanations: string[];
-  correctIndex: number;
-  points: number;
-  type: 'SEMANAL' | 'PERSONALIZADA';
-  startDate: string;
-  endDate: string;
-}
 
 export interface BroadcastPayload {
   type: 'SISTEMA' | 'CONQUISTA' | 'MISSAO' | 'RANKING';
@@ -226,18 +212,10 @@ export const adminService = {
     return Array.isArray(data) ? data : data.data;
   },
 
-  generateMissionQuiz: async (payload: GenerateMissionQuizPayload): Promise<AdminMissionListItem> => {
-    const { data } = await api.post<AdminMissionListItem>('/missions/generate-quiz', payload);
-    return data;
-  },
-
-  previewMissionQuiz: async (payload: GenerateMissionQuizPayload): Promise<AdminMissionQuizPreview> => {
-    const { data } = await api.post<AdminMissionQuizPreview>('/missions/generate-quiz/preview', payload);
-    return data;
-  },
-
-  approveMissionQuiz: async (payload: AdminMissionQuizPreview): Promise<AdminMissionListItem> => {
-    const { data } = await api.post<AdminMissionListItem>('/missions/generate-quiz/approve', payload);
+  createManualMissionQuiz: async (
+    payload: CreateManualMissionQuizPayload,
+  ): Promise<AdminMissionListItem> => {
+    const { data } = await api.post<AdminMissionListItem>('/missions/quiz', payload);
     return data;
   },
 

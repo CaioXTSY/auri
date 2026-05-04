@@ -792,7 +792,7 @@ socket.on('notification', (payload) => {
                 <Endpoint method="POST" path="/admin/achievements" description="Criar conquista" />
                 <Endpoint method="PATCH" path="/admin/achievements/:id" description="Atualizar conquista" />
                 <Endpoint method="DELETE" path="/admin/achievements/:id" description="Remover conquista" />
-                <Endpoint method="POST" path="/missions/generate-quiz" description="Gerar questao com IA e criar missao global" />
+                <Endpoint method="POST" path="/missions/quiz" description="Criar questao manual e missao global" />
                 <Endpoint method="POST" path="/admin/notifications/broadcast" description="Enviar notificação em massa" />
               </div>
             </SubSection>
