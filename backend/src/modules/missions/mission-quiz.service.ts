@@ -15,6 +15,8 @@ import { QuizGeneratorService } from './quiz-generator.service';
 
 @Injectable()
 export class MissionQuizService {
+  private static readonly DAILY_QUIZ_GENERATION_RETRY_DELAYS_MS = [500, 1000, 1500, 2500, 4000, 5000];
+
   constructor(
     private prisma: PrismaService,
     private gamificationService: GamificationService,
@@ -251,16 +253,7 @@ export class MissionQuizService {
   }
 
   async getDailyQuiz() {
-    let mission = await this.getTodayDailyQuizMission();
-
-    if (!mission || !mission.quiz) {
-      const generated = await this.quizGeneratorService.generateDailyQuizMission();
-      if (generated) {
-        return generated;
-      }
-
-      mission = await this.getTodayDailyQuizMission();
-    }
+    const mission = await this.getOrCreateTodayDailyQuizMission();
 
     if (!mission || !mission.quiz) {
       throw new NotFoundException('Quiz diário não encontrado');
@@ -279,20 +272,7 @@ export class MissionQuizService {
   }
 
   async getDailyQuizForUser(userId: string) {
-    let mission = await this.getTodayDailyQuizMission();
-
-    if (!mission || !mission.quiz) {
-      const generated = await this.quizGeneratorService.generateDailyQuizMission();
-      if (generated) {
-        return {
-          ...generated,
-          answered: false,
-          attempt: null,
-        };
-      }
-
-      mission = await this.getTodayDailyQuizMission();
-    }
+    const mission = await this.getOrCreateTodayDailyQuizMission();
 
     if (!mission || !mission.quiz) {
       throw new NotFoundException('Quiz diário não encontrado');
@@ -439,5 +419,39 @@ export class MissionQuizService {
       include: { quiz: true },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  private async getOrCreateTodayDailyQuizMission() {
+    let mission = await this.getTodayDailyQuizMission();
+
+    if (mission?.quiz) {
+      return mission;
+    }
+
+    const generated = await this.quizGeneratorService.generateDailyQuizMission();
+    if (generated) {
+      mission = await this.getTodayDailyQuizMission();
+      if (mission?.quiz) {
+        return mission;
+      }
+    }
+
+    return this.waitForTodayDailyQuizMission();
+  }
+
+  private async waitForTodayDailyQuizMission() {
+    for (const delayMs of MissionQuizService.DAILY_QUIZ_GENERATION_RETRY_DELAYS_MS) {
+      await this.sleep(delayMs);
+      const mission = await this.getTodayDailyQuizMission();
+      if (mission?.quiz) {
+        return mission;
+      }
+    }
+
+    return this.getTodayDailyQuizMission();
+  }
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

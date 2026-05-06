@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { Difficulty, Prisma } from '@prisma/client';
+import { Difficulty } from '@prisma/client';
 import {
   buildDailyQuizValidationPrompt,
   buildDailyQuizUserPrompt,
@@ -13,6 +13,7 @@ import {
 import { getDailyQuizDateWindow } from './daily-quiz-date';
 
 const PERMANENT_MISSION_END_DATE = new Date('2099-12-31T23:59:59.999Z');
+const DAILY_QUIZ_GENERATION_MAX_ATTEMPTS = 3;
 
 type GeneratedQuiz = {
   title: string;
@@ -23,10 +24,21 @@ type GeneratedQuiz = {
   explanations: string[];
 };
 
+type GeneratedDailyQuizMission = {
+  missionId: string;
+  title: string;
+  question: string;
+  difficulty: Difficulty;
+  points: number;
+  options: string[];
+  answered: false;
+  attempt: null;
+};
+
 @Injectable()
 export class QuizGeneratorService {
   private readonly logger = new Logger(QuizGeneratorService.name);
-  private generationLock = false;
+  private generationPromise: Promise<GeneratedDailyQuizMission | null> | null = null;
 
   constructor(
     private prisma: PrismaService,
@@ -40,34 +52,25 @@ export class QuizGeneratorService {
       return null;
     }
 
-    if (this.generationLock) {
-      this.logger.log('Geracao de quiz diario ja em andamento, ignorando requisicao duplicada');
-      return null;
+    if (this.generationPromise) {
+      this.logger.log('Geracao de quiz diario ja em andamento, aguardando requisicao existente');
+      return this.generationPromise;
     }
 
-    this.generationLock = true;
-    const dayKey = getDailyQuizDateWindow(
-      new Date(),
-      this.configService.get<string>('APP_TIME_ZONE'),
-    ).dayKey;
-    const lockName = `auri:daily-quiz:${dayKey}`;
+    const generationPromise = this.doGenerateDaily(apiKey);
+    this.generationPromise = generationPromise;
 
     try {
-      const lockAcquired = await this.acquireGenerationLock(lockName);
-      if (!lockAcquired) {
-        this.logger.log(`Geracao de quiz diario ja bloqueada por outra instancia (${dayKey})`);
-        return null;
-      }
-
-      return await this.doGenerateDaily(apiKey);
+      return await generationPromise;
     } finally {
-      await this.releaseGenerationLock(lockName);
-      this.generationLock = false;
+      if (this.generationPromise === generationPromise) {
+        this.generationPromise = null;
+      }
     }
   }
 
-  private async doGenerateDaily(apiKey: string) {
-    const { startOfDay, endOfDay } = getDailyQuizDateWindow(
+  private async doGenerateDaily(apiKey: string): Promise<GeneratedDailyQuizMission | null> {
+    const { startOfDay } = getDailyQuizDateWindow(
       new Date(),
       this.configService.get<string>('APP_TIME_ZONE'),
     );
@@ -100,33 +103,76 @@ export class QuizGeneratorService {
       preferredLanguages.length > 0
         ? preferredLanguages.slice(0, 3).join(', ')
         : DAILY_QUIZ_LANGUAGES.join(', ');
-    const randomTopic = DAILY_QUIZ_TOPICS[Math.floor(Math.random() * DAILY_QUIZ_TOPICS.length)];
-    const prompt = buildDailyQuizUserPrompt({
-      difficulty: targetDifficulty,
-      languageHint,
-      suggestedTopic: randomTopic,
-      recentQuizzes,
-    });
+    let promptUsed = '';
+    let content = '';
+    let quiz: GeneratedQuiz | null = null;
+    let lastValidationReason = '';
 
     try {
-      const content = await this.requestQuizGeneration(apiKey, model, prompt);
-      const quiz = this.normalizeGeneratedQuiz(content, targetDifficulty);
-      const validation = await this.validateGeneratedQuiz(apiKey, model, quiz);
+      for (let attempt = 1; attempt <= DAILY_QUIZ_GENERATION_MAX_ATTEMPTS; attempt += 1) {
+        const randomTopic = DAILY_QUIZ_TOPICS[Math.floor(Math.random() * DAILY_QUIZ_TOPICS.length)];
+        const basePrompt = buildDailyQuizUserPrompt({
+          difficulty: targetDifficulty,
+          languageHint,
+          suggestedTopic: randomTopic,
+          recentQuizzes,
+        });
 
-      if (!validation.isValid || validation.correctIndex !== quiz.correctIndex) {
-        this.logger.error(
-          `Quiz diario rejeitado pela validacao: isValid=${validation.isValid}, ` +
-            `correctIndex=${validation.correctIndex}, expected=${quiz.correctIndex}, reason="${validation.reason}"`,
+        promptUsed =
+          attempt === 1
+            ? basePrompt
+            : [
+                basePrompt,
+                '',
+                'CORRECAO OBRIGATORIA PARA ESTA NOVA TENTATIVA:',
+                `- A tentativa anterior foi rejeitada por: ${lastValidationReason || 'falha tecnica na validacao'}.`,
+                '- Gere uma NOVA questao completa.',
+                '- Garanta que a alternativa correta e as explicacoes estejam tecnicamente consistentes entre si.',
+                '- Se houver codigo, explicite escopo, ordem de execucao, valor final ou erro sem ambiguidades.',
+              ].join('\n');
+
+        content = await this.requestQuizGeneration(apiKey, model, promptUsed);
+        quiz = this.normalizeGeneratedQuiz(content, targetDifficulty);
+        const validation = await this.validateGeneratedQuiz(apiKey, model, quiz);
+
+        if (validation.isValid && validation.correctIndex === quiz.correctIndex) {
+          break;
+        }
+
+        lastValidationReason = validation.reason;
+        this.logger.warn(
+          `Quiz diario rejeitado na tentativa ${attempt}/${DAILY_QUIZ_GENERATION_MAX_ATTEMPTS}: ` +
+            `isValid=${validation.isValid}, correctIndex=${validation.correctIndex}, expected=${quiz.correctIndex}, reason="${validation.reason}"`,
         );
+
+        quiz = null;
+      }
+
+      if (!quiz) {
+        this.logger.error('Falha ao gerar quiz diario valido apos multiplas tentativas');
         return null;
       }
 
       const points = this.getPointsForDifficulty(quiz.difficulty);
       const mission = await this.prisma.$transaction(async (tx) => {
+        const existingMission = await tx.mission.findFirst({
+          where: {
+            type: 'DIARIA',
+            classId: null,
+            startDate: { gte: startOfDay },
+            quiz: { isNot: null },
+          },
+          include: { quiz: true },
+        });
+
+        if (existingMission?.quiz) {
+          return existingMission;
+        }
+
         const aiGeneration = await tx.aIGeneration.create({
           data: {
             type: 'QUIZ',
-            prompt,
+            prompt: promptUsed,
             response: content,
           },
         });
@@ -155,16 +201,19 @@ export class QuizGeneratorService {
           },
         });
 
-        return created;
+        return tx.mission.findUniqueOrThrow({
+          where: { id: created.id },
+          include: { quiz: true },
+        });
       });
 
       return {
         missionId: mission.id,
-        title: quiz.title,
-        question: quiz.question,
-        difficulty: quiz.difficulty,
-        points,
-        options: quiz.options,
+        title: mission.quiz?.title ?? quiz.title,
+        question: mission.quiz?.question ?? quiz.question,
+        difficulty: mission.quiz?.difficulty ?? quiz.difficulty,
+        points: mission.points,
+        options: Array.isArray(mission.quiz?.options) ? (mission.quiz.options as string[]) : quiz.options,
         answered: false,
         attempt: null,
       };
@@ -327,26 +376,6 @@ export class QuizGeneratorService {
       throw new BadRequestException('Resposta invalida da IA');
     }
     return JSON.parse(match[0]);
-  }
-
-  private async acquireGenerationLock(lockName: string) {
-    try {
-      const rows = await this.prisma.$queryRaw<{ acquired: number | bigint | null }[]>(
-        Prisma.sql`SELECT GET_LOCK(${lockName}, 5) AS acquired`,
-      );
-      return Number(rows[0]?.acquired ?? 0) === 1;
-    } catch (error) {
-      this.logger.warn(`Nao foi possivel adquirir lock distribuido do quiz diario: ${error}`);
-      return true;
-    }
-  }
-
-  private async releaseGenerationLock(lockName: string) {
-    try {
-      await this.prisma.$queryRaw(Prisma.sql`SELECT RELEASE_LOCK(${lockName})`);
-    } catch (error) {
-      this.logger.warn(`Nao foi possivel liberar lock distribuido do quiz diario: ${error}`);
-    }
   }
 
   private async getRecentQuizSummaries(
