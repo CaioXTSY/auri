@@ -6,3 +6,21 @@ backend/.env
 backend/.env.*
 frontend/.env
 frontend/.env.*
+
+# Build and coverage artifacts
+**/dist/
+**/.next/
+**/coverage/
+**/.nyc_output/
+
+# Test automation artifacts
+**/test-results/
+**/playwright-report/
+**/blob-report/
+
+# Temporary files and logs
+**/logs/
+**/tmp/
+**/temp/
+**/*.log
+backend/tmp-backend.log

@@ -10,8 +10,6 @@ import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: UsersService;
-  let jwtService: JwtService;
 
   const mockUser = {
     id: '1',
@@ -46,15 +44,19 @@ describe('AuthService', () => {
     verify: jest.fn(),
   };
 
+  const mockConfig = {
+    JWT_SECRET: 'test-secret',
+    JWT_REFRESH_SECRET: 'test-refresh-secret',
+    JWT_EXPIRES_IN: '15m',
+    FRONTEND_URL: 'https://auri.test',
+  } as const;
+
   const mockConfigService = {
     get: jest.fn((key: string, defaultValue?: string) => {
-      const config = {
-        JWT_SECRET: 'test-secret',
-        JWT_REFRESH_SECRET: 'test-refresh-secret',
-        JWT_EXPIRES_IN: '15m',
-        FRONTEND_URL: 'https://auri.test',
-      };
-      return config[key] || defaultValue;
+      if (key in mockConfig) {
+        return mockConfig[key as keyof typeof mockConfig];
+      }
+      return defaultValue;
     }),
   };
 
@@ -79,8 +81,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    usersService = module.get<UsersService>(UsersService);
-    jwtService = module.get<JwtService>(JwtService);
 
     jest.clearAllMocks();
   });

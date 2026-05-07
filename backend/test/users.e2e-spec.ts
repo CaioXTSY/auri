@@ -4,6 +4,7 @@ import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { Role } from '@prisma/client';
+import * as fs from 'fs';
 import * as path from 'path';
 
 describe('UsersController (e2e)', () => {
@@ -213,7 +214,6 @@ describe('UsersController (e2e)', () => {
       const testImagePath = path.join(__dirname, '..', 'fixtures', 'test-avatar.jpg');
       
       // Se não existir imagem de teste, pular
-      const fs = require('fs');
       if (!fs.existsSync(testImagePath)) {
         console.log('Skipping avatar upload test - no test image');
         return;

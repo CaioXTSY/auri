@@ -404,7 +404,7 @@ export class MissionQuizService {
   }
 
   private async getTodayDailyQuizMission() {
-    const { startOfDay, endOfDay } = getDailyQuizDateWindow(
+    const { startOfDay } = getDailyQuizDateWindow(
       new Date(),
       this.configService.get<string>('APP_TIME_ZONE'),
     );

@@ -28,7 +28,8 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user;
+      const result = { ...user };
+      delete result.password;
       return result;
     }
     return null;
@@ -61,7 +62,8 @@ export class AuthService {
       }
       throw err;
     }
-    const { password, ...result } = user;
+    const result = { ...user };
+    delete result.password;
     
     const tokens = await this.generateTokens(result);
     await this.updateRefreshToken(result.id, tokens.refresh_token);

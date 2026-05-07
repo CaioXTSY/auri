@@ -36,7 +36,8 @@ export class AuthController {
   ) {
     const result = await this.authService.register(registerDto);
     res.cookie(REFRESH_COOKIE, result.refresh_token, COOKIE_OPTIONS);
-    const { refresh_token, ...response } = result;
+    const response = { ...result };
+    delete response.refresh_token;
     return response;
   }
 
@@ -52,7 +53,8 @@ export class AuthController {
   ) {
     const result = await this.authService.login(loginDto);
     res.cookie(REFRESH_COOKIE, result.refresh_token, COOKIE_OPTIONS);
-    const { refresh_token, ...response } = result;
+    const response = { ...result };
+    delete response.refresh_token;
     return response;
   }
 
@@ -70,7 +72,8 @@ export class AuthController {
     }
     const result = await this.authService.refreshToken({ refreshToken: token });
     res.cookie(REFRESH_COOKIE, result.refresh_token, COOKIE_OPTIONS);
-    const { refresh_token, ...response } = result;
+    const response = { ...result };
+    delete response.refresh_token;
     return response;
   }
 
