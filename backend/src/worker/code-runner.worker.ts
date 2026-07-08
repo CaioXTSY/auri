@@ -1,0 +1,423 @@
+import { spawn } from 'child_process';
+import { mkdtemp, rm, writeFile } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import {
+  CodeSubmissionStatus,
+  PrismaClient,
+  ProgrammingLanguage,
+  TestCaseVisibility,
+} from '@prisma/client';
+
+type ClaimedSubmission = Awaited<ReturnType<typeof loadSubmission>>;
+
+type DockerRunResult = {
+  status: CodeSubmissionStatus;
+  stdout: string;
+  stderr: string;
+  runtimeMs: number;
+};
+
+const prisma = new PrismaClient();
+
+const config = {
+  enabled: process.env.CODE_RUNNER_ENABLED !== 'false',
+  pollIntervalMs: numberFromEnv('CODE_RUNNER_POLL_INTERVAL_MS', 1000),
+  maxParallel: numberFromEnv('CODE_RUNNER_MAX_PARALLEL', 2),
+  jsImage: process.env.CODE_RUNNER_JS_IMAGE ?? 'node:20-alpine',
+  pyImage: process.env.CODE_RUNNER_PY_IMAGE ?? 'python:3.12-alpine',
+  defaultTimeoutMs: numberFromEnv('CODE_RUNNER_DEFAULT_TIMEOUT_MS', 2000),
+  defaultMemoryMb: numberFromEnv('CODE_RUNNER_DEFAULT_MEMORY_MB', 128),
+  defaultCpus: process.env.CODE_RUNNER_DEFAULT_CPUS ?? '0.5',
+  maxOutputBytes: numberFromEnv('CODE_RUNNER_MAX_OUTPUT_BYTES', 64 * 1024),
+};
+
+let shuttingDown = false;
+
+async function main() {
+  if (!config.enabled) {
+    console.log('Code runner disabled by CODE_RUNNER_ENABLED=false');
+    return;
+  }
+
+  process.on('SIGINT', requestShutdown);
+  process.on('SIGTERM', requestShutdown);
+
+  console.log(
+    `Code runner started. parallel=${config.maxParallel} poll=${config.pollIntervalMs}ms`,
+  );
+
+  await Promise.all(
+    Array.from({ length: config.maxParallel }, (_, index) => workerLoop(index)),
+  );
+}
+
+async function workerLoop(index: number) {
+  while (!shuttingDown) {
+    const submission = await claimNextSubmission();
+
+    if (!submission) {
+      await sleep(config.pollIntervalMs);
+      continue;
+    }
+
+    try {
+      console.log(`[runner:${index}] judging submission ${submission.id}`);
+      await judgeSubmission(submission.id);
+    } catch (error) {
+      console.error(
+        `[runner:${index}] failed submission ${submission.id}`,
+        error instanceof Error ? error.stack : error,
+      );
+
+      await prisma.codeSubmission.update({
+        where: { id: submission.id },
+        data: {
+          status: CodeSubmissionStatus.INTERNAL_ERROR,
+          errorMessage:
+            error instanceof Error ? error.message : 'Erro interno no judge',
+          judgedAt: new Date(),
+        },
+      });
+    }
+  }
+}
+
+async function claimNextSubmission() {
+  const candidate = await prisma.codeSubmission.findFirst({
+    where: { status: CodeSubmissionStatus.PENDING },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
+  });
+
+  if (!candidate) {
+    return null;
+  }
+
+  const claimed = await prisma.codeSubmission.updateMany({
+    where: {
+      id: candidate.id,
+      status: CodeSubmissionStatus.PENDING,
+    },
+    data: {
+      status: CodeSubmissionStatus.RUNNING,
+      startedAt: new Date(),
+    },
+  });
+
+  return claimed.count === 1 ? candidate : null;
+}
+
+async function judgeSubmission(submissionId: string) {
+  const submission = await loadSubmission(submissionId);
+
+  if (!submission) {
+    throw new Error(`Submission ${submissionId} not found`);
+  }
+
+  await prisma.submissionTestResult.deleteMany({
+    where: { submissionId },
+  });
+
+  const testCases = submission.problem.testCases;
+  if (testCases.length === 0) {
+    throw new Error('Problem has no test cases');
+  }
+
+  const results = [];
+  for (const testCase of testCases) {
+    const result = await runSingleTest(submission, testCase.input);
+    const normalizedActual = normalizeOutput(result.stdout);
+    const normalizedExpected = normalizeOutput(testCase.expected);
+    const status =
+      result.status === CodeSubmissionStatus.ACCEPTED &&
+      normalizedActual !== normalizedExpected
+        ? CodeSubmissionStatus.WRONG_ANSWER
+        : result.status;
+
+    const isPublic = testCase.visibility === TestCaseVisibility.PUBLIC;
+    const saved = await prisma.submissionTestResult.create({
+      data: {
+        submissionId,
+        testCaseId: testCase.id,
+        status,
+        inputPreview: isPublic ? preview(testCase.input) : null,
+        expected: isPublic ? testCase.expected : null,
+        actual: isPublic ? result.stdout : null,
+        errorMessage: isPublic ? result.stderr || null : null,
+        runtimeMs: result.runtimeMs,
+      },
+    });
+
+    results.push(saved);
+  }
+
+  const passedTests = results.filter(
+    (result) => result.status === CodeSubmissionStatus.ACCEPTED,
+  ).length;
+  const finalStatus = getFinalStatus(results.map((result) => result.status));
+  const score = Math.round((passedTests / testCases.length) * 100);
+  const runtimeMs = results.reduce(
+    (total, result) => total + (result.runtimeMs ?? 0),
+    0,
+  );
+
+  await prisma.codeSubmission.update({
+    where: { id: submissionId },
+    data: {
+      status: finalStatus,
+      score,
+      passedTests,
+      totalTests: testCases.length,
+      runtimeMs,
+      judgedAt: new Date(),
+      errorMessage: finalStatus === CodeSubmissionStatus.ACCEPTED ? null : finalStatus,
+    },
+  });
+}
+
+function loadSubmission(id: string) {
+  return prisma.codeSubmission.findUnique({
+    where: { id },
+    include: {
+      problem: {
+        include: {
+          testCases: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      },
+    },
+  });
+}
+
+async function runSingleTest(
+  submission: NonNullable<ClaimedSubmission>,
+  input: string,
+): Promise<DockerRunResult> {
+  const workspace = await mkdtemp(join(tmpdir(), 'auri-code-runner-'));
+  const timeoutMs = submission.problem.timeLimitMs ?? config.defaultTimeoutMs;
+
+  try {
+    await writeFile(join(workspace, 'input.txt'), input, 'utf8');
+
+    if (submission.language === ProgrammingLanguage.JAVASCRIPT) {
+      await writeFile(join(workspace, 'solution.js'), submission.code, 'utf8');
+      await writeFile(join(workspace, 'runner.js'), javascriptHarness, 'utf8');
+      return runDocker({
+        image: config.jsImage,
+        workspace,
+        timeoutMs,
+        memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
+        command: ['node', 'runner.js'],
+      });
+    }
+
+    await writeFile(join(workspace, 'solution.py'), submission.code, 'utf8');
+    await writeFile(join(workspace, 'runner.py'), pythonHarness, 'utf8');
+    return runDocker({
+      image: config.pyImage,
+      workspace,
+      timeoutMs,
+      memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
+      command: ['python', 'runner.py'],
+    });
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+}
+
+function runDocker(options: {
+  image: string;
+  workspace: string;
+  timeoutMs: number;
+  memoryMb: number;
+  command: string[];
+}): Promise<DockerRunResult> {
+  const args = [
+    'run',
+    '--rm',
+    '--network',
+    'none',
+    '--memory',
+    `${options.memoryMb}m`,
+    '--cpus',
+    config.defaultCpus,
+    '--read-only',
+    '--pids-limit',
+    '64',
+    '--cap-drop',
+    'ALL',
+    '--security-opt',
+    'no-new-privileges',
+    '-v',
+    `${options.workspace}:/workspace:ro`,
+    '-w',
+    '/workspace',
+    options.image,
+    ...options.command,
+  ];
+
+  const startedAt = Date.now();
+
+  return new Promise((resolve) => {
+    const child = spawn('docker', args, {
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let stdout = '';
+    let stderr = '';
+    let killedByTimeout = false;
+    let outputLimitExceeded = false;
+
+    const timer = setTimeout(() => {
+      killedByTimeout = true;
+      child.kill('SIGKILL');
+    }, options.timeoutMs);
+
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout = appendLimited(stdout, chunk.toString('utf8'));
+      if (Buffer.byteLength(stdout, 'utf8') >= config.maxOutputBytes) {
+        outputLimitExceeded = true;
+        child.kill('SIGKILL');
+      }
+    });
+
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr = appendLimited(stderr, chunk.toString('utf8'));
+      if (Buffer.byteLength(stderr, 'utf8') >= config.maxOutputBytes) {
+        outputLimitExceeded = true;
+        child.kill('SIGKILL');
+      }
+    });
+
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      resolve({
+        status: CodeSubmissionStatus.INTERNAL_ERROR,
+        stdout,
+        stderr: error.message,
+        runtimeMs: Date.now() - startedAt,
+      });
+    });
+
+    child.on('close', (code) => {
+      clearTimeout(timer);
+
+      let status: CodeSubmissionStatus = CodeSubmissionStatus.ACCEPTED;
+      if (killedByTimeout) {
+        status = CodeSubmissionStatus.TIME_LIMIT_EXCEEDED;
+      } else if (outputLimitExceeded) {
+        status = CodeSubmissionStatus.RUNTIME_ERROR;
+        stderr = 'Limite de saida excedido';
+      } else if (code === 137) {
+        status = CodeSubmissionStatus.MEMORY_LIMIT_EXCEEDED;
+      } else if (code !== 0) {
+        status = CodeSubmissionStatus.RUNTIME_ERROR;
+      }
+
+      resolve({
+        status,
+        stdout,
+        stderr,
+        runtimeMs: Date.now() - startedAt,
+      });
+    });
+  });
+}
+
+function getFinalStatus(statuses: CodeSubmissionStatus[]) {
+  if (statuses.every((status) => status === CodeSubmissionStatus.ACCEPTED)) {
+    return CodeSubmissionStatus.ACCEPTED;
+  }
+
+  for (const status of [
+    CodeSubmissionStatus.TIME_LIMIT_EXCEEDED,
+    CodeSubmissionStatus.MEMORY_LIMIT_EXCEEDED,
+    CodeSubmissionStatus.RUNTIME_ERROR,
+    CodeSubmissionStatus.INTERNAL_ERROR,
+  ]) {
+    if (statuses.includes(status)) {
+      return status;
+    }
+  }
+
+  return CodeSubmissionStatus.WRONG_ANSWER;
+}
+
+function normalizeOutput(value: string) {
+  return value
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .join('\n')
+    .replace(/\n+$/g, '');
+}
+
+function preview(value: string) {
+  return value.length > 2000 ? `${value.slice(0, 2000)}...` : value;
+}
+
+function appendLimited(current: string, next: string) {
+  const combined = current + next;
+  if (Buffer.byteLength(combined, 'utf8') <= config.maxOutputBytes) {
+    return combined;
+  }
+
+  return combined.slice(0, config.maxOutputBytes);
+}
+
+function numberFromEnv(key: string, fallback: number) {
+  const raw = process.env[key];
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function requestShutdown() {
+  shuttingDown = true;
+  console.log('Code runner shutting down...');
+}
+
+const javascriptHarness = `
+const fs = require("fs");
+const solve = require("./solution");
+const input = fs.readFileSync("/workspace/input.txt", "utf8");
+
+Promise.resolve(solve(input))
+  .then((result) => {
+    process.stdout.write(String(result ?? ""));
+  })
+  .catch((err) => {
+    console.error(err?.message || String(err));
+    process.exit(1);
+  });
+`.trimStart();
+
+const pythonHarness = `
+import sys
+from solution import solve
+
+with open("/workspace/input.txt", "r", encoding="utf-8") as file:
+    input_value = file.read()
+
+try:
+    result = solve(input_value)
+    sys.stdout.write("" if result is None else str(result))
+except Exception as exc:
+    sys.stderr.write(str(exc))
+    sys.exit(1)
+`.trimStart();
+
+main()
+  .catch((error) => {
+    console.error(error instanceof Error ? error.stack : error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

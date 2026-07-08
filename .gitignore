@@ -9,6 +9,7 @@ frontend/.env.*
 
 # Build and coverage artifacts
 **/dist/
+**/dist-runner/
 **/.next/
 **/coverage/
 **/.nyc_output/
