@@ -4,9 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CodeSubmissionStatus, ProgrammingLanguage, Role } from '@prisma/client';
+import {
+  CodeSubmissionMode,
+  CodeSubmissionStatus,
+  ProgrammingLanguage,
+  Role,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateCodeSubmissionDto } from './dto';
+import { CreateCodeSubmissionDto, SubmitAssignmentCodeDto } from './dto';
 
 @Injectable()
 export class CodeSubmissionsService {
@@ -41,6 +46,67 @@ export class CodeSubmissionsService {
         assignmentId: dto.assignmentId,
         language: dto.language,
         code: dto.code,
+        mode: CodeSubmissionMode.SUBMIT,
+        status: CodeSubmissionStatus.PENDING,
+      },
+    });
+  }
+
+  async runAssignmentExamples(
+    userId: string,
+    assignmentId: string,
+    dto: SubmitAssignmentCodeDto,
+  ) {
+    const assignment = await this.getStudentAssignmentForSubmission(
+      userId,
+      assignmentId,
+    );
+
+    this.ensureLanguageAllowed(
+      assignment.problem.allowedLanguages as ProgrammingLanguage[],
+      dto.language,
+    );
+
+    return this.prisma.codeSubmission.create({
+      data: {
+        userId,
+        assignmentId,
+        problemId: assignment.problemId,
+        language: dto.language,
+        code: dto.code,
+        mode: CodeSubmissionMode.RUN,
+        status: CodeSubmissionStatus.PENDING,
+      },
+    });
+  }
+
+  async submitAssignment(
+    userId: string,
+    assignmentId: string,
+    dto: SubmitAssignmentCodeDto,
+  ) {
+    const assignment = await this.getStudentAssignmentForSubmission(
+      userId,
+      assignmentId,
+    );
+
+    if (assignment.dueDate && assignment.dueDate < new Date()) {
+      throw new BadRequestException('Prazo da atividade encerrado');
+    }
+
+    this.ensureLanguageAllowed(
+      assignment.problem.allowedLanguages as ProgrammingLanguage[],
+      dto.language,
+    );
+
+    return this.prisma.codeSubmission.create({
+      data: {
+        userId,
+        assignmentId,
+        problemId: assignment.problemId,
+        language: dto.language,
+        code: dto.code,
+        mode: CodeSubmissionMode.SUBMIT,
         status: CodeSubmissionStatus.PENDING,
       },
     });
@@ -54,15 +120,15 @@ export class CodeSubmissionsService {
       },
       orderBy: { createdAt: 'desc' },
       include: {
-        results: true,
+        results: { include: { testCase: true } },
       },
     });
   }
 
   async findMyAssignmentSubmissions(userId: string, assignmentId: string) {
     await this.ensureStudentAssignmentAccess(userId, assignmentId);
-
-    return this.findByUser(userId, assignmentId);
+    const submissions = await this.findByUser(userId, assignmentId);
+    return submissions.map((submission) => this.sanitizeForStudent(submission));
   }
 
   async findByAssignment(assignmentId: string, userId: string, role: Role) {
@@ -81,7 +147,7 @@ export class CodeSubmissionsService {
             avatar: true,
           },
         },
-        results: true,
+        results: { include: { testCase: true } },
       },
     });
   }
@@ -90,7 +156,7 @@ export class CodeSubmissionsService {
     const submission = await this.prisma.codeSubmission.findUnique({
       where: { id },
       include: {
-        results: true,
+        results: { include: { testCase: true } },
       },
     });
 
@@ -99,6 +165,48 @@ export class CodeSubmissionsService {
     }
 
     return submission;
+  }
+
+  async findOneForUser(id: string, userId: string, role: Role) {
+    const submission = await this.prisma.codeSubmission.findUnique({
+      where: { id },
+      include: {
+        results: { include: { testCase: true } },
+        assignment: {
+          include: {
+            class: { select: { createdById: true } },
+          },
+        },
+        problem: {
+          select: {
+            createdById: true,
+          },
+        },
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submissao de codigo nao encontrada');
+    }
+
+    if (role === Role.ADMIN) {
+      return submission;
+    }
+
+    if (role === Role.PROFESSOR) {
+      const ownsAssignment = submission.assignment?.class.createdById === userId;
+      const ownsProblem = submission.problem.createdById === userId;
+      if (ownsAssignment || ownsProblem) {
+        return submission;
+      }
+      throw new ForbiddenException('Voce nao pode acessar esta submissao');
+    }
+
+    if (submission.userId !== userId) {
+      throw new ForbiddenException('Voce nao pode acessar esta submissao');
+    }
+
+    return this.sanitizeForStudent(submission);
   }
 
   private ensureLanguageAllowed(
@@ -130,6 +238,37 @@ export class CodeSubmissionsService {
         'A atividade informada nao pertence ao problema enviado',
       );
     }
+  }
+
+  private async getStudentAssignmentForSubmission(
+    userId: string,
+    assignmentId: string,
+  ) {
+    const assignment = await this.prisma.programmingAssignment.findFirst({
+      where: {
+        id: assignmentId,
+        published: true,
+        class: {
+          students: {
+            some: { userId },
+          },
+        },
+      },
+      include: {
+        problem: {
+          select: {
+            id: true,
+            allowedLanguages: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Atividade de programacao nao encontrada');
+    }
+
+    return assignment;
   }
 
   private async ensureStudentAssignmentAccess(
@@ -175,4 +314,33 @@ export class CodeSubmissionsService {
       throw new ForbiddenException('Voce nao pode acessar estas submissoes');
     }
   }
+
+  private sanitizeForStudent<T extends { results?: any[] }>(submission: T) {
+    return {
+      ...submission,
+      results: submission.results?.map((result) => {
+        const visibility = result.testCase?.visibility ?? 'HIDDEN';
+        if (visibility === 'PUBLIC') {
+          return {
+            id: result.id,
+            status: result.status,
+            visibility,
+            input: result.inputPreview,
+            expected: result.expected,
+            actual: result.actual,
+            errorMessage: result.errorMessage,
+            runtimeMs: result.runtimeMs,
+          };
+        }
+
+        return {
+          id: result.id,
+          status: result.status,
+          visibility,
+          runtimeMs: result.runtimeMs,
+        };
+      }),
+    };
+  }
 }
+

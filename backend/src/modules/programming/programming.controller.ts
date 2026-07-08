@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -27,6 +28,7 @@ import {
   CreateProgrammingAssignmentDto,
   CreateProgrammingProblemDto,
   QueryProgrammingListDto,
+  SubmitAssignmentCodeDto,
   UpdateProblemTestCaseDto,
   UpdateProgrammingAssignmentDto,
   UpdateProgrammingProblemDto,
@@ -172,6 +174,32 @@ export class ProgrammingController {
     return this.assignmentsService.getSolveView(id, req.user.id);
   }
 
+  @Post('assignments/:id/run')
+  @Roles(Role.ALUNO)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Executar exemplos publicos de uma atividade' })
+  @ApiBody({ type: SubmitAssignmentCodeDto })
+  runAssignment(
+    @Param('id') id: string,
+    @Body() dto: SubmitAssignmentCodeDto,
+    @Request() req,
+  ) {
+    return this.submissionsService.runAssignmentExamples(req.user.id, id, dto);
+  }
+
+  @Post('assignments/:id/submit')
+  @Roles(Role.ALUNO)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Enviar submissao oficial de uma atividade' })
+  @ApiBody({ type: SubmitAssignmentCodeDto })
+  submitAssignment(
+    @Param('id') id: string,
+    @Body() dto: SubmitAssignmentCodeDto,
+    @Request() req,
+  ) {
+    return this.submissionsService.submitAssignment(req.user.id, id, dto);
+  }
+
   @Get('assignments/:id/submissions/my')
   @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Listar minhas submissoes em uma atividade' })
@@ -184,6 +212,17 @@ export class ProgrammingController {
   @ApiOperation({ summary: 'Listar submissoes de uma atividade' })
   findAssignmentSubmissions(@Param('id') id: string, @Request() req) {
     return this.submissionsService.findByAssignment(
+      id,
+      req.user.id,
+      req.user.role,
+    );
+  }
+
+  @Get('submissions/:id')
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
+  @ApiOperation({ summary: 'Buscar resultado de uma submissao' })
+  findSubmission(@Param('id') id: string, @Request() req) {
+    return this.submissionsService.findOneForUser(
       id,
       req.user.id,
       req.user.role,
@@ -216,4 +255,3 @@ export class ProgrammingController {
     return this.assignmentsService.remove(id, req.user.id, req.user.role);
   }
 }
-

@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import {
+  CodeSubmissionMode,
   CodeSubmissionStatus,
   PrismaClient,
   ProgrammingLanguage,
@@ -119,7 +120,13 @@ async function judgeSubmission(submissionId: string) {
     where: { submissionId },
   });
 
-  const testCases = submission.problem.testCases;
+  const testCases =
+    submission.mode === CodeSubmissionMode.RUN
+      ? submission.problem.testCases.filter(
+          (testCase) => testCase.visibility === TestCaseVisibility.PUBLIC,
+        )
+      : submission.problem.testCases;
+
   if (testCases.length === 0) {
     throw new Error('Problem has no test cases');
   }
@@ -152,21 +159,41 @@ async function judgeSubmission(submissionId: string) {
     results.push(saved);
   }
 
-  const passedTests = results.filter(
-    (result) => result.status === CodeSubmissionStatus.ACCEPTED,
-  ).length;
+  const passedTestIds = new Set(
+    results
+      .filter((result) => result.status === CodeSubmissionStatus.ACCEPTED)
+      .map((result) => result.testCaseId)
+      .filter(Boolean),
+  );
+  const passedTests = passedTestIds.size;
   const finalStatus = getFinalStatus(results.map((result) => result.status));
-  const score = Math.round((passedTests / testCases.length) * 100);
+  const totalWeight = testCases.reduce((total, testCase) => total + testCase.weight, 0);
+  const passedWeight = testCases.reduce(
+    (total, testCase) =>
+      passedTestIds.has(testCase.id) ? total + testCase.weight : total,
+    0,
+  );
+  const maxScore =
+    submission.mode === CodeSubmissionMode.SUBMIT
+      ? (submission.assignment?.points ?? 100)
+      : 100;
+  const score =
+    totalWeight > 0 ? Math.round((passedWeight / totalWeight) * maxScore) : 0;
   const runtimeMs = results.reduce(
     (total, result) => total + (result.runtimeMs ?? 0),
     0,
   );
+  const pointsAwarded =
+    submission.mode === CodeSubmissionMode.SUBMIT
+      ? await awardProgrammingPoints(submission.id, score)
+      : 0;
 
   await prisma.codeSubmission.update({
     where: { id: submissionId },
     data: {
       status: finalStatus,
       score,
+      pointsAwarded,
       passedTests,
       totalTests: testCases.length,
       runtimeMs,
@@ -187,8 +214,141 @@ function loadSubmission(id: string) {
           },
         },
       },
+      assignment: true,
     },
   });
+}
+
+async function awardProgrammingPoints(submissionId: string, score: number) {
+  const submission = await prisma.codeSubmission.findUnique({
+    where: { id: submissionId },
+    select: {
+      id: true,
+      userId: true,
+      assignmentId: true,
+      assignment: {
+        select: {
+          id: true,
+          title: true,
+          classId: true,
+        },
+      },
+    },
+  });
+
+  if (!submission?.assignmentId || score <= 0) {
+    return 0;
+  }
+
+  const bestPrevious = await prisma.codeSubmission.findFirst({
+    where: {
+      id: { not: submission.id },
+      userId: submission.userId,
+      assignmentId: submission.assignmentId,
+      mode: CodeSubmissionMode.SUBMIT,
+      status: {
+        in: [CodeSubmissionStatus.ACCEPTED, CodeSubmissionStatus.WRONG_ANSWER],
+      },
+    },
+    orderBy: { score: 'desc' },
+    select: { score: true },
+  });
+
+  const delta = Math.max(0, score - (bestPrevious?.score ?? 0));
+  if (delta <= 0) {
+    return 0;
+  }
+
+  await prisma.userPoint.create({
+    data: {
+      userId: submission.userId,
+      points: delta,
+      source: 'programming_assignment',
+      description: `Atividade de programacao: ${submission.assignment?.title ?? submission.assignmentId}`,
+      referenceId: submission.assignmentId,
+    },
+  });
+
+  if (submission.assignment?.classId) {
+    await updateClassRanking(submission.assignment.classId);
+  }
+  await updateGlobalRanking();
+
+  return delta;
+}
+
+async function updateGlobalRanking() {
+  const topUsers = await prisma.$queryRaw<
+    Array<{ userId: string; totalPoints: bigint }>
+  >`
+    SELECT
+      user_id as userId,
+      SUM(points) as totalPoints
+    FROM user_points
+    GROUP BY user_id
+    ORDER BY totalPoints DESC
+    LIMIT 100
+  `;
+
+  for (let i = 0; i < topUsers.length; i++) {
+    const user = topUsers[i];
+    await prisma.ranking.upsert({
+      where: {
+        userId_type: { userId: user.userId, type: 'GLOBAL' },
+      },
+      update: {
+        position: i + 1,
+        points: Number(user.totalPoints),
+        updatedAt: new Date(),
+      },
+      create: {
+        userId: user.userId,
+        type: 'GLOBAL',
+        position: i + 1,
+        points: Number(user.totalPoints),
+      },
+    });
+  }
+}
+
+async function updateClassRanking(classId: string) {
+  const topUsers = await prisma.$queryRaw<
+    Array<{ userId: string; totalPoints: bigint }>
+  >`
+    SELECT
+      cs.user_id as userId,
+      SUM(up.points) as totalPoints
+    FROM class_students cs
+    LEFT JOIN user_points up ON up.user_id = cs.user_id
+    WHERE cs.class_id = ${classId}
+    GROUP BY cs.user_id
+    ORDER BY totalPoints DESC
+  `;
+
+  for (let i = 0; i < topUsers.length; i++) {
+    const user = topUsers[i];
+    await prisma.ranking.upsert({
+      where: {
+        userId_type_referenceId: {
+          userId: user.userId,
+          type: 'TURMA',
+          referenceId: classId,
+        },
+      },
+      update: {
+        position: i + 1,
+        points: Number(user.totalPoints) || 0,
+        updatedAt: new Date(),
+      },
+      create: {
+        userId: user.userId,
+        type: 'TURMA',
+        referenceId: classId,
+        position: i + 1,
+        points: Number(user.totalPoints) || 0,
+      },
+    });
+  }
 }
 
 async function runSingleTest(

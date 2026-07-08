@@ -5,6 +5,7 @@ export * from './create-programming-assignment.dto';
 export * from './create-programming-problem.dto';
 export * from './query-programming-list.dto';
 export * from './run-public-examples.dto';
+export * from './submit-assignment-code.dto';
 export * from './update-problem-test-case.dto';
 export * from './update-programming-assignment.dto';
 export * from './update-programming-problem.dto';
