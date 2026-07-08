@@ -52,6 +52,27 @@ enum ModerationStatus {
   REJECTED
 }
 
+enum ProgrammingLanguage {
+  JAVASCRIPT
+  PYTHON
+}
+
+enum CodeSubmissionStatus {
+  PENDING
+  RUNNING
+  ACCEPTED
+  WRONG_ANSWER
+  RUNTIME_ERROR
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  INTERNAL_ERROR
+}
+
+enum TestCaseVisibility {
+  PUBLIC
+  HIDDEN
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -79,6 +100,8 @@ model User {
   postReplies         PostReply[]
   createdClasses      Class[]
   classJoinRequests   ClassJoinRequest[]
+  programmingProblems ProgrammingProblem[]
+  codeSubmissions     CodeSubmission[]
 
   @@map("users")
 }
@@ -93,31 +116,32 @@ model Class {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  createdBy User?          @relation(fields: [createdById], references: [id])
-  students  ClassStudent[]
-  missions  Mission[]
-  posts     Post[]
-  settings  ClassSettings?
-  joinRequests ClassJoinRequest[]
+  createdBy              User?                   @relation(fields: [createdById], references: [id])
+  students               ClassStudent[]
+  missions               Mission[]
+  posts                  Post[]
+  settings               ClassSettings?
+  joinRequests           ClassJoinRequest[]
+  programmingAssignments ProgrammingAssignment[]
 
   @@map("classes")
 }
 
 model ClassSettings {
-  id                         String  @id @default(uuid())
-  classId                    String  @unique @map("class_id")
-  allowStudentPosts          Boolean @default(true) @map("allow_student_posts")
-  allowStudentReplies        Boolean @default(true) @map("allow_student_replies")
-  requirePostApproval        Boolean @default(false) @map("require_post_approval")
-  requireReplyApproval       Boolean @default(false) @map("require_reply_approval")
-  allowJoinByCode            Boolean @default(true) @map("allow_join_by_code")
-  requireJoinApproval        Boolean @default(false) @map("require_join_approval")
-  lockEnrollment             Boolean @default(false) @map("lock_enrollment")
-  activitiesEnabled          Boolean @default(false) @map("activities_enabled")
-  allowLateSubmissions       Boolean @default(false) @map("allow_late_submissions")
-  showRankingToStudents      Boolean @default(true) @map("show_ranking_to_students")
-  createdAt                  DateTime @default(now()) @map("created_at")
-  updatedAt                  DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid())
+  classId               String   @unique @map("class_id")
+  allowStudentPosts     Boolean  @default(true) @map("allow_student_posts")
+  allowStudentReplies   Boolean  @default(true) @map("allow_student_replies")
+  requirePostApproval   Boolean  @default(false) @map("require_post_approval")
+  requireReplyApproval  Boolean  @default(false) @map("require_reply_approval")
+  allowJoinByCode       Boolean  @default(true) @map("allow_join_by_code")
+  requireJoinApproval   Boolean  @default(false) @map("require_join_approval")
+  lockEnrollment        Boolean  @default(false) @map("lock_enrollment")
+  activitiesEnabled     Boolean  @default(false) @map("activities_enabled")
+  allowLateSubmissions  Boolean  @default(false) @map("allow_late_submissions")
+  showRankingToStudents Boolean  @default(true) @map("show_ranking_to_students")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
 
@@ -243,8 +267,8 @@ model MissionQuiz {
   aiGenerationId String?    @map("ai_generation_id")
   createdAt      DateTime   @default(now()) @map("created_at")
 
-  mission      Mission            @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  aiGeneration AIGeneration?      @relation(fields: [aiGenerationId], references: [id])
+  mission      Mission              @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  aiGeneration AIGeneration?        @relation(fields: [aiGenerationId], references: [id])
   attempts     MissionQuizAttempt[]
 
   @@map("mission_quizzes")
@@ -284,11 +308,11 @@ model UserMission {
 }
 
 model AIGeneration {
-  id         String   @id @default(uuid())
-  type       String
-  prompt     String   @db.Text
-  response   String   @db.Text
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  type      String
+  prompt    String   @db.Text
+  response  String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
 
   missionQuizzes MissionQuiz[]
 
@@ -310,14 +334,14 @@ model Notification {
 }
 
 model Post {
-  id        String   @id @default(uuid())
-  classId   String   @map("class_id")
-  authorId  String   @map("author_id")
+  id        String           @id @default(uuid())
+  classId   String           @map("class_id")
+  authorId  String           @map("author_id")
   title     String
-  content   String   @db.Text
+  content   String           @db.Text
   status    ModerationStatus @default(APPROVED)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
 
   class   Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
   author  User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -327,16 +351,114 @@ model Post {
 }
 
 model PostReply {
-  id        String   @id @default(uuid())
-  postId    String   @map("post_id")
-  authorId  String   @map("author_id")
-  content   String   @db.Text
+  id        String           @id @default(uuid())
+  postId    String           @map("post_id")
+  authorId  String           @map("author_id")
+  content   String           @db.Text
   status    ModerationStatus @default(APPROVED)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
 
   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@map("post_replies")
+}
+
+model ProgrammingProblem {
+  id               String     @id @default(uuid())
+  title            String
+  statement        String     @db.Text
+  difficulty       Difficulty @default(FACIL)
+  allowedLanguages Json       @map("allowed_languages")
+  starterCode      Json       @map("starter_code")
+  timeLimitMs      Int        @default(2000) @map("time_limit_ms")
+  memoryLimitMb    Int        @default(128) @map("memory_limit_mb")
+  createdById      String     @map("created_by_id")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  createdBy   User                    @relation(fields: [createdById], references: [id])
+  testCases   ProblemTestCase[]
+  assignments ProgrammingAssignment[]
+  submissions CodeSubmission[]
+
+  @@map("programming_problems")
+}
+
+model ProblemTestCase {
+  id         String             @id @default(uuid())
+  problemId  String             @map("problem_id")
+  input      String             @db.Text
+  expected   String             @db.Text
+  visibility TestCaseVisibility @default(HIDDEN)
+  weight     Int                @default(1)
+  createdAt  DateTime           @default(now()) @map("created_at")
+
+  problem ProgrammingProblem     @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  results SubmissionTestResult[]
+
+  @@map("problem_test_cases")
+}
+
+model ProgrammingAssignment {
+  id        String    @id @default(uuid())
+  problemId String    @map("problem_id")
+  classId   String    @map("class_id")
+  title     String
+  points    Int       @default(0)
+  dueDate   DateTime? @map("due_date")
+  published Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  problem     ProgrammingProblem @relation(fields: [problemId], references: [id])
+  class       Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  submissions CodeSubmission[]
+
+  @@map("programming_assignments")
+}
+
+model CodeSubmission {
+  id           String               @id @default(uuid())
+  problemId    String               @map("problem_id")
+  assignmentId String?              @map("assignment_id")
+  userId       String               @map("user_id")
+  language     ProgrammingLanguage
+  code         String               @db.Text
+  status       CodeSubmissionStatus @default(PENDING)
+  score        Int                  @default(0)
+  passedTests  Int                  @default(0) @map("passed_tests")
+  totalTests   Int                  @default(0) @map("total_tests")
+  runtimeMs    Int?                 @map("runtime_ms")
+  errorMessage String?              @map("error_message") @db.Text
+  createdAt    DateTime             @default(now()) @map("created_at")
+  startedAt    DateTime?            @map("started_at")
+  judgedAt     DateTime?            @map("judged_at")
+
+  problem    ProgrammingProblem     @relation(fields: [problemId], references: [id])
+  assignment ProgrammingAssignment? @relation(fields: [assignmentId], references: [id])
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results    SubmissionTestResult[]
+
+  @@index([status, createdAt])
+  @@index([userId, assignmentId])
+  @@map("code_submissions")
+}
+
+model SubmissionTestResult {
+  id           String               @id @default(uuid())
+  submissionId String               @map("submission_id")
+  testCaseId   String?              @map("test_case_id")
+  status       CodeSubmissionStatus
+  inputPreview String?              @map("input_preview") @db.Text
+  expected     String?              @db.Text
+  actual       String?              @db.Text
+  errorMessage String?              @map("error_message") @db.Text
+  runtimeMs    Int?                 @map("runtime_ms")
+
+  submission CodeSubmission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  testCase   ProblemTestCase? @relation(fields: [testCaseId], references: [id])
+
+  @@map("submission_test_results")
 }
