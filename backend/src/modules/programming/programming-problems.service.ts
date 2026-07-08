@@ -1,9 +1,20 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, ProgrammingLanguage, TestCaseVisibility } from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  Prisma,
+  ProgrammingLanguage,
+  Role,
+  TestCaseVisibility,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateProblemTestCaseDto,
   CreateProgrammingProblemDto,
+  QueryProgrammingListDto,
   UpdateProblemTestCaseDto,
   UpdateProgrammingProblemDto,
 } from './dto';
@@ -29,22 +40,47 @@ export class ProgrammingProblemsService {
     });
   }
 
-  findAll() {
-    return this.prisma.programmingProblem.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: {
-            testCases: true,
-            assignments: true,
-            submissions: true,
+  async findAll(
+    userId: string,
+    role: Role,
+    query: QueryProgrammingListDto = {},
+  ) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where: Prisma.ProgrammingProblemWhereInput =
+      role === Role.PROFESSOR ? { createdById: userId } : {};
+
+    const [data, total] = await Promise.all([
+      this.prisma.programmingProblem.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          _count: {
+            select: {
+              testCases: true,
+              assignments: true,
+              submissions: true,
+            },
           },
         },
+      }),
+      this.prisma.programmingProblem.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string, role?: Role) {
     const problem = await this.prisma.programmingProblem.findUnique({
       where: { id },
       include: {
@@ -57,11 +93,20 @@ export class ProgrammingProblemsService {
       throw new NotFoundException('Problema de programacao nao encontrado');
     }
 
+    if (role === Role.PROFESSOR && problem.createdById !== userId) {
+      throw new ForbiddenException('Voce nao pode acessar este problema');
+    }
+
     return problem;
   }
 
-  async update(id: string, dto: UpdateProgrammingProblemDto) {
-    const current = await this.findOne(id);
+  async update(
+    id: string,
+    dto: UpdateProgrammingProblemDto,
+    userId: string,
+    role: Role,
+  ) {
+    const current = await this.findOne(id, userId, role);
     const allowedLanguages =
       dto.allowedLanguages ??
       (current.allowedLanguages as ProgrammingLanguage[]);
@@ -85,8 +130,21 @@ export class ProgrammingProblemsService {
     });
   }
 
-  async createTestCase(problemId: string, dto: CreateProblemTestCaseDto) {
-    await this.ensureProblemExists(problemId);
+  async remove(id: string, userId: string, role: Role) {
+    await this.findOne(id, userId, role);
+
+    return this.prisma.programmingProblem.delete({
+      where: { id },
+    });
+  }
+
+  async createTestCase(
+    problemId: string,
+    dto: CreateProblemTestCaseDto,
+    userId: string,
+    role: Role,
+  ) {
+    await this.ensureProblemAccess(problemId, userId, role);
 
     return this.prisma.problemTestCase.create({
       data: {
@@ -99,7 +157,18 @@ export class ProgrammingProblemsService {
     });
   }
 
-  findTestCases(problemId: string, includeHidden = false) {
+  async findTestCases(
+    problemId: string,
+    includeHidden = false,
+    userId?: string,
+    role?: Role,
+  ) {
+    if (includeHidden && userId && role) {
+      await this.ensureProblemAccess(problemId, userId, role);
+    } else {
+      await this.ensureProblemExists(problemId);
+    }
+
     return this.prisma.problemTestCase.findMany({
       where: {
         problemId,
@@ -109,12 +178,25 @@ export class ProgrammingProblemsService {
     });
   }
 
-  async updateTestCase(id: string, dto: UpdateProblemTestCaseDto) {
-    await this.ensureTestCaseExists(id);
+  async updateTestCase(
+    id: string,
+    dto: UpdateProblemTestCaseDto,
+    userId: string,
+    role: Role,
+  ) {
+    await this.ensureTestCaseAccess(id, userId, role);
 
     return this.prisma.problemTestCase.update({
       where: { id },
       data: dto,
+    });
+  }
+
+  async removeTestCase(id: string, userId: string, role: Role) {
+    await this.ensureTestCaseAccess(id, userId, role);
+
+    return this.prisma.problemTestCase.delete({
+      where: { id },
     });
   }
 
@@ -140,6 +222,39 @@ export class ProgrammingProblemsService {
     }
   }
 
+  private async ensureProblemAccess(id: string, userId: string, role: Role) {
+    const problem = await this.prisma.programmingProblem.findUnique({
+      where: { id },
+      select: { id: true, createdById: true },
+    });
+
+    if (!problem) {
+      throw new NotFoundException('Problema de programacao nao encontrado');
+    }
+
+    if (role === Role.PROFESSOR && problem.createdById !== userId) {
+      throw new ForbiddenException('Voce nao pode gerenciar este problema');
+    }
+  }
+
+  private async ensureTestCaseAccess(id: string, userId: string, role: Role) {
+    const testCase = await this.prisma.problemTestCase.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        problem: { select: { createdById: true } },
+      },
+    });
+
+    if (!testCase) {
+      throw new NotFoundException('Caso de teste nao encontrado');
+    }
+
+    if (role === Role.PROFESSOR && testCase.problem.createdById !== userId) {
+      throw new ForbiddenException('Voce nao pode gerenciar este caso de teste');
+    }
+  }
+
   private validateStarterCode(
     allowedLanguages: ProgrammingLanguage[],
     starterCode: Record<ProgrammingLanguage, string>,
@@ -153,4 +268,3 @@ export class ProgrammingProblemsService {
     }
   }
 }
-

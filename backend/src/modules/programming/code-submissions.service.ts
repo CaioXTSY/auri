@@ -1,5 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CodeSubmissionStatus, ProgrammingLanguage } from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { CodeSubmissionStatus, ProgrammingLanguage, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCodeSubmissionDto } from './dto';
 
@@ -54,6 +59,33 @@ export class CodeSubmissionsService {
     });
   }
 
+  async findMyAssignmentSubmissions(userId: string, assignmentId: string) {
+    await this.ensureStudentAssignmentAccess(userId, assignmentId);
+
+    return this.findByUser(userId, assignmentId);
+  }
+
+  async findByAssignment(assignmentId: string, userId: string, role: Role) {
+    await this.ensureAssignmentManageAccess(assignmentId, userId, role);
+
+    return this.prisma.codeSubmission.findMany({
+      where: { assignmentId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            avatar: true,
+          },
+        },
+        results: true,
+      },
+    });
+  }
+
   async findOne(id: string) {
     const submission = await this.prisma.codeSubmission.findUnique({
       where: { id },
@@ -99,5 +131,48 @@ export class CodeSubmissionsService {
       );
     }
   }
-}
 
+  private async ensureStudentAssignmentAccess(
+    userId: string,
+    assignmentId: string,
+  ) {
+    const assignment = await this.prisma.programmingAssignment.findFirst({
+      where: {
+        id: assignmentId,
+        published: true,
+        class: {
+          students: {
+            some: { userId },
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Atividade de programacao nao encontrada');
+    }
+  }
+
+  private async ensureAssignmentManageAccess(
+    assignmentId: string,
+    userId: string,
+    role: Role,
+  ) {
+    const assignment = await this.prisma.programmingAssignment.findUnique({
+      where: { id: assignmentId },
+      select: {
+        id: true,
+        class: { select: { createdById: true } },
+      },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Atividade de programacao nao encontrada');
+    }
+
+    if (role === Role.PROFESSOR && assignment.class.createdById !== userId) {
+      throw new ForbiddenException('Voce nao pode acessar estas submissoes');
+    }
+  }
+}
