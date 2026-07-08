@@ -14,6 +14,8 @@ const DashboardHome = lazy(() => import('@/pages/dashboard/DashboardHome').then(
 const MyClasses = lazy(() => import('@/pages/dashboard/MyClasses').then(m => ({ default: m.MyClasses })));
 const ClassDetails = lazy(() => import('@/pages/dashboard/ClassDetails').then(m => ({ default: m.ClassDetails })));
 const MissionsPage = lazy(() => import('@/pages/dashboard/MissionsPage').then(m => ({ default: m.MissionsPage })));
+const ActivitiesPage = lazy(() => import('@/pages/dashboard/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
+const ActivitySolvePage = lazy(() => import('@/pages/dashboard/ActivitySolvePage').then(m => ({ default: m.ActivitySolvePage })));
 const SettingsPage = lazy(() => import('@/pages/dashboard/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const JoinClass = lazy(() => import('@/pages/dashboard/JoinClass').then(m => ({ default: m.JoinClass })));
 const AchievementsPage = lazy(() => import('@/pages/dashboard/AchievementsPage').then(m => ({ default: m.AchievementsPage })));
@@ -116,6 +118,22 @@ function App() {
             element={
               <RoleRoute allow={['ALUNO']}>
                 <MissionsPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/dashboard/activities"
+            element={
+              <RoleRoute allow={['ALUNO']}>
+                <ActivitiesPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/dashboard/activities/:id"
+            element={
+              <RoleRoute allow={['ALUNO']}>
+                <ActivitySolvePage />
               </RoleRoute>
             }
           />

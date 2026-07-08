@@ -68,6 +68,11 @@ enum CodeSubmissionStatus {
   INTERNAL_ERROR
 }
 
+enum CodeSubmissionMode {
+  RUN
+  SUBMIT
+}
+
 enum TestCaseVisibility {
   PUBLIC
   HIDDEN
@@ -420,21 +425,23 @@ model ProgrammingAssignment {
 }
 
 model CodeSubmission {
-  id           String               @id @default(uuid())
-  problemId    String               @map("problem_id")
-  assignmentId String?              @map("assignment_id")
-  userId       String               @map("user_id")
-  language     ProgrammingLanguage
-  code         String               @db.Text
-  status       CodeSubmissionStatus @default(PENDING)
-  score        Int                  @default(0)
-  passedTests  Int                  @default(0) @map("passed_tests")
-  totalTests   Int                  @default(0) @map("total_tests")
-  runtimeMs    Int?                 @map("runtime_ms")
-  errorMessage String?              @map("error_message") @db.Text
-  createdAt    DateTime             @default(now()) @map("created_at")
-  startedAt    DateTime?            @map("started_at")
-  judgedAt     DateTime?            @map("judged_at")
+  id            String               @id @default(uuid())
+  problemId     String               @map("problem_id")
+  assignmentId  String?              @map("assignment_id")
+  userId        String               @map("user_id")
+  language      ProgrammingLanguage
+  code          String               @db.Text
+  mode          CodeSubmissionMode   @default(SUBMIT)
+  status        CodeSubmissionStatus @default(PENDING)
+  score         Int                  @default(0)
+  pointsAwarded Int                  @default(0) @map("points_awarded")
+  passedTests   Int                  @default(0) @map("passed_tests")
+  totalTests    Int                  @default(0) @map("total_tests")
+  runtimeMs     Int?                 @map("runtime_ms")
+  errorMessage  String?              @map("error_message") @db.Text
+  createdAt     DateTime             @default(now()) @map("created_at")
+  startedAt     DateTime?            @map("started_at")
+  judgedAt      DateTime?            @map("judged_at")
 
   problem    ProgrammingProblem     @relation(fields: [problemId], references: [id])
   assignment ProgrammingAssignment? @relation(fields: [assignmentId], references: [id])
