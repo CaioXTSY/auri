@@ -17,6 +17,72 @@ import { CreateCodeSubmissionDto, SubmitAssignmentCodeDto } from './dto';
 export class CodeSubmissionsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getRunnerStats() {
+    const stuckThreshold = new Date(Date.now() - 5 * 60 * 1000);
+
+    const [
+      pending,
+      running,
+      stuckRunning,
+      averageRuntime,
+      recentInternalErrors,
+      totalsByLanguage,
+    ] = await Promise.all([
+      this.prisma.codeSubmission.count({
+        where: { status: CodeSubmissionStatus.PENDING },
+      }),
+      this.prisma.codeSubmission.count({
+        where: { status: CodeSubmissionStatus.RUNNING },
+      }),
+      this.prisma.codeSubmission.count({
+        where: {
+          status: CodeSubmissionStatus.RUNNING,
+          startedAt: { lt: stuckThreshold },
+        },
+      }),
+      this.prisma.codeSubmission.aggregate({
+        where: {
+          judgedAt: { not: null },
+          runtimeMs: { not: null },
+        },
+        _avg: { runtimeMs: true },
+      }),
+      this.prisma.codeSubmission.findMany({
+        where: { status: CodeSubmissionStatus.INTERNAL_ERROR },
+        orderBy: { createdAt: 'desc' },
+        take: 8,
+        select: {
+          id: true,
+          language: true,
+          mode: true,
+          errorMessage: true,
+          createdAt: true,
+          startedAt: true,
+          judgedAt: true,
+        },
+      }),
+      this.prisma.codeSubmission.groupBy({
+        by: ['language'],
+        _count: { _all: true },
+      }),
+    ]);
+
+    return {
+      pending,
+      running,
+      stuckRunning,
+      averageRuntimeMs: Math.round(averageRuntime._avg.runtimeMs ?? 0),
+      recentInternalErrors,
+      totalsByLanguage: totalsByLanguage.reduce<Record<string, number>>(
+        (acc, item) => {
+          acc[item.language] = item._count._all;
+          return acc;
+        },
+        {},
+      ),
+    };
+  }
+
   async create(userId: string, dto: CreateCodeSubmissionDto) {
     const problem = await this.prisma.programmingProblem.findUnique({
       where: { id: dto.problemId },
@@ -343,4 +409,3 @@ export class CodeSubmissionsService {
     };
   }
 }
-

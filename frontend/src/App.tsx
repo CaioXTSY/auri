@@ -23,6 +23,9 @@ const PostsPage = lazy(() => import('@/pages/dashboard/PostsPage').then(m => ({ 
 const TeacherClasses = lazy(() => import('@/pages/teacher/TeacherClasses').then(m => ({ default: m.TeacherClasses })));
 const CreateClass = lazy(() => import('@/pages/teacher/CreateClass').then(m => ({ default: m.CreateClass })));
 const TeacherClassDetails = lazy(() => import('@/pages/teacher/TeacherClassDetails').then(m => ({ default: m.TeacherClassDetails })));
+const TeacherActivities = lazy(() => import('@/pages/teacher/TeacherActivities').then(m => ({ default: m.TeacherActivities })));
+const TeacherActivityForm = lazy(() => import('@/pages/teacher/TeacherActivityForm').then(m => ({ default: m.TeacherActivityForm })));
+const TeacherActivitySubmissions = lazy(() => import('@/pages/teacher/TeacherActivitySubmissions').then(m => ({ default: m.TeacherActivitySubmissions })));
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
 const AdminClasses = lazy(() => import('@/pages/admin/AdminClasses').then(m => ({ default: m.AdminClasses })));
@@ -168,6 +171,46 @@ function App() {
             element={
               <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
                 <TeacherClassDetails />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teacher/activities"
+            element={
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
+                <TeacherActivities />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teacher/activities/new"
+            element={
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
+                <TeacherActivityForm />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teacher/activities/:id/edit"
+            element={
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
+                <TeacherActivityForm />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teacher/activities/:id/submissions"
+            element={
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
+                <TeacherActivitySubmissions />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/dashboard/teacher/classes/:classId/activities"
+            element={
+              <RoleRoute allow={['PROFESSOR', 'ADMIN']}>
+                <TeacherActivities />
               </RoleRoute>
             }
           />

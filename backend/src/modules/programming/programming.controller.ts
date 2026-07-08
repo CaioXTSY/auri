@@ -218,6 +218,13 @@ export class ProgrammingController {
     );
   }
 
+  @Get('runner/stats')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Diagnostico operacional do judge de codigo' })
+  getRunnerStats() {
+    return this.submissionsService.getRunnerStats();
+  }
+
   @Get('submissions/:id')
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({ summary: 'Buscar resultado de uma submissao' })

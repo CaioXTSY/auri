@@ -69,6 +69,9 @@ export const SidebarNav = memo(({
             <Link to="/admin/classes" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/admin/classes')}`} onClick={onNavClick} {...marker('admin-classes')}>
               <GraduationCap className="h-4 w-4" /><span>Turmas</span>
             </Link>
+            <Link to="/dashboard/teacher/activities" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/dashboard/teacher/activities')}`} onClick={onNavClick} {...marker('admin-code-activities')}>
+              <Code2 className="h-4 w-4" /><span>Atividades</span>
+            </Link>
             <Link to="/admin/missions" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/admin/missions')}`} onClick={onNavClick} {...marker('admin-missions')}>
               <Target className="h-4 w-4" /><span>Missões</span>
             </Link>
@@ -89,6 +92,9 @@ export const SidebarNav = memo(({
             </Link>
             <Link to="/dashboard/teacher/classes" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/dashboard/teacher/classes')}`} onClick={onNavClick} {...marker('professor-classes')}>
               <BookOpen className="h-4 w-4" /><span>Gerenciar Turmas</span>
+            </Link>
+            <Link to="/dashboard/teacher/activities" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/dashboard/teacher/activities')}`} onClick={onNavClick} {...marker('professor-code-activities')}>
+              <Code2 className="h-4 w-4" /><span>Atividades</span>
             </Link>
             <Link to="/dashboard/posts" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/dashboard/posts')}`} onClick={onNavClick} {...marker('professor-posts')}>
               <MessageSquare className="h-4 w-4" /><span>Postagens</span>
