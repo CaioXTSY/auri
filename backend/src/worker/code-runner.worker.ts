@@ -1,7 +1,4 @@
 import { spawn } from 'child_process';
-import { mkdtemp, rm, writeFile } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
 import {
   CodeSubmissionMode,
   CodeSubmissionStatus,
@@ -355,43 +352,32 @@ async function runSingleTest(
   submission: NonNullable<ClaimedSubmission>,
   input: string,
 ): Promise<DockerRunResult> {
-  const workspace = await mkdtemp(join(tmpdir(), 'auri-code-runner-'));
   const timeoutMs = submission.problem.timeLimitMs ?? config.defaultTimeoutMs;
 
-  try {
-    await writeFile(join(workspace, 'input.txt'), input, 'utf8');
-
-    if (submission.language === ProgrammingLanguage.JAVASCRIPT) {
-      await writeFile(join(workspace, 'solution.js'), submission.code, 'utf8');
-      await writeFile(join(workspace, 'runner.js'), javascriptHarness, 'utf8');
-      return runDocker({
-        image: config.jsImage,
-        workspace,
-        timeoutMs,
-        memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
-        command: ['node', 'runner.js'],
-      });
-    }
-
-    await writeFile(join(workspace, 'solution.py'), submission.code, 'utf8');
-    await writeFile(join(workspace, 'runner.py'), pythonHarness, 'utf8');
+  if (submission.language === ProgrammingLanguage.JAVASCRIPT) {
     return runDocker({
-      image: config.pyImage,
-      workspace,
+      image: config.jsImage,
       timeoutMs,
       memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
-      command: ['python', 'runner.py'],
+      env: buildRunnerEnv(submission.code, input),
+      command: ['node', '-e', javascriptLauncher],
     });
-  } finally {
-    await rm(workspace, { recursive: true, force: true });
   }
+
+  return runDocker({
+    image: config.pyImage,
+    timeoutMs,
+    memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
+    env: buildRunnerEnv(submission.code, input),
+    command: ['python', '-c', pythonLauncher],
+  });
 }
 
 function runDocker(options: {
   image: string;
-  workspace: string;
   timeoutMs: number;
   memoryMb: number;
+  env: string[];
   command: string[];
 }): Promise<DockerRunResult> {
   const args = [
@@ -410,10 +396,7 @@ function runDocker(options: {
     'ALL',
     '--security-opt',
     'no-new-privileges',
-    '-v',
-    `${options.workspace}:/workspace:ro`,
-    '-w',
-    '/workspace',
+    ...options.env.flatMap((env) => ['-e', env]),
     options.image,
     ...options.command,
   ];
@@ -487,6 +470,13 @@ function runDocker(options: {
   });
 }
 
+function buildRunnerEnv(code: string, input: string) {
+  return [
+    `AURI_CODE_B64=${Buffer.from(code, 'utf8').toString('base64')}`,
+    `AURI_INPUT_B64=${Buffer.from(input, 'utf8').toString('base64')}`,
+  ];
+}
+
 function getFinalStatus(statuses: CodeSubmissionStatus[]) {
   if (statuses.every((status) => status === CodeSubmissionStatus.ACCEPTED)) {
     return CodeSubmissionStatus.ACCEPTED;
@@ -543,10 +533,13 @@ function requestShutdown() {
   console.log('Code runner shutting down...');
 }
 
-const javascriptHarness = `
-const fs = require("fs");
-const solve = require("./solution");
-const input = fs.readFileSync("/workspace/input.txt", "utf8");
+const javascriptLauncher = `
+const code = Buffer.from(process.env.AURI_CODE_B64 || "", "base64").toString("utf8");
+const input = Buffer.from(process.env.AURI_INPUT_B64 || "", "base64").toString("utf8");
+const solutionModule = { exports: {} };
+const solutionExports = solutionModule.exports;
+const loadSolution = new Function("module", "exports", "require", code + "\\n; return module.exports;");
+const solve = loadSolution(solutionModule, solutionExports, require);
 
 Promise.resolve(solve(input))
   .then((result) => {
@@ -558,14 +551,18 @@ Promise.resolve(solve(input))
   });
 `.trimStart();
 
-const pythonHarness = `
+const pythonLauncher = `
+import base64
+import os
 import sys
-from solution import solve
 
-with open("/workspace/input.txt", "r", encoding="utf-8") as file:
-    input_value = file.read()
+code = base64.b64decode(os.environ.get("AURI_CODE_B64", "")).decode("utf-8")
+input_value = base64.b64decode(os.environ.get("AURI_INPUT_B64", "")).decode("utf-8")
+namespace = {}
 
 try:
+    exec(compile(code, "solution.py", "exec"), namespace)
+    solve = namespace["solve"]
     result = solve(input_value)
     sys.stdout.write("" if result is None else str(result))
 except Exception as exc:
