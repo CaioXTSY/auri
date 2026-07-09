@@ -56,11 +56,14 @@ export interface ProgrammingProblem extends ProgrammingProblemSummary {
 
 export interface ProgrammingAssignment {
   id: string;
+  problemId: string;
+  classId: string;
   title: string;
   points: number;
   dueDate?: string | null;
   published: boolean;
   createdAt: string;
+  updatedAt?: string;
   problem: ProgrammingProblemSummary;
   class: ProgrammingClassInfo;
   submissions?: Array<Pick<CodeSubmission, 'id' | 'status' | 'score' | 'passedTests' | 'totalTests' | 'createdAt' | 'judgedAt'>>;

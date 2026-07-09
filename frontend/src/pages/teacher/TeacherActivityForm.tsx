@@ -11,6 +11,8 @@ import {
   programmingService,
   type Difficulty,
   type ProblemTestCase,
+  type ProgrammingAssignment,
+  type ProgrammingProblem,
   type ProgrammingLanguage,
   type TestCaseVisibility,
 } from '@/services/programming-service';
@@ -37,13 +39,25 @@ const createEmptyTestCase = (): EditableTestCase => ({
   weight: 1,
 });
 
+const toDatetimeLocalValue = (value?: string | null) => {
+  if (!value) return '';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+};
+
 export const TeacherActivityForm = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const isEditing = Boolean(id);
+  const editType = searchParams.get('type');
 
   const [classes, setClasses] = useState<Class[]>([]);
+  const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [statement, setStatement] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty>('FACIL');
@@ -72,12 +86,25 @@ export const TeacherActivityForm = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [classData, problem] = await Promise.all([
-        classService.getAllClasses(),
-        id ? programmingService.getProblem(id) : Promise.resolve(null),
-      ]);
+      const classData = await classService.getAllClasses();
+      let assignment: ProgrammingAssignment | null = null;
+      let problem: ProgrammingProblem | null = null;
+
+      if (id) {
+        if (editType === 'problem') {
+          problem = await programmingService.getProblem(id);
+        } else {
+          try {
+            assignment = await programmingService.getAssignment(id);
+            problem = await programmingService.getProblem(assignment.problem.id);
+          } catch {
+            problem = await programmingService.getProblem(id);
+          }
+        }
+      }
 
       setClasses(classData);
+      setAssignmentId(assignment?.id ?? null);
 
       if (problem) {
         setTitle(problem.title);
@@ -100,13 +127,27 @@ export const TeacherActivityForm = () => {
             : [createEmptyTestCase()],
         );
       }
+
+      if (assignment) {
+        setPublishEnabled(true);
+        setClassId(assignment.classId || assignment.class?.id || '');
+        setAssignmentTitle(assignment.title);
+        setPoints(assignment.points);
+        setDueDate(toDatetimeLocalValue(assignment.dueDate));
+        setPublished(assignment.published);
+      } else if (problem) {
+        setPublishEnabled(false);
+        setClassId(searchParams.get('classId') ?? '');
+        setDueDate('');
+        setPublished(true);
+      }
     } catch (err) {
       setError('Nao foi possivel carregar o formulario.');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [editType, id, searchParams]);
 
   useEffect(() => {
     loadData();
@@ -147,7 +188,7 @@ export const TeacherActivityForm = () => {
       if (!testCase.expected.trim()) return 'Todo caso de teste precisa de saida esperada.';
       if (testCase.weight <= 0) return 'Os pesos dos testes devem ser positivos.';
     }
-    if (publishEnabled) {
+    if (publishEnabled || assignmentId) {
       if (!classId) return 'Selecione a turma para publicar.';
       if (!assignmentTitle.trim()) return 'Informe o titulo da atividade.';
       if (points < 0) return 'Os pontos da atividade nao podem ser negativos.';
@@ -229,15 +270,21 @@ export const TeacherActivityForm = () => {
         }
       }
 
-      if (publishEnabled) {
-        await programmingService.createAssignment({
+      if (publishEnabled || assignmentId) {
+        const assignmentPayload = {
           problemId: problem.id,
           classId,
           title: assignmentTitle.trim(),
           points,
           dueDate: dueDate ? new Date(dueDate).toISOString() : null,
           published,
-        });
+        };
+
+        if (assignmentId) {
+          await programmingService.updateAssignment(assignmentId, assignmentPayload);
+        } else {
+          await programmingService.createAssignment(assignmentPayload);
+        }
       }
 
       navigate('/dashboard/teacher/activities');
@@ -264,10 +311,16 @@ export const TeacherActivityForm = () => {
               Voltar
             </Button>
             <h1 className="font-display text-2xl font-bold text-brand-900">
-              {isEditing ? 'Editar problema' : 'Nova atividade de codigo'}
+              {assignmentId
+                ? 'Editar atividade publicada'
+                : isEditing
+                  ? 'Editar problema'
+                  : 'Nova atividade de codigo'}
             </h1>
             <p className="text-sm text-slate-500">
-              Configure enunciado, linguagens, testes e publicacao.
+              {assignmentId
+                ? 'Ajuste o problema, prazo, pontos e status de publicacao.'
+                : 'Configure enunciado, linguagens, testes e publicacao.'}
             </p>
           </div>
         </div>
@@ -464,9 +517,10 @@ export const TeacherActivityForm = () => {
               <label className="mb-4 flex items-center gap-2 text-sm font-semibold text-brand-900">
                 <Checkbox
                   checked={publishEnabled}
+                  disabled={Boolean(assignmentId)}
                   onCheckedChange={(checked) => setPublishEnabled(Boolean(checked))}
                 />
-                Publicar em turma
+                {assignmentId ? 'Dados da publicacao' : 'Publicar em turma'}
               </label>
               {publishEnabled ? (
                 <div className="grid gap-4 lg:grid-cols-2">

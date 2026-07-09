@@ -444,7 +444,7 @@ function buildRunnerEnv(code: string, input: string) {
   ];
 }
 
-function getFinalStatus(statuses: CodeSubmissionStatus[]) {
+export function getFinalStatus(statuses: CodeSubmissionStatus[]) {
   if (statuses.every((status) => status === CodeSubmissionStatus.ACCEPTED)) {
     return CodeSubmissionStatus.ACCEPTED;
   }
@@ -463,7 +463,7 @@ function getFinalStatus(statuses: CodeSubmissionStatus[]) {
   return CodeSubmissionStatus.WRONG_ANSWER;
 }
 
-function normalizeOutput(value: string) {
+export function normalizeOutput(value: string) {
   return value
     .replace(/\r\n/g, '\n')
     .split('\n')
@@ -537,11 +537,13 @@ except Exception as exc:
     sys.exit(1)
 `.trimStart();
 
-main()
-  .catch((error) => {
-    console.error(error instanceof Error ? error.stack : error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  main()
+    .catch((error) => {
+      console.error(error instanceof Error ? error.stack : error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

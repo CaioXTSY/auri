@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, BarChart3, Code2, Edit3, Eye, Loader2, Plus } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Code2,
+  Edit3,
+  Eye,
+  EyeOff,
+  Loader2,
+  Plus,
+} from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,6 +70,22 @@ export const TeacherActivities = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleToggleAssignmentPublished = async (assignment: ProgrammingAssignment) => {
+    setError(null);
+    try {
+      const updated = await programmingService.updateAssignment(assignment.id, {
+        published: !assignment.published,
+      });
+
+      setAssignments((current) =>
+        current.map((item) => (item.id === assignment.id ? { ...item, ...updated } : item)),
+      );
+    } catch (err) {
+      setError('Nao foi possivel alterar a publicacao da atividade.');
+      console.error(err);
+    }
+  };
 
   const selectedClass = useMemo(
     () => classes.find((item) => item.id === classId),
@@ -160,7 +185,9 @@ export const TeacherActivities = () => {
                               variant="outline"
                               size="sm"
                               onClick={() =>
-                                navigate(`/dashboard/teacher/activities/${problem.id}/edit`)
+                                navigate(
+                                  `/dashboard/teacher/activities/${problem.id}/edit?type=problem`,
+                                )
                               }
                             >
                               <Edit3 className="mr-2 h-4 w-4" />
@@ -188,7 +215,7 @@ export const TeacherActivities = () => {
                       <TableHeaderCell>Turma</TableHeaderCell>
                       <TableHeaderCell>Prazo</TableHeaderCell>
                       <TableHeaderCell>Status</TableHeaderCell>
-                      <TableHeaderCell className="text-right">Submissoes</TableHeaderCell>
+                      <TableHeaderCell className="text-right">Acoes</TableHeaderCell>
                     </TableRow>
                   </TableHead>
                   <tbody>
@@ -225,19 +252,41 @@ export const TeacherActivities = () => {
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                navigate(
-                                  `/dashboard/teacher/activities/${assignment.id}/submissions`,
-                                )
-                              }
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Ver
-                            </Button>
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  navigate(`/dashboard/teacher/activities/${assignment.id}/edit`)
+                                }
+                              >
+                                <Edit3 className="mr-2 h-4 w-4" />
+                                Editar
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleToggleAssignmentPublished(assignment)}
+                              >
+                                <EyeOff className="mr-2 h-4 w-4" />
+                                {assignment.published ? 'Despublicar' : 'Publicar'}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  navigate(
+                                    `/dashboard/teacher/activities/${assignment.id}/submissions`,
+                                  )
+                                }
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                Submissoes
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))

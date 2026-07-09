@@ -36,11 +36,7 @@ export class ProgrammingAssignmentsService {
     });
   }
 
-  async findAll(
-    userId: string,
-    role: Role,
-    query: QueryProgrammingListDto = {},
-  ) {
+  async findAll(userId: string, role: Role, query: QueryProgrammingListDto = {}) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const where =
@@ -89,22 +85,14 @@ export class ProgrammingAssignmentsService {
       throw new NotFoundException('Atividade de programacao nao encontrada');
     }
 
-    if (
-      role === Role.PROFESSOR &&
-      assignment.class.createdById !== userId
-    ) {
+    if (role === Role.PROFESSOR && assignment.class.createdById !== userId) {
       throw new ForbiddenException('Voce nao pode acessar esta atividade');
     }
 
     return assignment;
   }
 
-  async update(
-    id: string,
-    dto: UpdateProgrammingAssignmentDto,
-    userId: string,
-    role: Role,
-  ) {
+  async update(id: string, dto: UpdateProgrammingAssignmentDto, userId: string, role: Role) {
     const current = await this.findOne(id, userId, role);
     const problemId = dto.problemId ?? current.problemId;
 
@@ -146,6 +134,9 @@ export class ProgrammingAssignmentsService {
       where: {
         published: true,
         class: {
+          settings: {
+            is: { activitiesEnabled: true },
+          },
           students: {
             some: { userId },
           },
@@ -189,6 +180,9 @@ export class ProgrammingAssignmentsService {
         id,
         published: true,
         class: {
+          settings: {
+            is: { activitiesEnabled: true },
+          },
           students: {
             some: { userId },
           },
@@ -233,6 +227,9 @@ export class ProgrammingAssignmentsService {
         id,
         published: true,
         class: {
+          settings: {
+            is: { activitiesEnabled: true },
+          },
           students: {
             some: { userId },
           },
@@ -289,9 +286,7 @@ export class ProgrammingAssignmentsService {
     });
 
     if (testCasesCount === 0) {
-      throw new BadRequestException(
-        'Nao e possivel publicar atividade sem casos de teste',
-      );
+      throw new BadRequestException('Nao e possivel publicar atividade sem casos de teste');
     }
   }
 }
