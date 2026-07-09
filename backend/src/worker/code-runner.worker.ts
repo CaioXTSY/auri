@@ -195,15 +195,22 @@ async function judgeSubmission(submissionId: string) {
   });
 
   if (submission.mode === CodeSubmissionMode.SUBMIT) {
-    const pointsAwarded = await processProgrammingGamification(
-      submission.id,
-      finalStatus,
-    );
+    try {
+      const pointsAwarded = await processProgrammingGamification(
+        submission.id,
+        finalStatus,
+      );
 
-    await prisma.codeSubmission.update({
-      where: { id: submissionId },
-      data: { pointsAwarded },
-    });
+      await prisma.codeSubmission.update({
+        where: { id: submissionId },
+        data: { pointsAwarded },
+      });
+    } catch (error) {
+      console.error(
+        `[gamification] failed for submission ${submission.id}`,
+        error instanceof Error ? error.stack : error,
+      );
+    }
   }
 }
 
@@ -481,7 +488,11 @@ async function updateGlobalRanking() {
     const user = topUsers[i];
     await prisma.ranking.upsert({
       where: {
-        userId_type: { userId: user.userId, type: 'GLOBAL' },
+        userId_type_referenceId: {
+          userId: user.userId,
+          type: 'GLOBAL',
+          referenceId: 'GLOBAL',
+        },
       },
       update: {
         position: i + 1,
@@ -491,6 +502,7 @@ async function updateGlobalRanking() {
       create: {
         userId: user.userId,
         type: 'GLOBAL',
+        referenceId: 'GLOBAL',
         position: i + 1,
         points: Number(user.totalPoints),
       },

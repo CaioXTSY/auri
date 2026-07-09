@@ -235,8 +235,8 @@ model Ranking {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, type])
   @@unique([userId, type, referenceId])
+  @@index([type, referenceId, position])
   @@map("rankings")
 }
 

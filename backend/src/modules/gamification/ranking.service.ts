@@ -29,12 +29,17 @@ export class RankingService {
 
       await this.prisma.ranking.upsert({
         where: {
-          userId_type: { userId: user.userId, type: 'GLOBAL' },
+          userId_type_referenceId: {
+            userId: user.userId,
+            type: 'GLOBAL',
+            referenceId: 'GLOBAL',
+          },
         },
         update: { position, points, updatedAt: new Date() },
         create: {
           userId: user.userId,
           type: 'GLOBAL',
+          referenceId: 'GLOBAL',
           position,
           points,
         },
@@ -92,10 +97,10 @@ export class RankingService {
     referenceId?: string,
     limit = 50,
   ) {
-    const where: any = { type };
-    if (referenceId) {
-      where.referenceId = referenceId;
-    }
+    const where: any =
+      type === 'GLOBAL'
+        ? { type, referenceId: 'GLOBAL' }
+        : { type, ...(referenceId ? { referenceId } : {}) };
 
     return this.prisma.ranking.findMany({
       where: { ...where, user: { role: 'ALUNO' } },
@@ -117,7 +122,13 @@ export class RankingService {
     return this.prisma.ranking.findUnique({
       where:
         type === 'GLOBAL'
-          ? { userId_type: { userId, type } }
+          ? {
+              userId_type_referenceId: {
+                userId,
+                type,
+                referenceId: 'GLOBAL',
+              },
+            }
           : { userId_type_referenceId: { userId, type, referenceId } },
       include: {
         user: {
