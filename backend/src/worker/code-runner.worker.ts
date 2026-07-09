@@ -2,11 +2,11 @@ import { spawn } from 'child_process';
 import {
   CodeSubmissionMode,
   CodeSubmissionStatus,
-  NotificationType,
   PrismaClient,
   ProgrammingLanguage,
   TestCaseVisibility,
 } from '@prisma/client';
+import { ProgrammingGamificationService } from '../modules/programming/programming-gamification.service';
 
 type ClaimedSubmission = Awaited<ReturnType<typeof loadSubmission>>;
 
@@ -18,6 +18,7 @@ type DockerRunResult = {
 };
 
 const prisma = new PrismaClient();
+const programmingGamification = new ProgrammingGamificationService(prisma);
 
 const config = {
   enabled: process.env.CODE_RUNNER_ENABLED !== 'false',
@@ -46,9 +47,7 @@ async function main() {
     `Code runner started. parallel=${config.maxParallel} poll=${config.pollIntervalMs}ms`,
   );
 
-  await Promise.all(
-    Array.from({ length: config.maxParallel }, (_, index) => workerLoop(index)),
-  );
+  await Promise.all(Array.from({ length: config.maxParallel }, (_, index) => workerLoop(index)));
 }
 
 async function workerLoop(index: number) {
@@ -73,8 +72,7 @@ async function workerLoop(index: number) {
         where: { id: submission.id },
         data: {
           status: CodeSubmissionStatus.INTERNAL_ERROR,
-          errorMessage:
-            error instanceof Error ? error.message : 'Erro interno no judge',
+          errorMessage: error instanceof Error ? error.message : 'Erro interno no judge',
           judgedAt: new Date(),
         },
       });
@@ -135,8 +133,7 @@ async function judgeSubmission(submissionId: string) {
     const normalizedActual = normalizeOutput(result.stdout);
     const normalizedExpected = normalizeOutput(testCase.expected);
     const status =
-      result.status === CodeSubmissionStatus.ACCEPTED &&
-      normalizedActual !== normalizedExpected
+      result.status === CodeSubmissionStatus.ACCEPTED && normalizedActual !== normalizedExpected
         ? CodeSubmissionStatus.WRONG_ANSWER
         : result.status;
 
@@ -167,20 +164,13 @@ async function judgeSubmission(submissionId: string) {
   const finalStatus = getFinalStatus(results.map((result) => result.status));
   const totalWeight = testCases.reduce((total, testCase) => total + testCase.weight, 0);
   const passedWeight = testCases.reduce(
-    (total, testCase) =>
-      passedTestIds.has(testCase.id) ? total + testCase.weight : total,
+    (total, testCase) => (passedTestIds.has(testCase.id) ? total + testCase.weight : total),
     0,
   );
   const maxScore =
-    submission.mode === CodeSubmissionMode.SUBMIT
-      ? (submission.assignment?.points ?? 100)
-      : 100;
-  const score =
-    totalWeight > 0 ? Math.round((passedWeight / totalWeight) * maxScore) : 0;
-  const runtimeMs = results.reduce(
-    (total, result) => total + (result.runtimeMs ?? 0),
-    0,
-  );
+    submission.mode === CodeSubmissionMode.SUBMIT ? (submission.assignment?.points ?? 100) : 100;
+  const score = totalWeight > 0 ? Math.round((passedWeight / totalWeight) * maxScore) : 0;
+  const runtimeMs = results.reduce((total, result) => total + (result.runtimeMs ?? 0), 0);
   await prisma.codeSubmission.update({
     where: { id: submissionId },
     data: {
@@ -196,7 +186,7 @@ async function judgeSubmission(submissionId: string) {
 
   if (submission.mode === CodeSubmissionMode.SUBMIT) {
     try {
-      const pointsAwarded = await processProgrammingGamification(
+      const pointsAwarded = await programmingGamification.processSubmission(
         submission.id,
         finalStatus,
       );
@@ -228,326 +218,6 @@ function loadSubmission(id: string) {
       assignment: true,
     },
   });
-}
-
-async function processProgrammingGamification(
-  submissionId: string,
-  finalStatus: CodeSubmissionStatus,
-) {
-  const pointsAwarded = await awardProgrammingPoints(submissionId);
-
-  await checkProgrammingAchievements(submissionId, finalStatus);
-
-  const submission = await prisma.codeSubmission.findUnique({
-    where: { id: submissionId },
-    select: {
-      userId: true,
-      assignment: { select: { classId: true } },
-    },
-  });
-
-  if (submission) {
-    await refreshProgressionAfterPointsChange(submission.userId);
-
-    if (submission.assignment?.classId) {
-      await updateClassRanking(submission.assignment.classId);
-    }
-    await updateGlobalRanking();
-  }
-
-  return pointsAwarded;
-}
-
-async function awardProgrammingPoints(submissionId: string) {
-  const submission = await prisma.codeSubmission.findUnique({
-    where: { id: submissionId },
-    select: {
-      id: true,
-      userId: true,
-      assignmentId: true,
-      score: true,
-      assignment: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
-    },
-  });
-
-  if (!submission?.assignmentId || submission.score <= 0) {
-    return 0;
-  }
-
-  const bestPrevious = await prisma.codeSubmission.findFirst({
-    where: {
-      id: { not: submission.id },
-      userId: submission.userId,
-      assignmentId: submission.assignmentId,
-      mode: CodeSubmissionMode.SUBMIT,
-      status: {
-        in: [CodeSubmissionStatus.ACCEPTED, CodeSubmissionStatus.WRONG_ANSWER],
-      },
-    },
-    orderBy: { score: 'desc' },
-    select: { score: true },
-  });
-
-  const delta = Math.max(0, submission.score - (bestPrevious?.score ?? 0));
-  if (delta <= 0) {
-    return 0;
-  }
-
-  await prisma.userPoint.create({
-    data: {
-      userId: submission.userId,
-      points: delta,
-      source: 'programming_assignment',
-      description: `Atividade de programacao: ${submission.assignment?.title ?? submission.assignmentId}`,
-      referenceId: submission.assignmentId,
-    },
-  });
-
-  return delta;
-}
-
-async function checkProgrammingAchievements(
-  submissionId: string,
-  finalStatus: CodeSubmissionStatus,
-) {
-  const submission = await prisma.codeSubmission.findUnique({
-    where: { id: submissionId },
-    select: {
-      userId: true,
-      language: true,
-      assignmentId: true,
-      score: true,
-      createdAt: true,
-      assignment: { select: { points: true } },
-    },
-  });
-
-  if (!submission) {
-    return;
-  }
-
-  await unlockAchievementByCondition(submission.userId, 'FIRST_SUBMISSION');
-  await checkSubmissionTimingAchievements(submission.userId, submission.createdAt);
-
-  if (finalStatus === CodeSubmissionStatus.ACCEPTED) {
-    await unlockAchievementByCondition(submission.userId, 'FIRST_APPROVED');
-    await unlockAchievementByCondition(submission.userId, 'PERFECT_SUBMISSION');
-  }
-
-  const acceptedCount = await prisma.codeSubmission.count({
-    where: {
-      userId: submission.userId,
-      mode: CodeSubmissionMode.SUBMIT,
-      status: CodeSubmissionStatus.ACCEPTED,
-    },
-  });
-
-  for (const milestone of [10, 25, 50, 100, 250, 500]) {
-    if (acceptedCount >= milestone) {
-      await unlockAchievementByCondition(
-        submission.userId,
-        `APPROVED_${milestone}`,
-      );
-    }
-  }
-
-  const languages = await prisma.codeSubmission.findMany({
-    where: {
-      userId: submission.userId,
-      mode: CodeSubmissionMode.SUBMIT,
-      status: {
-        in: [CodeSubmissionStatus.ACCEPTED, CodeSubmissionStatus.WRONG_ANSWER],
-      },
-    },
-    distinct: ['language'],
-    select: { language: true },
-  });
-
-  if (languages.length >= 2) {
-    await unlockAchievementByCondition(submission.userId, 'POLYGLOT');
-  }
-}
-
-async function checkSubmissionTimingAchievements(userId: string, date: Date) {
-  const saoPauloDateParts = getSaoPauloDateParts(date);
-
-  if (saoPauloDateParts.hour >= 0 && saoPauloDateParts.hour < 4) {
-    await unlockAchievementByCondition(userId, 'NIGHT_OWL');
-  }
-
-  if (saoPauloDateParts.hour >= 5 && saoPauloDateParts.hour < 9) {
-    await unlockAchievementByCondition(userId, 'EARLY_BIRD');
-  }
-
-  if (
-    saoPauloDateParts.weekday === 'Sat' ||
-    saoPauloDateParts.weekday === 'Sun'
-  ) {
-    await unlockAchievementByCondition(userId, 'WEEKEND_WARRIOR');
-  }
-}
-
-async function refreshProgressionAfterPointsChange(userId: string) {
-  const totalPoints = await getUserTotalPoints(userId);
-
-  for (const milestone of [100, 500, 1000, 5000, 10000]) {
-    if (totalPoints >= milestone) {
-      await unlockAchievementByCondition(userId, `POINTS_${milestone}`);
-    }
-  }
-
-  const currentLevel = Math.floor(Math.sqrt(totalPoints / 100));
-  for (const level of [5, 10]) {
-    if (currentLevel >= level) {
-      await unlockAchievementByCondition(userId, `LEVEL_${level}`);
-    }
-  }
-}
-
-async function unlockAchievementByCondition(userId: string, condition: string) {
-  const achievement = await prisma.achievement.findUnique({
-    where: { condition },
-  });
-
-  if (!achievement) {
-    return false;
-  }
-
-  const existing = await prisma.userAchievement.findUnique({
-    where: {
-      userId_achievementId: {
-        userId,
-        achievementId: achievement.id,
-      },
-    },
-  });
-
-  if (existing) {
-    return false;
-  }
-
-  await prisma.userAchievement.create({
-    data: {
-      userId,
-      achievementId: achievement.id,
-    },
-  });
-
-  if (achievement.points > 0) {
-    await prisma.userPoint.create({
-      data: {
-        userId,
-        points: achievement.points,
-        source: 'CONQUISTA',
-        description: `Desbloqueou: ${achievement.name}`,
-        referenceId: achievement.id,
-      },
-    });
-  }
-
-  await prisma.notification.create({
-    data: {
-      userId,
-      type: NotificationType.CONQUISTA,
-      title: `Conquista desbloqueada: ${achievement.name}`,
-      message: `${achievement.description} +${achievement.points} XP.`,
-    },
-  });
-
-  return true;
-}
-
-async function getUserTotalPoints(userId: string) {
-  const result = await prisma.userPoint.aggregate({
-    where: { userId },
-    _sum: { points: true },
-  });
-
-  return result._sum.points || 0;
-}
-
-async function updateGlobalRanking() {
-  const topUsers = await prisma.$queryRaw<
-    Array<{ userId: string; totalPoints: bigint }>
-  >`
-    SELECT
-      user_id as userId,
-      SUM(points) as totalPoints
-    FROM user_points
-    GROUP BY user_id
-    ORDER BY totalPoints DESC
-    LIMIT 100
-  `;
-
-  for (let i = 0; i < topUsers.length; i++) {
-    const user = topUsers[i];
-    await prisma.ranking.upsert({
-      where: {
-        userId_type_referenceId: {
-          userId: user.userId,
-          type: 'GLOBAL',
-          referenceId: 'GLOBAL',
-        },
-      },
-      update: {
-        position: i + 1,
-        points: Number(user.totalPoints),
-        updatedAt: new Date(),
-      },
-      create: {
-        userId: user.userId,
-        type: 'GLOBAL',
-        referenceId: 'GLOBAL',
-        position: i + 1,
-        points: Number(user.totalPoints),
-      },
-    });
-  }
-}
-
-async function updateClassRanking(classId: string) {
-  const topUsers = await prisma.$queryRaw<
-    Array<{ userId: string; totalPoints: bigint }>
-  >`
-    SELECT
-      cs.user_id as userId,
-      SUM(up.points) as totalPoints
-    FROM class_students cs
-    LEFT JOIN user_points up ON up.user_id = cs.user_id
-    WHERE cs.class_id = ${classId}
-    GROUP BY cs.user_id
-    ORDER BY totalPoints DESC
-  `;
-
-  for (let i = 0; i < topUsers.length; i++) {
-    const user = topUsers[i];
-    await prisma.ranking.upsert({
-      where: {
-        userId_type_referenceId: {
-          userId: user.userId,
-          type: 'TURMA',
-          referenceId: classId,
-        },
-      },
-      update: {
-        position: i + 1,
-        points: Number(user.totalPoints) || 0,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId: user.userId,
-        type: 'TURMA',
-        referenceId: classId,
-        position: i + 1,
-        points: Number(user.totalPoints) || 0,
-      },
-    });
-  }
 }
 
 async function runSingleTest(
@@ -582,16 +252,29 @@ function runDocker(options: {
   env: string[];
   command: string[];
 }): Promise<DockerRunResult> {
+  const containerName = createDockerContainerName();
   const args = [
     'run',
     '--rm',
+    '--name',
+    containerName,
+    '--label',
+    'auri.code-runner=true',
+    '--label',
+    `auri.code-runner.name=${containerName}`,
     '--network',
     'none',
     '--memory',
     `${options.memoryMb}m`,
+    '--memory-swap',
+    `${options.memoryMb}m`,
     '--cpus',
     config.defaultCpus,
+    '--user',
+    '1000:1000',
     '--read-only',
+    '--tmpfs',
+    '/tmp:rw,noexec,nosuid,size=16m',
     '--pids-limit',
     '64',
     '--cap-drop',
@@ -615,17 +298,33 @@ function runDocker(options: {
     let stderr = '';
     let killedByTimeout = false;
     let outputLimitExceeded = false;
+    let stopRequested = false;
+
+    const requestContainerStop = () => {
+      if (stopRequested) {
+        return;
+      }
+
+      stopRequested = true;
+      void killDockerContainer(containerName)
+        .finally(() => removeDockerContainer(containerName))
+        .finally(() => {
+          if (!child.killed) {
+            child.kill('SIGKILL');
+          }
+        });
+    };
 
     const timer = setTimeout(() => {
       killedByTimeout = true;
-      child.kill('SIGKILL');
+      requestContainerStop();
     }, options.timeoutMs);
 
     child.stdout.on('data', (chunk: Buffer) => {
       stdout = appendLimited(stdout, chunk.toString('utf8'));
       if (Buffer.byteLength(stdout, 'utf8') >= config.maxOutputBytes) {
         outputLimitExceeded = true;
-        child.kill('SIGKILL');
+        requestContainerStop();
       }
     });
 
@@ -633,7 +332,7 @@ function runDocker(options: {
       stderr = appendLimited(stderr, chunk.toString('utf8'));
       if (Buffer.byteLength(stderr, 'utf8') >= config.maxOutputBytes) {
         outputLimitExceeded = true;
-        child.kill('SIGKILL');
+        requestContainerStop();
       }
     });
 
@@ -668,6 +367,72 @@ function runDocker(options: {
         stderr,
         runtimeMs: Date.now() - startedAt,
       });
+    });
+  });
+}
+
+function createDockerContainerName() {
+  const randomSuffix = Math.random().toString(16).slice(2, 10);
+
+  return `auri-code-runner-${process.pid}-${Date.now()}-${randomSuffix}`;
+}
+
+async function killDockerContainer(containerName: string) {
+  await runDockerCli(['kill', containerName]).catch((error) => {
+    console.warn(
+      `[docker] failed to kill container ${containerName}`,
+      error instanceof Error ? error.message : error,
+    );
+  });
+}
+
+async function removeDockerContainer(containerName: string) {
+  await runDockerCli(['rm', '-f', containerName]).catch(() => undefined);
+}
+
+function runDockerCli(args: string[], timeoutMs = 5000) {
+  return new Promise<void>((resolve, reject) => {
+    const child = spawn('docker', args, {
+      windowsHide: true,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+
+    let stderr = '';
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      finish(new Error(`docker ${args[0]} timed out`));
+    }, timeoutMs);
+
+    function finish(error?: Error) {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timer);
+
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    }
+
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr = appendLimited(stderr, chunk.toString('utf8'));
+    });
+
+    child.on('error', (error) => finish(error));
+    child.on('close', (code) => {
+      if (code === 0) {
+        finish();
+        return;
+      }
+
+      finish(new Error(stderr || `docker ${args[0]} exited with ${code}`));
     });
   });
 }
@@ -724,20 +489,6 @@ function numberFromEnv(key: string, fallback: number) {
   const raw = process.env[key];
   const parsed = raw ? Number(raw) : NaN;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function getSaoPauloDateParts(date: Date) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Sao_Paulo',
-    weekday: 'short',
-    hour: '2-digit',
-    hour12: false,
-  }).formatToParts(date);
-
-  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? 0);
-  const weekday = parts.find((part) => part.type === 'weekday')?.value ?? '';
-
-  return { hour, weekday };
 }
 
 function sleep(ms: number) {

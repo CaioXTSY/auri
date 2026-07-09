@@ -22,7 +22,7 @@ RUN npm run build:runner
 # ---- Stage 2: Production ----
 FROM node:20-alpine AS production
 
-RUN apk add --no-cache openssl docker-cli
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -37,3 +37,10 @@ RUN mkdir -p /app/uploads
 EXPOSE 3001
 
 CMD ["node", "dist/main"]
+
+# ---- Stage 3: Runner ----
+FROM production AS runner
+
+RUN apk add --no-cache docker-cli
+
+CMD ["node", "dist-runner/worker/code-runner.worker.js"]
