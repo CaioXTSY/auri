@@ -15,7 +15,9 @@ import { QuizGeneratorService } from './quiz-generator.service';
 
 @Injectable()
 export class MissionQuizService {
-  private static readonly DAILY_QUIZ_GENERATION_RETRY_DELAYS_MS = [500, 1000, 1500, 2500, 4000, 5000];
+  private static readonly DAILY_QUIZ_GENERATION_RETRY_DELAYS_MS = [
+    500, 1000, 1500, 2500, 4000, 5000,
+  ];
 
   constructor(
     private prisma: PrismaService,
@@ -89,10 +91,7 @@ export class MissionQuizService {
     }
 
     const now = new Date();
-    if (
-      mission.type !== MissionType.DIARIA &&
-      now < mission.startDate
-    ) {
+    if (mission.type !== MissionType.DIARIA && now < mission.startDate) {
       throw new BadRequestException('Esta missão ainda não está disponível');
     }
 
@@ -156,10 +155,7 @@ export class MissionQuizService {
     }
 
     const now = new Date();
-    if (
-      mission.type !== MissionType.DIARIA &&
-      now < mission.startDate
-    ) {
+    if (mission.type !== MissionType.DIARIA && now < mission.startDate) {
       throw new BadRequestException('Esta missão ainda não está disponível');
     }
 
@@ -267,7 +263,7 @@ export class MissionQuizService {
       points: mission.points,
       options: mission.quiz.options,
       answered: false,
-      attempt: null,
+      attempt: null as null,
     };
   }
 
@@ -291,7 +287,7 @@ export class MissionQuizService {
         points: mission.points,
         options: mission.quiz.options,
         answered: false,
-        attempt: null,
+        attempt: null as null,
       };
     }
 
@@ -339,10 +335,7 @@ export class MissionQuizService {
             isCorrect: true,
           },
         },
-        OR: [
-          { classId: null },
-          { classId: { in: userClassIds } },
-        ],
+        OR: [{ classId: null }, { classId: { in: userClassIds } }],
       },
       select: {
         id: true,

@@ -33,7 +33,7 @@ describe('CodeSubmissionsService', () => {
   const assignmentForSubmission = {
     id: 'assignment-1',
     problemId: 'problem-1',
-    dueDate: null,
+    dueDate: null as Date | null,
     class: {
       settings: {
         allowLateSubmissions: false,

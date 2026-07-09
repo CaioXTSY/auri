@@ -1,11 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { PrismaService } from '../../src/prisma/prisma.service';
+import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { Role } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as cookieParser from 'cookie-parser';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+
+type E2EUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+};
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication;
@@ -13,9 +23,9 @@ describe('UsersController (e2e)', () => {
   let adminToken: string;
   let professorToken: string;
   let alunoToken: string;
-  let adminUser: any;
-  let professorUser: any;
-  let alunoUser: any;
+  let adminUser: E2EUser;
+  let professorUser: E2EUser;
+  let alunoUser: E2EUser;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -23,6 +33,8 @@ describe('UsersController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');
+    app.use(cookieParser());
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -33,51 +45,49 @@ describe('UsersController (e2e)', () => {
 
     await app.init();
     prisma = app.get<PrismaService>(PrismaService);
+    const jwtService = app.get<JwtService>(JwtService);
 
-    // Criar usuários de teste
-    const adminRes = await request(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
-        email: `admin-${Date.now()}@test.com`,
-        password: 'password123',
-        name: 'Admin User',
-        role: Role.ADMIN,
+    const createTestUser = async (role: Role, prefix: string) => {
+      return prisma.user.create({
+        data: {
+          email: `${prefix}-${Date.now()}@test.com`,
+          password: await bcrypt.hash('password123', 10),
+          name: `${prefix} User`,
+          role,
+        },
       });
-    adminToken = adminRes.body.access_token;
-    adminUser = adminRes.body.user;
+    };
 
-    const professorRes = await request(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
-        email: `professor-${Date.now()}@test.com`,
-        password: 'password123',
-        name: 'Professor User',
-        role: Role.PROFESSOR,
+    const createToken = (user: E2EUser) =>
+      jwtService.signAsync({
+        email: user.email,
+        sub: user.id,
+        role: user.role,
       });
-    professorToken = professorRes.body.access_token;
-    professorUser = professorRes.body.user;
 
-    const alunoRes = await request(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
-        email: `aluno-${Date.now()}@test.com`,
-        password: 'password123',
-        name: 'Aluno User',
-        role: Role.ALUNO,
-      });
-    alunoToken = alunoRes.body.access_token;
-    alunoUser = alunoRes.body.user;
+    adminUser = await createTestUser(Role.ADMIN, 'admin');
+    professorUser = await createTestUser(Role.PROFESSOR, 'professor');
+    alunoUser = await createTestUser(Role.ALUNO, 'aluno');
+
+    adminToken = await createToken(adminUser);
+    professorToken = await createToken(professorUser);
+    alunoToken = await createToken(alunoUser);
   });
 
   afterAll(async () => {
     // Limpar usuários de teste
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          in: [adminUser.email, professorUser.email, alunoUser.email],
+    const emails = [adminUser, professorUser, alunoUser].filter(Boolean).map((user) => user.email);
+
+    if (emails.length > 0) {
+      await prisma.user.deleteMany({
+        where: {
+          email: {
+            in: emails,
+          },
         },
-      },
-    });
+      });
+    }
+
     await app.close();
   });
 
@@ -111,7 +121,7 @@ describe('UsersController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(response.body.data.every((u: any) => u.role === Role.ALUNO)).toBe(true);
+      expect(response.body.data.every((u: E2EUser) => u.role === Role.ALUNO)).toBe(true);
     });
 
     it('should paginate results', async () => {
@@ -126,9 +136,7 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should fail without authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/users')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/users').expect(401);
     });
 
     it('should fail for aluno role', async () => {
@@ -152,9 +160,7 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should fail without authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/users/me')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/users/me').expect(401);
     });
   });
 
@@ -212,7 +218,7 @@ describe('UsersController (e2e)', () => {
   describe('/users/me/avatar (POST)', () => {
     it('should upload avatar for current user', async () => {
       const testImagePath = path.join(__dirname, '..', 'fixtures', 'test-avatar.jpg');
-      
+
       // Se não existir imagem de teste, pular
       if (!fs.existsSync(testImagePath)) {
         console.log('Skipping avatar upload test - no test image');

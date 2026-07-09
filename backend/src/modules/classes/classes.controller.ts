@@ -10,24 +10,14 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { ClassesService } from './classes.service';
-import {
-  CreateClassDto,
-  UpdateClassDto,
-  QueryClassesDto,
-  UpdateClassSettingsDto,
-} from './dto';
+import { CreateClassDto, UpdateClassDto, QueryClassesDto, UpdateClassSettingsDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @ApiTags('classes')
 @ApiBearerAuth()
@@ -40,7 +30,7 @@ export class ClassesController {
   @Roles(Role.ALUNO)
   @ApiOperation({
     summary: 'Entrar em uma turma pelo código',
-    description: 'Permite que um aluno entre em uma turma usando o código de acesso.'
+    description: 'Permite que um aluno entre em uma turma usando o código de acesso.',
   })
   @ApiBody({
     schema: {
@@ -48,18 +38,18 @@ export class ClassesController {
       properties: {
         code: {
           type: 'string',
-          example: 'ckz123456'
-        }
+          example: 'ckz123456',
+        },
       },
-      required: ['code']
-    }
+      required: ['code'],
+    },
   })
   @ApiResponse({ status: 201, description: 'Aluno matriculado com sucesso' })
   @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 409, description: 'Aluno já matriculado' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Aluno)' })
-  joinClass(@Body('code') code: string, @Request() req) {
+  joinClass(@Body('code') code: string, @Request() req: AuthenticatedRequest) {
     return this.classesService.joinClass(code, req.user.id);
   }
 
@@ -67,14 +57,14 @@ export class ClassesController {
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({
     summary: 'Criar nova turma',
-    description: 'Cria uma turma para organizar alunos.'
+    description: 'Cria uma turma para organizar alunos.',
   })
   @ApiBody({ type: CreateClassDto })
   @ApiResponse({ status: 201, description: 'Turma criada com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  create(@Body() createClassDto: CreateClassDto, @Request() req) {
+  create(@Body() createClassDto: CreateClassDto, @Request() req: AuthenticatedRequest) {
     return this.classesService.create(createClassDto, req.user.id);
   }
 
@@ -82,12 +72,12 @@ export class ClassesController {
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({
     summary: 'Listar turmas com paginação',
-    description: 'Professores veem apenas suas próprias turmas. Admins veem todas.'
+    description: 'Professores veem apenas suas próprias turmas. Admins veem todas.',
   })
   @ApiResponse({ status: 200, description: 'Lista de turmas retornada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  findAll(@Query() query: QueryClassesDto, @Request() req) {
+  findAll(@Query() query: QueryClassesDto, @Request() req: AuthenticatedRequest) {
     return this.classesService.findAll(query, req.user.id, req.user.role);
   }
 
@@ -95,12 +85,12 @@ export class ClassesController {
   @Roles(Role.ALUNO)
   @ApiOperation({
     summary: 'Listar minhas turmas (aluno)',
-    description: 'Retorna todas as turmas em que o aluno está matriculado'
+    description: 'Retorna todas as turmas em que o aluno está matriculado',
   })
   @ApiResponse({ status: 200, description: 'Lista de turmas do aluno' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Aluno)' })
-  getMyClasses(@Request() req) {
+  getMyClasses(@Request() req: AuthenticatedRequest) {
     return this.classesService.getMyClasses(req.user.id);
   }
 
@@ -108,12 +98,12 @@ export class ClassesController {
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({
     summary: 'Listar turmas criadas pelo professor',
-    description: 'Retorna todas as turmas criadas pelo professor logado'
+    description: 'Retorna todas as turmas criadas pelo professor logado',
   })
   @ApiResponse({ status: 200, description: 'Lista de turmas criadas' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Professor/Admin)' })
-  getMyCreatedClasses(@Request() req) {
+  getMyCreatedClasses(@Request() req: AuthenticatedRequest) {
     return this.classesService.getMyCreatedClasses(req.user.id);
   }
 
@@ -121,20 +111,20 @@ export class ClassesController {
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({
     summary: 'Buscar turma por ID',
-    description: 'Professores só podem acessar as próprias turmas.'
+    description: 'Professores só podem acessar as próprias turmas.',
   })
   @ApiResponse({ status: 200, description: 'Turma encontrada' })
   @ApiResponse({ status: 403, description: 'Sem acesso a esta turma' })
   @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  findOne(@Param('id') id: string, @Request() req) {
+  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.classesService.findOne(id, req.user.id, req.user.role);
   }
 
   @Get(':id/settings')
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({ summary: 'Buscar configurações da turma' })
-  getSettings(@Param('id') id: string, @Request() req) {
+  getSettings(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.classesService.getSettings(id, req.user.id, req.user.role);
   }
 
@@ -144,7 +134,7 @@ export class ClassesController {
   updateSettings(
     @Param('id') id: string,
     @Body() dto: UpdateClassSettingsDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.classesService.updateSettings(id, dto, req.user.id, req.user.role);
   }
@@ -152,7 +142,7 @@ export class ClassesController {
   @Get(':id/join-requests')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Listar solicitações pendentes de entrada' })
-  getJoinRequests(@Param('id') id: string, @Request() req) {
+  getJoinRequests(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.classesService.listJoinRequests(id, req.user.id, req.user.role);
   }
 
@@ -162,7 +152,7 @@ export class ClassesController {
   approveJoinRequest(
     @Param('id') id: string,
     @Param('requestId') requestId: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.classesService.reviewJoinRequest(
       id,
@@ -179,7 +169,7 @@ export class ClassesController {
   rejectJoinRequest(
     @Param('id') id: string,
     @Param('requestId') requestId: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.classesService.reviewJoinRequest(
       id,
@@ -194,13 +184,13 @@ export class ClassesController {
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({
     summary: 'Listar alunos da turma',
-    description: 'Professores só podem acessar alunos das próprias turmas.'
+    description: 'Professores só podem acessar alunos das próprias turmas.',
   })
   @ApiResponse({ status: 200, description: 'Lista de alunos retornada' })
   @ApiResponse({ status: 403, description: 'Sem acesso a esta turma' })
   @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  findStudents(@Param('id') id: string, @Request() req) {
+  findStudents(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.classesService.findStudentsByClass(id, req.user.id, req.user.role);
   }
 
@@ -208,14 +198,18 @@ export class ClassesController {
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({
     summary: 'Remover aluno da turma',
-    description: 'Professores só podem remover alunos das próprias turmas.'
+    description: 'Professores só podem remover alunos das próprias turmas.',
   })
   @ApiResponse({ status: 200, description: 'Aluno removido com sucesso' })
   @ApiResponse({ status: 403, description: 'Sem acesso a esta turma' })
   @ApiResponse({ status: 404, description: 'Turma ou matrícula não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  unenrollStudent(@Param('id') id: string, @Param('userId') userId: string, @Request() req) {
+  unenrollStudent(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.classesService.unenrollStudent(id, userId, req.user.id, req.user.role);
   }
 
@@ -223,7 +217,7 @@ export class ClassesController {
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({
     summary: 'Atualizar turma',
-    description: 'Professores só podem editar as próprias turmas.'
+    description: 'Professores só podem editar as próprias turmas.',
   })
   @ApiBody({ type: UpdateClassDto })
   @ApiResponse({ status: 200, description: 'Turma atualizada com sucesso' })
@@ -231,7 +225,11 @@ export class ClassesController {
   @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  update(@Param('id') id: string, @Body() updateClassDto: UpdateClassDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Body() updateClassDto: UpdateClassDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.classesService.update(id, updateClassDto, req.user.id, req.user.role);
   }
 
@@ -239,7 +237,7 @@ export class ClassesController {
   @Roles(Role.ADMIN)
   @ApiOperation({
     summary: 'Remover turma',
-    description: 'Remove permanentemente uma turma. Apenas Admin pode remover.'
+    description: 'Remove permanentemente uma turma. Apenas Admin pode remover.',
   })
   @ApiResponse({ status: 200, description: 'Turma removida com sucesso' })
   @ApiResponse({ status: 404, description: 'Turma não encontrada' })

@@ -28,6 +28,7 @@ import {
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @ApiTags('missions')
 @Controller('missions')
@@ -44,7 +45,7 @@ export class MissionsController {
   @ApiResponse({ status: 400, description: 'Dados inválidos para criação de missão' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  create(@Body() createMissionDto: CreateMissionDto, @Request() req) {
+  create(@Body() createMissionDto: CreateMissionDto, @Request() req: AuthenticatedRequest) {
     return this.missionsService.create(createMissionDto, req.user.id);
   }
 
@@ -58,7 +59,10 @@ export class MissionsController {
   @ApiResponse({ status: 400, description: 'Dados inválidos para criação' })
   @ApiResponse({ status: 401, description: 'Nao autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissao' })
-  createManualQuizMission(@Body() createManualQuizDto: CreateManualMissionQuizDto, @Request() req) {
+  createManualQuizMission(
+    @Body() createManualQuizDto: CreateManualMissionQuizDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.missionsService.createManualQuizMission(createManualQuizDto, req.user.id);
   }
 
@@ -70,7 +74,7 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Lista de missões retornada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  findAll(@Query() query: QueryMissionsDto, @Request() req) {
+  findAll(@Query() query: QueryMissionsDto, @Request() req: AuthenticatedRequest) {
     return this.missionsService.findAll(query, req.user.id, req.user.role);
   }
 
@@ -94,7 +98,7 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Quiz diário do usuário retornado com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  getDailyQuizForUser(@Request() req) {
+  getDailyQuizForUser(@Request() req: AuthenticatedRequest) {
     return this.missionsService.getDailyQuizForUser(req.user.id);
   }
 
@@ -107,7 +111,7 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Lista de missões disponíveis retornada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
-  getAvailableMissions(@Request() req, @Query('classId') classId?: string) {
+  getAvailableMissions(@Request() req: AuthenticatedRequest, @Query('classId') classId?: string) {
     return this.missionsService.getAvailableMissions(req.user.id, classId);
   }
 
@@ -119,10 +123,7 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Histórico de missões retornado com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
-  getMyMissions(
-    @Request() req,
-    @Query() query: QueryUserMissionsDto,
-  ) {
+  getMyMissions(@Request() req: AuthenticatedRequest, @Query() query: QueryUserMissionsDto) {
     return this.missionsService.getUserMissionHistory(req.user.id, query);
   }
 
@@ -134,7 +135,7 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Estatísticas do aluno retornadas com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
-  getMyStats(@Request() req) {
+  getMyStats(@Request() req: AuthenticatedRequest) {
     return this.missionsService.getUserMissionStats(req.user.id);
   }
 
@@ -147,7 +148,7 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
   @ApiResponse({ status: 404, description: 'Nenhuma questão disponível' })
-  getRandomQuizMission(@Request() req) {
+  getRandomQuizMission(@Request() req: AuthenticatedRequest) {
     return this.missionsService.getRandomQuizMission(req.user.id);
   }
 
@@ -159,7 +160,7 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Missão retornada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  findOne(@Param('id') id: string, @Request() req) {
+  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.missionsService.findOne(id, req.user.id, req.user.role);
   }
 
@@ -174,7 +175,11 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  update(@Param('id') id: string, @Body() updateMissionDto: UpdateMissionDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Body() updateMissionDto: UpdateMissionDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.missionsService.update(id, updateMissionDto, req.user.id, req.user.role);
   }
 
@@ -188,7 +193,7 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  remove(@Param('id') id: string, @Request() req) {
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.missionsService.remove(id, req.user.id, req.user.role);
   }
 
@@ -202,7 +207,7 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  startMission(@Param('id') id: string, @Request() req) {
+  startMission(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.missionsService.startMission(id, req.user.id);
   }
 
@@ -214,7 +219,7 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Não matriculado na turma' })
   @ApiResponse({ status: 404, description: 'Quiz da missão não encontrado' })
-  getMissionQuiz(@Param('id') id: string, @Request() req) {
+  getMissionQuiz(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.missionsService.getMissionQuiz(id, req.user.id);
   }
 
@@ -227,7 +232,7 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   @ApiResponse({ status: 404, description: 'Quiz da missão não encontrado' })
-  getMissionQuizDetails(@Param('id') id: string, @Request() req) {
+  getMissionQuizDetails(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.missionsService.getMissionQuizDetails(id, req.user.id, req.user.role);
   }
 
@@ -244,7 +249,7 @@ export class MissionsController {
   @ApiResponse({ status: 404, description: 'Quiz não encontrado' })
   answerMissionQuiz(
     @Param('id') id: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() answerQuizDto: AnswerQuizDto,
   ) {
     return this.missionsService.answerMissionQuiz(id, req.user.id, answerQuizDto);
@@ -259,7 +264,7 @@ export class MissionsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Apenas alunos podem acessar' })
   @ApiResponse({ status: 404, description: 'Missão não encontrada' })
-  completeMission(@Param('id') id: string, @Request() req) {
+  completeMission(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.missionsService.completeMission(id, req.user.id);
   }
 
@@ -271,10 +276,7 @@ export class MissionsController {
   @ApiResponse({ status: 200, description: 'Histórico do usuário retornado com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  getUserHistory(
-    @Param('userId') userId: string,
-    @Query() query: QueryUserMissionsDto,
-  ) {
+  getUserHistory(@Param('userId') userId: string, @Query() query: QueryUserMissionsDto) {
     return this.missionsService.getUserMissionHistory(userId, query);
   }
 

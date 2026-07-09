@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 
@@ -63,12 +64,8 @@ export class NotificationsController {
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  getNotifications(@Request() req, @Query() query: QueryNotificationsDto) {
-    return this.notificationsService.getNotifications(
-      req.user.id,
-      query.page,
-      query.limit,
-    );
+  getNotifications(@Request() req: AuthenticatedRequest, @Query() query: QueryNotificationsDto) {
+    return this.notificationsService.getNotifications(req.user.id, query.page, query.limit);
   }
 
   @Get('unread')
@@ -83,7 +80,7 @@ export class NotificationsController {
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  getUnreadCount(@Request() req) {
+  getUnreadCount(@Request() req: AuthenticatedRequest) {
     return this.notificationsService.getUnreadCount(req.user.id);
   }
 
@@ -113,7 +110,7 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   @ApiResponse({ status: 404, description: 'Notificação não encontrada' })
-  markAsRead(@Request() req, @Param('id') id: string) {
+  markAsRead(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.notificationsService.markAsRead(req.user.id, id);
   }
 
@@ -131,7 +128,7 @@ export class NotificationsController {
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  markAllAsRead(@Request() req) {
+  markAllAsRead(@Request() req: AuthenticatedRequest) {
     return this.notificationsService.markAllAsRead(req.user.id);
   }
 
@@ -155,7 +152,7 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
   @ApiResponse({ status: 404, description: 'Notificação não encontrada' })
-  remove(@Request() req, @Param('id') id: string) {
+  remove(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.notificationsService.deleteNotification(req.user.id, id);
   }
 
@@ -181,7 +178,7 @@ export class NotificationsController {
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin/Professor)' })
-  create(@Body() body: CreateNotificationDto, @Request() req) {
+  create(@Body() body: CreateNotificationDto, @Request() req: AuthenticatedRequest) {
     return this.notificationsService.createNotification(body, req.user);
   }
 }

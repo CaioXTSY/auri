@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @ApiTags('dashboard')
 @ApiBearerAuth()
@@ -20,7 +21,7 @@ export class DashboardController {
     status: 200,
     description: 'Dashboard agregado do aluno',
   })
-  getStudentDashboard(@Request() req) {
+  getStudentDashboard(@Request() req: AuthenticatedRequest) {
     return this.dashboardService.getStudentDashboard(req.user.id);
   }
 }

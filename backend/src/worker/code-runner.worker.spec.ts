@@ -1,5 +1,5 @@
 import { CodeSubmissionStatus } from '@prisma/client';
-import { getFinalStatus, normalizeOutput } from './code-runner.worker';
+import { getFinalStatus, normalizeOutput } from './output-normalizer';
 
 describe('code-runner.worker', () => {
   describe('getFinalStatus', () => {

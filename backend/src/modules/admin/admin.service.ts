@@ -101,7 +101,10 @@ export class AdminService {
     ]);
 
     const toKey = (d: Date) => d.toISOString().slice(0, 10);
-    const buckets: Record<string, { users: number; missions: number; correct: number; wrong: number }> = {};
+    const buckets: Record<
+      string,
+      { users: number; missions: number; correct: number; wrong: number }
+    > = {};
 
     for (let i = 0; i < days; i++) {
       const d = new Date(start);
@@ -195,7 +198,7 @@ export class AdminService {
       data: data.map((g) => ({
         ...g,
         promptPreview: g.prompt.slice(0, 200),
-        prompt: undefined,
+        prompt: undefined as undefined,
       })),
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };

@@ -1,4 +1,3 @@
-import { spawn } from 'child_process';
 import {
   CodeSubmissionMode,
   CodeSubmissionStatus,
@@ -7,15 +6,10 @@ import {
   TestCaseVisibility,
 } from '@prisma/client';
 import { ProgrammingGamificationService } from '../modules/programming/programming-gamification.service';
+import { runDocker, type DockerRunResult } from './docker-runner';
+import { getFinalStatus, normalizeOutput, preview } from './output-normalizer';
 
 type ClaimedSubmission = Awaited<ReturnType<typeof loadSubmission>>;
-
-type DockerRunResult = {
-  status: CodeSubmissionStatus;
-  stdout: string;
-  stderr: string;
-  runtimeMs: number;
-};
 
 const prisma = new PrismaClient();
 const programmingGamification = new ProgrammingGamificationService(prisma);
@@ -231,6 +225,8 @@ async function runSingleTest(
       image: config.jsImage,
       timeoutMs,
       memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
+      cpus: config.defaultCpus,
+      maxOutputBytes: config.maxOutputBytes,
       env: buildRunnerEnv(submission.code, input),
       command: ['node', '-e', javascriptLauncher],
     });
@@ -240,200 +236,10 @@ async function runSingleTest(
     image: config.pyImage,
     timeoutMs,
     memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
+    cpus: config.defaultCpus,
+    maxOutputBytes: config.maxOutputBytes,
     env: buildRunnerEnv(submission.code, input),
     command: ['python', '-c', pythonLauncher],
-  });
-}
-
-function runDocker(options: {
-  image: string;
-  timeoutMs: number;
-  memoryMb: number;
-  env: string[];
-  command: string[];
-}): Promise<DockerRunResult> {
-  const containerName = createDockerContainerName();
-  const args = [
-    'run',
-    '--rm',
-    '--name',
-    containerName,
-    '--label',
-    'auri.code-runner=true',
-    '--label',
-    `auri.code-runner.name=${containerName}`,
-    '--network',
-    'none',
-    '--memory',
-    `${options.memoryMb}m`,
-    '--memory-swap',
-    `${options.memoryMb}m`,
-    '--cpus',
-    config.defaultCpus,
-    '--user',
-    '1000:1000',
-    '--read-only',
-    '--tmpfs',
-    '/tmp:rw,noexec,nosuid,size=16m',
-    '--pids-limit',
-    '64',
-    '--cap-drop',
-    'ALL',
-    '--security-opt',
-    'no-new-privileges',
-    ...options.env.flatMap((env) => ['-e', env]),
-    options.image,
-    ...options.command,
-  ];
-
-  const startedAt = Date.now();
-
-  return new Promise((resolve) => {
-    const child = spawn('docker', args, {
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    let stdout = '';
-    let stderr = '';
-    let killedByTimeout = false;
-    let outputLimitExceeded = false;
-    let stopRequested = false;
-
-    const requestContainerStop = () => {
-      if (stopRequested) {
-        return;
-      }
-
-      stopRequested = true;
-      void killDockerContainer(containerName)
-        .finally(() => removeDockerContainer(containerName))
-        .finally(() => {
-          if (!child.killed) {
-            child.kill('SIGKILL');
-          }
-        });
-    };
-
-    const timer = setTimeout(() => {
-      killedByTimeout = true;
-      requestContainerStop();
-    }, options.timeoutMs);
-
-    child.stdout.on('data', (chunk: Buffer) => {
-      stdout = appendLimited(stdout, chunk.toString('utf8'));
-      if (Buffer.byteLength(stdout, 'utf8') >= config.maxOutputBytes) {
-        outputLimitExceeded = true;
-        requestContainerStop();
-      }
-    });
-
-    child.stderr.on('data', (chunk: Buffer) => {
-      stderr = appendLimited(stderr, chunk.toString('utf8'));
-      if (Buffer.byteLength(stderr, 'utf8') >= config.maxOutputBytes) {
-        outputLimitExceeded = true;
-        requestContainerStop();
-      }
-    });
-
-    child.on('error', (error) => {
-      clearTimeout(timer);
-      resolve({
-        status: CodeSubmissionStatus.INTERNAL_ERROR,
-        stdout,
-        stderr: error.message,
-        runtimeMs: Date.now() - startedAt,
-      });
-    });
-
-    child.on('close', (code) => {
-      clearTimeout(timer);
-
-      let status: CodeSubmissionStatus = CodeSubmissionStatus.ACCEPTED;
-      if (killedByTimeout) {
-        status = CodeSubmissionStatus.TIME_LIMIT_EXCEEDED;
-      } else if (outputLimitExceeded) {
-        status = CodeSubmissionStatus.RUNTIME_ERROR;
-        stderr = 'Limite de saida excedido';
-      } else if (code === 137) {
-        status = CodeSubmissionStatus.MEMORY_LIMIT_EXCEEDED;
-      } else if (code !== 0) {
-        status = CodeSubmissionStatus.RUNTIME_ERROR;
-      }
-
-      resolve({
-        status,
-        stdout,
-        stderr,
-        runtimeMs: Date.now() - startedAt,
-      });
-    });
-  });
-}
-
-function createDockerContainerName() {
-  const randomSuffix = Math.random().toString(16).slice(2, 10);
-
-  return `auri-code-runner-${process.pid}-${Date.now()}-${randomSuffix}`;
-}
-
-async function killDockerContainer(containerName: string) {
-  await runDockerCli(['kill', containerName]).catch((error) => {
-    console.warn(
-      `[docker] failed to kill container ${containerName}`,
-      error instanceof Error ? error.message : error,
-    );
-  });
-}
-
-async function removeDockerContainer(containerName: string) {
-  await runDockerCli(['rm', '-f', containerName]).catch(() => undefined);
-}
-
-function runDockerCli(args: string[], timeoutMs = 5000) {
-  return new Promise<void>((resolve, reject) => {
-    const child = spawn('docker', args, {
-      windowsHide: true,
-      stdio: ['ignore', 'ignore', 'pipe'],
-    });
-
-    let stderr = '';
-    let settled = false;
-
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      finish(new Error(`docker ${args[0]} timed out`));
-    }, timeoutMs);
-
-    function finish(error?: Error) {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-      clearTimeout(timer);
-
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      resolve();
-    }
-
-    child.stderr.on('data', (chunk: Buffer) => {
-      stderr = appendLimited(stderr, chunk.toString('utf8'));
-    });
-
-    child.on('error', (error) => finish(error));
-    child.on('close', (code) => {
-      if (code === 0) {
-        finish();
-        return;
-      }
-
-      finish(new Error(stderr || `docker ${args[0]} exited with ${code}`));
-    });
   });
 }
 
@@ -442,47 +248,6 @@ function buildRunnerEnv(code: string, input: string) {
     `AURI_CODE_B64=${Buffer.from(code, 'utf8').toString('base64')}`,
     `AURI_INPUT_B64=${Buffer.from(input, 'utf8').toString('base64')}`,
   ];
-}
-
-export function getFinalStatus(statuses: CodeSubmissionStatus[]) {
-  if (statuses.every((status) => status === CodeSubmissionStatus.ACCEPTED)) {
-    return CodeSubmissionStatus.ACCEPTED;
-  }
-
-  for (const status of [
-    CodeSubmissionStatus.TIME_LIMIT_EXCEEDED,
-    CodeSubmissionStatus.MEMORY_LIMIT_EXCEEDED,
-    CodeSubmissionStatus.RUNTIME_ERROR,
-    CodeSubmissionStatus.INTERNAL_ERROR,
-  ]) {
-    if (statuses.includes(status)) {
-      return status;
-    }
-  }
-
-  return CodeSubmissionStatus.WRONG_ANSWER;
-}
-
-export function normalizeOutput(value: string) {
-  return value
-    .replace(/\r\n/g, '\n')
-    .split('\n')
-    .map((line) => line.trimEnd())
-    .join('\n')
-    .replace(/\n+$/g, '');
-}
-
-function preview(value: string) {
-  return value.length > 2000 ? `${value.slice(0, 2000)}...` : value;
-}
-
-function appendLimited(current: string, next: string) {
-  const combined = current + next;
-  if (Buffer.byteLength(combined, 'utf8') <= config.maxOutputBytes) {
-    return combined;
-  }
-
-  return combined.slice(0, config.maxOutputBytes);
 }
 
 function numberFromEnv(key: string, fallback: number) {

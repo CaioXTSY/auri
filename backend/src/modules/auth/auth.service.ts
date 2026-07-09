@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -63,8 +69,7 @@ export class AuthService {
       throw err;
     }
     const result = { ...user };
-    delete result.password;
-    
+
     const tokens = await this.generateTokens(result);
     await this.updateRefreshToken(result.id, tokens.refresh_token);
 
@@ -152,7 +157,7 @@ export class AuthService {
 
   private async generateTokens(user: any) {
     const payload = { email: user.email, sub: user.id, role: user.role };
-    
+
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_SECRET'),

@@ -10,21 +10,42 @@ import { PaginatedUsersDto } from './dto/paginated-users.dto';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: Prisma.UserCreateInput): Promise<User> {
+  async create(data: Prisma.UserCreateInput): Promise<UserWithoutPassword> {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     return this.prisma.user.create({
       data: {
         ...data,
         password: hashedPassword,
       },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatar: true,
+        currentStreak: true,
+        longestStreak: true,
+        streakLastDate: true,
+        createdAt: true,
+        updatedAt: true,
+        password: false,
+      },
     });
   }
 
   async findAll(query?: QueryUsersDto): Promise<PaginatedUsersDto<UserWithoutPassword>> {
-    const { page = 1, limit = 10, role, name, email, sortBy = 'createdAt', sortOrder = 'desc' } = query || {};
-    
+    const {
+      page = 1,
+      limit = 10,
+      role,
+      name,
+      email,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = query || {};
+
     const skip = (page - 1) * limit;
-    
+
     const where: Prisma.UserWhereInput = {
       ...(role && { role }),
       ...(name && { name: { contains: name } }),
@@ -98,7 +119,7 @@ export class UsersService {
     if (data.password) {
       data.password = await bcrypt.hash(data.password as string, 10);
     }
-    
+
     const user = await this.prisma.user.update({
       where: { id },
       data,
@@ -144,11 +165,7 @@ export class UsersService {
     });
   }
 
-  async updateResetToken(
-    userId: string,
-    resetToken: string,
-    expires: Date,
-  ): Promise<void> {
+  async updateResetToken(userId: string, resetToken: string, expires: Date): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
       data: {

@@ -67,9 +67,7 @@ export class AchievementsService {
       message: `${userAchievement.achievement.description} +${userAchievement.achievement.points} XP.`,
     });
 
-    this.logger.log(
-      `Usuário ${userId} desbloqueou: ${userAchievement.achievement.name}`,
-    );
+    this.logger.log(`Usuário ${userId} desbloqueou: ${userAchievement.achievement.name}`);
 
     return userAchievement;
   }
@@ -125,7 +123,7 @@ export class AchievementsService {
 
       data = locked.map((a) => ({
         ...a,
-        unlockedAt: null,
+        unlockedAt: null as Date | null,
         isUnlocked: false,
       }));
     } else {
@@ -142,9 +140,7 @@ export class AchievementsService {
         select: { achievementId: true, unlockedAt: true },
       });
 
-      const unlockedMap = new Map(
-        unlockedInPage.map((u) => [u.achievementId, u.unlockedAt]),
-      );
+      const unlockedMap = new Map(unlockedInPage.map((u) => [u.achievementId, u.unlockedAt]));
 
       data = achievements.map((a) => ({
         ...a,

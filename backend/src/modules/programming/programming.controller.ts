@@ -10,15 +10,10 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -52,21 +47,21 @@ export class ProgrammingController {
   @ApiOperation({ summary: 'Criar problema de programacao' })
   @ApiBody({ type: CreateProgrammingProblemDto })
   @ApiResponse({ status: 201, description: 'Problema criado com sucesso' })
-  createProblem(@Body() dto: CreateProgrammingProblemDto, @Request() req) {
+  createProblem(@Body() dto: CreateProgrammingProblemDto, @Request() req: AuthenticatedRequest) {
     return this.problemsService.create(req.user.id, dto);
   }
 
   @Get('problems')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Listar problemas de programacao' })
-  findProblems(@Query() query: QueryProgrammingListDto, @Request() req) {
+  findProblems(@Query() query: QueryProgrammingListDto, @Request() req: AuthenticatedRequest) {
     return this.problemsService.findAll(req.user.id, req.user.role, query);
   }
 
   @Get('problems/:id')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Buscar problema de programacao por ID' })
-  findProblem(@Param('id') id: string, @Request() req) {
+  findProblem(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.problemsService.findOne(id, req.user.id, req.user.role);
   }
 
@@ -77,7 +72,7 @@ export class ProgrammingController {
   updateProblem(
     @Param('id') id: string,
     @Body() dto: UpdateProgrammingProblemDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.problemsService.update(id, dto, req.user.id, req.user.role);
   }
@@ -85,7 +80,7 @@ export class ProgrammingController {
   @Delete('problems/:id')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Remover problema de programacao' })
-  removeProblem(@Param('id') id: string, @Request() req) {
+  removeProblem(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.problemsService.remove(id, req.user.id, req.user.role);
   }
 
@@ -96,26 +91,16 @@ export class ProgrammingController {
   createTestCase(
     @Param('id') id: string,
     @Body() dto: CreateProblemTestCaseDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
-    return this.problemsService.createTestCase(
-      id,
-      dto,
-      req.user.id,
-      req.user.role,
-    );
+    return this.problemsService.createTestCase(id, dto, req.user.id, req.user.role);
   }
 
   @Get('problems/:id/test-cases')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Listar casos de teste de um problema' })
-  findTestCases(@Param('id') id: string, @Request() req) {
-    return this.problemsService.findTestCases(
-      id,
-      true,
-      req.user.id,
-      req.user.role,
-    );
+  findTestCases(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.problemsService.findTestCases(id, true, req.user.id, req.user.role);
   }
 
   @Patch('test-cases/:id')
@@ -125,20 +110,15 @@ export class ProgrammingController {
   updateTestCase(
     @Param('id') id: string,
     @Body() dto: UpdateProblemTestCaseDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
-    return this.problemsService.updateTestCase(
-      id,
-      dto,
-      req.user.id,
-      req.user.role,
-    );
+    return this.problemsService.updateTestCase(id, dto, req.user.id, req.user.role);
   }
 
   @Delete('test-cases/:id')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Remover caso de teste' })
-  removeTestCase(@Param('id') id: string, @Request() req) {
+  removeTestCase(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.problemsService.removeTestCase(id, req.user.id, req.user.role);
   }
 
@@ -148,7 +128,7 @@ export class ProgrammingController {
   @ApiBody({ type: CreateProgrammingAssignmentDto })
   createAssignment(
     @Body() dto: CreateProgrammingAssignmentDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.assignmentsService.create(dto, req.user.id, req.user.role);
   }
@@ -156,21 +136,21 @@ export class ProgrammingController {
   @Get('assignments')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Listar atividades de programacao' })
-  findAssignments(@Query() query: QueryProgrammingListDto, @Request() req) {
+  findAssignments(@Query() query: QueryProgrammingListDto, @Request() req: AuthenticatedRequest) {
     return this.assignmentsService.findAll(req.user.id, req.user.role, query);
   }
 
   @Get('assignments/my')
   @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Listar minhas atividades de programacao' })
-  findMyAssignments(@Request() req) {
+  findMyAssignments(@Request() req: AuthenticatedRequest) {
     return this.assignmentsService.findMyAssignments(req.user.id);
   }
 
   @Get('assignments/:id/solve')
   @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Abrir atividade para resolucao pelo aluno' })
-  getSolveView(@Param('id') id: string, @Request() req) {
+  getSolveView(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.assignmentsService.getSolveView(id, req.user.id);
   }
 
@@ -182,7 +162,7 @@ export class ProgrammingController {
   runAssignment(
     @Param('id') id: string,
     @Body() dto: SubmitAssignmentCodeDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.submissionsService.runAssignmentExamples(req.user.id, id, dto);
   }
@@ -195,7 +175,7 @@ export class ProgrammingController {
   submitAssignment(
     @Param('id') id: string,
     @Body() dto: SubmitAssignmentCodeDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.submissionsService.submitAssignment(req.user.id, id, dto);
   }
@@ -203,19 +183,15 @@ export class ProgrammingController {
   @Get('assignments/:id/submissions/my')
   @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Listar minhas submissoes em uma atividade' })
-  findMyAssignmentSubmissions(@Param('id') id: string, @Request() req) {
+  findMyAssignmentSubmissions(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.submissionsService.findMyAssignmentSubmissions(req.user.id, id);
   }
 
   @Get('assignments/:id/submissions')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Listar submissoes de uma atividade' })
-  findAssignmentSubmissions(@Param('id') id: string, @Request() req) {
-    return this.submissionsService.findByAssignment(
-      id,
-      req.user.id,
-      req.user.role,
-    );
+  findAssignmentSubmissions(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.submissionsService.findByAssignment(id, req.user.id, req.user.role);
   }
 
   @Get('runner/stats')
@@ -228,18 +204,14 @@ export class ProgrammingController {
   @Get('submissions/:id')
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @ApiOperation({ summary: 'Buscar resultado de uma submissao' })
-  findSubmission(@Param('id') id: string, @Request() req) {
-    return this.submissionsService.findOneForUser(
-      id,
-      req.user.id,
-      req.user.role,
-    );
+  findSubmission(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.submissionsService.findOneForUser(id, req.user.id, req.user.role);
   }
 
   @Get('assignments/:id')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Buscar atividade de programacao por ID' })
-  findAssignment(@Param('id') id: string, @Request() req) {
+  findAssignment(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.assignmentsService.findOne(id, req.user.id, req.user.role);
   }
 
@@ -250,7 +222,7 @@ export class ProgrammingController {
   updateAssignment(
     @Param('id') id: string,
     @Body() dto: UpdateProgrammingAssignmentDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.assignmentsService.update(id, dto, req.user.id, req.user.role);
   }
@@ -258,7 +230,7 @@ export class ProgrammingController {
   @Delete('assignments/:id')
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @ApiOperation({ summary: 'Remover atividade de programacao' })
-  removeAssignment(@Param('id') id: string, @Request() req) {
+  removeAssignment(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.assignmentsService.remove(id, req.user.id, req.user.role);
   }
 }

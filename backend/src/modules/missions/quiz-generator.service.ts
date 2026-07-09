@@ -213,7 +213,9 @@ export class QuizGeneratorService {
         question: mission.quiz?.question ?? quiz.question,
         difficulty: mission.quiz?.difficulty ?? quiz.difficulty,
         points: mission.points,
-        options: Array.isArray(mission.quiz?.options) ? (mission.quiz.options as string[]) : quiz.options,
+        options: Array.isArray(mission.quiz?.options)
+          ? (mission.quiz.options as string[])
+          : quiz.options,
         answered: false,
         attempt: null,
       };
@@ -265,10 +267,14 @@ export class QuizGeneratorService {
     const title = String(parsed?.title || '').trim();
     const question = String(parsed?.question || '').trim();
     const options = Array.isArray(parsed?.options)
-      ? parsed.options.map((option) => String(option).trim()).filter((option) => option.length > 0)
+      ? parsed.options
+          .map((option: unknown) => String(option).trim())
+          .filter((option: string) => option.length > 0)
       : [];
     const explanations = Array.isArray(parsed?.explanations)
-      ? parsed.explanations.map((exp) => String(exp).trim()).filter((exp) => exp.length > 0)
+      ? parsed.explanations
+          .map((exp: unknown) => String(exp).trim())
+          .filter((exp: string) => exp.length > 0)
       : [];
     const correctIndex = Number(parsed?.correctIndex);
     const difficultyRaw = String(parsed?.difficulty || '')
@@ -293,7 +299,12 @@ export class QuizGeneratorService {
   }
 
   private validateQuizShape(quiz: GeneratedQuiz) {
-    if (!quiz.title || !quiz.question || quiz.options.length !== 4 || quiz.explanations.length !== 4) {
+    if (
+      !quiz.title ||
+      !quiz.question ||
+      quiz.options.length !== 4 ||
+      quiz.explanations.length !== 4
+    ) {
       throw new BadRequestException(
         `Estrutura invalida no quiz: title="${quiz.title}", optionsLen=${quiz.options.length}, explanationsLen=${quiz.explanations.length}`,
       );
@@ -304,7 +315,9 @@ export class QuizGeneratorService {
     }
 
     if (quiz.question.length > 2000) {
-      throw new BadRequestException(`question do quiz excede 2000 caracteres (${quiz.question.length})`);
+      throw new BadRequestException(
+        `question do quiz excede 2000 caracteres (${quiz.question.length})`,
+      );
     }
 
     if (!Number.isInteger(quiz.correctIndex) || quiz.correctIndex < 0 || quiz.correctIndex > 3) {
@@ -403,7 +416,9 @@ export class QuizGeneratorService {
   }
 
   private summarizeQuizQuestion(title: string, question: string) {
-    const languageMatch = question.match(/\b(Python|JavaScript|TypeScript|Java|C\+\+|C#|C(?!#|\+))\b/i);
+    const languageMatch = question.match(
+      /\b(Python|JavaScript|TypeScript|Java|C\+\+|C#|C(?!#|\+))\b/i,
+    );
     const language = languageMatch ? languageMatch[1] : null;
     const topicMatch = question.match(
       /(?:def |function |class |public |void |int |str |let |const )?(\w[\w\s]{3,40}?)(?:\(|:|\n|\.)/,
@@ -454,5 +469,4 @@ export class QuizGeneratorService {
     };
     return pointsByDifficulty[difficulty];
   }
-
 }

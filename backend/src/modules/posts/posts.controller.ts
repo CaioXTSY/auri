@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -45,7 +46,7 @@ export class PostsController {
   @ApiResponse({ status: 201, description: 'Post criado com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
-  create(@Request() req, @Body() createPostDto: CreatePostDto) {
+  create(@Request() req: AuthenticatedRequest, @Body() createPostDto: CreatePostDto) {
     return this.postsService.create(req.user.id, req.user.role, createPostDto);
   }
 
@@ -53,7 +54,7 @@ export class PostsController {
   @Roles(Role.ALUNO, Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Listar postagens com paginação' })
   @ApiResponse({ status: 200, description: 'Lista de posts' })
-  findAll(@Request() req, @Query() query: QueryPostsDto) {
+  findAll(@Request() req: AuthenticatedRequest, @Query() query: QueryPostsDto) {
     return this.postsService.findAll(req.user.id, req.user.role, query);
   }
 
@@ -63,7 +64,7 @@ export class PostsController {
   @ApiParam({ name: 'id', description: 'ID do post' })
   @ApiResponse({ status: 200, description: 'Post encontrado' })
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
-  findOne(@Request() req, @Param('id') id: string) {
+  findOne(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.postsService.findOne(req.user.id, req.user.role, id);
   }
 
@@ -74,7 +75,11 @@ export class PostsController {
   @ApiBody({ type: UpdatePostDto })
   @ApiResponse({ status: 200, description: 'Post atualizado' })
   @ApiResponse({ status: 403, description: 'Sem permissão para editar o post' })
-  update(@Request() req, @Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
+  update(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+  ) {
     return this.postsService.update(req.user.id, req.user.role, id, updatePostDto);
   }
 
@@ -84,21 +89,21 @@ export class PostsController {
   @ApiParam({ name: 'id', description: 'ID do post' })
   @ApiResponse({ status: 200, description: 'Post removido' })
   @ApiResponse({ status: 403, description: 'Sem permissão para remover o post' })
-  remove(@Request() req, @Param('id') id: string) {
+  remove(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.postsService.remove(req.user.id, req.user.role, id);
   }
 
   @Patch(':id/approve')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Aprovar postagem pendente' })
-  approvePost(@Request() req, @Param('id') id: string) {
+  approvePost(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.postsService.reviewPost(req.user.id, req.user.role, id, 'approve');
   }
 
   @Patch(':id/reject')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Rejeitar postagem pendente' })
-  rejectPost(@Request() req, @Param('id') id: string) {
+  rejectPost(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.postsService.reviewPost(req.user.id, req.user.role, id, 'reject');
   }
 
@@ -109,7 +114,7 @@ export class PostsController {
   @ApiBody({ type: CreatePostReplyDto })
   @ApiResponse({ status: 201, description: 'Resposta criada' })
   createReply(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() createReplyDto: CreatePostReplyDto,
   ) {
@@ -124,18 +129,12 @@ export class PostsController {
   @ApiBody({ type: UpdatePostReplyDto })
   @ApiResponse({ status: 200, description: 'Resposta atualizada' })
   updateReply(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Param('replyId') replyId: string,
     @Body() updateReplyDto: UpdatePostReplyDto,
   ) {
-    return this.postsService.updateReply(
-      req.user.id,
-      req.user.role,
-      id,
-      replyId,
-      updateReplyDto,
-    );
+    return this.postsService.updateReply(req.user.id, req.user.role, id, replyId, updateReplyDto);
   }
 
   @Delete(':id/replies/:replyId')
@@ -144,7 +143,11 @@ export class PostsController {
   @ApiParam({ name: 'id', description: 'ID do post' })
   @ApiParam({ name: 'replyId', description: 'ID da resposta' })
   @ApiResponse({ status: 200, description: 'Resposta removida' })
-  removeReply(@Request() req, @Param('id') id: string, @Param('replyId') replyId: string) {
+  removeReply(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('replyId') replyId: string,
+  ) {
     return this.postsService.removeReply(req.user.id, req.user.role, id, replyId);
   }
 
@@ -152,7 +155,7 @@ export class PostsController {
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Aprovar resposta pendente' })
   approveReply(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Param('replyId') replyId: string,
   ) {
@@ -163,7 +166,7 @@ export class PostsController {
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Rejeitar resposta pendente' })
   rejectReply(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Param('replyId') replyId: string,
   ) {

@@ -13,7 +13,14 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiResponse,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -26,6 +33,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -36,9 +44,10 @@ export class UsersController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Criar novo usuário (apenas Admin)',
-    description: 'Cria um novo usuário no sistema. Apenas administradores podem usar este endpoint.'
+    description:
+      'Cria um novo usuário no sistema. Apenas administradores podem usar este endpoint.',
   })
   @ApiBody({
     type: CreateUserDto,
@@ -49,13 +58,13 @@ export class UsersController {
           name: 'Pedro Oliveira',
           email: 'pedro@example.com',
           password: 'Senha@123',
-          role: 'ALUNO'
-        }
-      }
-    }
+          role: 'ALUNO',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Usuário criado com sucesso',
     schema: {
       example: {
@@ -64,9 +73,9 @@ export class UsersController {
         email: 'pedro@example.com',
         role: 'ALUNO',
         avatar: null,
-        createdAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
+        createdAt: '2024-01-26T00:00:00.000Z',
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
@@ -79,12 +88,12 @@ export class UsersController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.PROFESSOR)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Listar todos os usuários (Admin e Professor)',
-    description: 'Retorna lista paginada de usuários com filtros opcionais'
+    description: 'Retorna lista paginada de usuários com filtros opcionais',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Lista de usuários',
     schema: {
       example: {
@@ -95,17 +104,17 @@ export class UsersController {
             email: 'joao@example.com',
             role: 'ALUNO',
             avatar: '/uploads/avatars/avatar.jpg',
-            createdAt: '2024-01-26T00:00:00.000Z'
-          }
+            createdAt: '2024-01-26T00:00:00.000Z',
+          },
         ],
         meta: {
           page: 1,
           limit: 10,
           total: 50,
-          totalPages: 5
-        }
-      }
-    }
+          totalPages: 5,
+        },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })
@@ -115,12 +124,12 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Obter perfil do usuário logado',
-    description: 'Retorna informações do usuário autenticado'
+    description: 'Retorna informações do usuário autenticado',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Perfil do usuário',
     schema: {
       example: {
@@ -130,23 +139,23 @@ export class UsersController {
         role: 'ALUNO',
         avatar: '/uploads/avatars/avatar.jpg',
         createdAt: '2024-01-26T00:00:00.000Z',
-        updatedAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
+        updatedAt: '2024-01-26T00:00:00.000Z',
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  getProfile(@Request() req) {
+  getProfile(@Request() req: AuthenticatedRequest) {
     return this.usersService.findOne(req.user.id);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Buscar usuário por ID',
-    description: 'Retorna informações de um usuário específico'
+    description: 'Retorna informações de um usuário específico',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Usuário encontrado',
     schema: {
       example: {
@@ -155,9 +164,9 @@ export class UsersController {
         email: 'joao@example.com',
         role: 'ALUNO',
         avatar: '/uploads/avatars/avatar.jpg',
-        createdAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
+        createdAt: '2024-01-26T00:00:00.000Z',
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
@@ -167,9 +176,9 @@ export class UsersController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Atualizar próprio perfil',
-    description: 'Permite ao usuário atualizar seus próprios dados'
+    description: 'Permite ao usuário atualizar seus próprios dados',
   })
   @ApiBody({
     type: UpdateUserDto,
@@ -178,13 +187,13 @@ export class UsersController {
         summary: 'Atualizar perfil',
         value: {
           name: 'João Silva Santos',
-          email: 'joao.novo@example.com'
-        }
-      }
-    }
+          email: 'joao.novo@example.com',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Perfil atualizado',
     schema: {
       example: {
@@ -193,13 +202,13 @@ export class UsersController {
         email: 'joao.novo@example.com',
         role: 'ALUNO',
         avatar: '/uploads/avatars/avatar.jpg',
-        updatedAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
+        updatedAt: '2024-01-26T00:00:00.000Z',
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
+  updateProfile(@Request() req: AuthenticatedRequest, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(req.user.id, updateUserDto);
   }
 
@@ -227,7 +236,10 @@ export class UsersController {
         const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         const allowedExtensions = /\.(jpg|jpeg|png|gif|webp)$/i;
 
-        if (!allowedMimeTypes.includes(file.mimetype) || !file.originalname.match(allowedExtensions)) {
+        if (
+          !allowedMimeTypes.includes(file.mimetype) ||
+          !file.originalname.match(allowedExtensions)
+        ) {
           return cb(new BadRequestException('Apenas imagens são permitidas'), false);
         }
         cb(null, true);
@@ -237,9 +249,10 @@ export class UsersController {
       },
     }),
   )
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Upload de avatar do usuário logado',
-    description: 'Faz upload da foto de perfil do usuário. Tamanho máximo: 5MB. Formatos: jpg, jpeg, png, gif, webp'
+    description:
+      'Faz upload da foto de perfil do usuário. Tamanho máximo: 5MB. Formatos: jpg, jpeg, png, gif, webp',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -249,25 +262,28 @@ export class UsersController {
         avatar: {
           type: 'string',
           format: 'binary',
-          description: 'Arquivo de imagem (jpg, jpeg, png, gif, webp)'
-        }
-      }
-    }
+          description: 'Arquivo de imagem (jpg, jpeg, png, gif, webp)',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Avatar atualizado',
     schema: {
       example: {
         id: 'uuid-here',
         avatar: '/uploads/avatars/abc123.jpg',
-        updatedAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
+        updatedAt: '2024-01-26T00:00:00.000Z',
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Arquivo inválido ou não enviado' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  async uploadAvatar(@Request() req, @UploadedFile() file: Express.Multer.File) {
+  async uploadAvatar(
+    @Request() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo foi enviado');
     }
@@ -279,9 +295,9 @@ export class UsersController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Atualizar usuário (apenas Admin)',
-    description: 'Administrador pode atualizar qualquer usuário, incluindo role'
+    description: 'Administrador pode atualizar qualquer usuário, incluindo role',
   })
   @ApiBody({
     type: UpdateUserDto,
@@ -290,13 +306,13 @@ export class UsersController {
         summary: 'Atualizar usuário',
         value: {
           name: 'João Silva Santos',
-          role: 'PROFESSOR'
-        }
-      }
-    }
+          role: 'PROFESSOR',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Usuário atualizado',
     schema: {
       example: {
@@ -305,9 +321,9 @@ export class UsersController {
         email: 'joao@example.com',
         role: 'PROFESSOR',
         avatar: '/uploads/avatars/avatar.jpg',
-        updatedAt: '2024-01-26T00:00:00.000Z'
-      }
-    }
+        updatedAt: '2024-01-26T00:00:00.000Z',
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
@@ -320,18 +336,18 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Deletar usuário (apenas Admin)',
-    description: 'Remove permanentemente um usuário do sistema'
+    description: 'Remove permanentemente um usuário do sistema',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Usuário deletado',
     schema: {
       example: {
-        message: 'User successfully deleted'
-      }
-    }
+        message: 'User successfully deleted',
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin)' })

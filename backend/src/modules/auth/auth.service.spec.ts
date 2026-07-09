@@ -17,12 +17,25 @@ describe('AuthService', () => {
     password: 'hashedPassword',
     name: 'Test User',
     role: 'ALUNO',
-    avatar: null,
-    refreshToken: null,
-    resetToken: null,
-    resetTokenExpires: null,
+    avatar: null as string | null,
+    refreshToken: null as string | null,
+    resetToken: null as string | null,
+    resetTokenExpires: null as Date | null,
     createdAt: new Date(),
     updatedAt: new Date(),
+  };
+
+  const mockPublicUser = {
+    id: mockUser.id,
+    email: mockUser.email,
+    name: mockUser.name,
+    role: mockUser.role,
+    avatar: mockUser.avatar,
+    currentStreak: 0,
+    longestStreak: 0,
+    streakLastDate: null as Date | null,
+    createdAt: mockUser.createdAt,
+    updatedAt: mockUser.updatedAt,
   };
 
   const mockUsersService = {
@@ -150,7 +163,7 @@ describe('AuthService', () => {
         name: 'New User',
         role: 'ALUNO',
       };
-      mockUsersService.create.mockResolvedValue(mockUser);
+      mockUsersService.create.mockResolvedValue(mockPublicUser);
       mockJwtService.signAsync.mockResolvedValue('token');
 
       const result = await service.register(registerDto as any);
@@ -185,9 +198,7 @@ describe('AuthService', () => {
         throw new Error('Invalid token');
       });
 
-      await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -241,9 +252,7 @@ describe('AuthService', () => {
       const resetPasswordDto = { token: 'invalid-token', newPassword: 'newPassword123' };
       mockUsersService.findByResetToken.mockResolvedValue(null);
 
-      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(BadRequestException);
     });
   });
 

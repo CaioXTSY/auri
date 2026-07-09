@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { UpdateMissionDto } from './dto/update-mission.dto';
@@ -66,11 +72,15 @@ export class MissionsService {
     });
   }
 
-  async findAll(filters?: {
-    classId?: string;
-    type?: MissionType;
-    active?: boolean;
-  }, userId?: string, userRole?: string) {
+  async findAll(
+    filters?: {
+      classId?: string;
+      type?: MissionType;
+      active?: boolean;
+    },
+    userId?: string,
+    userRole?: string,
+  ) {
     const where: any = {};
 
     if (filters?.classId) {
@@ -109,7 +119,10 @@ export class MissionsService {
     }));
   }
 
-  async createManualQuizMission(createManualQuizDto: CreateManualMissionQuizDto, createdById: string) {
+  async createManualQuizMission(
+    createManualQuizDto: CreateManualMissionQuizDto,
+    createdById: string,
+  ) {
     const title = createManualQuizDto.title.trim();
     const question = createManualQuizDto.question.trim();
     const options = createManualQuizDto.options.map((option) => option.trim());
@@ -119,8 +132,11 @@ export class MissionsService {
       throw new BadRequestException('Título, enunciado e alternativas são obrigatórios');
     }
 
-    const points = createManualQuizDto.points ?? this.getPointsForDifficulty(createManualQuizDto.difficulty);
-    const startDate = createManualQuizDto.startDate ? new Date(createManualQuizDto.startDate) : new Date();
+    const points =
+      createManualQuizDto.points ?? this.getPointsForDifficulty(createManualQuizDto.difficulty);
+    const startDate = createManualQuizDto.startDate
+      ? new Date(createManualQuizDto.startDate)
+      : new Date();
 
     const mission = await this.prisma.$transaction(async (tx) => {
       const created = await tx.mission.create({
@@ -245,7 +261,7 @@ export class MissionsService {
       return missions.map((mission) => ({
         ...mission,
         hasQuiz: Boolean(mission.quiz),
-        userStatus: null,
+        userStatus: null as null,
       }));
     }
 
@@ -269,10 +285,7 @@ export class MissionsService {
     const where: any = {
       OR: [
         {
-          AND: [
-            { OR: visibilityScope },
-            { startDate: { lte: now } },
-          ],
+          AND: [{ OR: visibilityScope }, { startDate: { lte: now } }],
         },
         {
           AND: [
@@ -304,16 +317,19 @@ export class MissionsService {
       ...mission,
       hasQuiz: Boolean(mission.quiz),
       userStatus: mission.userMissions[0] || null,
-      userMissions: undefined,
+      userMissions: undefined as undefined,
     }));
   }
 
-  async getUserMissionHistory(userId: string, filters?: {
-    status?: 'NAO_INICIADA' | 'EM_PROGRESSO' | 'CONCLUIDA' | 'EXPIRADA';
-    classId?: string;
-    page?: number;
-    limit?: number;
-  }) {
+  async getUserMissionHistory(
+    userId: string,
+    filters?: {
+      status?: 'NAO_INICIADA' | 'EM_PROGRESSO' | 'CONCLUIDA' | 'EXPIRADA';
+      classId?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     const page = Math.max(1, filters?.page ?? 1);
     const limit = Math.min(100, Math.max(1, filters?.limit ?? 20));
     const skip = (page - 1) * limit;

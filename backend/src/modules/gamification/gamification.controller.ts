@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -19,9 +12,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-import {
-  GetRankingQueryDto,
-} from './dto';
+import { AuthenticatedRequest } from '../../common/types/authenticated-request';
+import { GetRankingQueryDto } from './dto';
 
 @ApiTags('gamification')
 @ApiBearerAuth()
@@ -48,7 +40,7 @@ export class GamificationController {
       },
     },
   })
-  async getMyLevel(@Request() req) {
+  async getMyLevel(@Request() req: AuthenticatedRequest) {
     return this.gamificationService.getUserLevel(req.user.id);
   }
 
@@ -93,7 +85,7 @@ export class GamificationController {
     },
   })
   async getMyAchievements(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('filter') filter?: 'ALL' | 'UNLOCKED' | 'LOCKED',
@@ -135,19 +127,14 @@ export class GamificationController {
     },
   })
   async getRanking(@Query() query: GetRankingQueryDto) {
-    return this.gamificationService.getRanking(
-      query.type,
-      query.referenceId,
-      query.limit || 50,
-    );
+    return this.gamificationService.getRanking(query.type, query.referenceId, query.limit || 50);
   }
 
   @Get('stats/me')
   @Roles(Role.ALUNO)
   @ApiOperation({
     summary: 'Obter estatísticas completas de gamificação',
-    description:
-      'Dashboard com pontos, nível, conquistas e ranking do usuário',
+    description: 'Dashboard com pontos, nível, conquistas e ranking do usuário',
   })
   @ApiResponse({
     status: 200,
@@ -176,7 +163,7 @@ export class GamificationController {
       },
     },
   })
-  async getMyGamificationStats(@Request() req) {
+  async getMyGamificationStats(@Request() req: AuthenticatedRequest) {
     return this.gamificationService.getUserGamificationStats(req.user.id);
   }
 

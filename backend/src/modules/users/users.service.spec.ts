@@ -14,12 +14,25 @@ describe('UsersService', () => {
     password: 'hashedPassword',
     name: 'Test User',
     role: Role.ALUNO,
-    avatar: null,
-    refreshToken: null,
-    resetToken: null,
-    resetTokenExpires: null,
+    avatar: null as string | null,
+    refreshToken: null as string | null,
+    resetToken: null as string | null,
+    resetTokenExpires: null as Date | null,
     createdAt: new Date(),
     updatedAt: new Date(),
+  };
+
+  const mockUserWithoutSensitiveFields = {
+    id: mockUser.id,
+    email: mockUser.email,
+    name: mockUser.name,
+    role: mockUser.role,
+    avatar: mockUser.avatar,
+    currentStreak: 0,
+    longestStreak: 0,
+    streakLastDate: null as Date | null,
+    createdAt: mockUser.createdAt,
+    updatedAt: mockUser.updatedAt,
   };
 
   const mockPrismaService = {
@@ -63,7 +76,7 @@ describe('UsersService', () => {
       };
 
       jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('hashedPassword'));
-      mockPrismaService.user.create.mockResolvedValue(mockUser);
+      mockPrismaService.user.create.mockResolvedValue(mockUserWithoutSensitiveFields);
 
       const result = await service.create(createUserDto);
 
@@ -73,8 +86,14 @@ describe('UsersService', () => {
           ...createUserDto,
           password: 'hashedPassword',
         },
+        select: expect.objectContaining({
+          id: true,
+          email: true,
+          password: false,
+        }),
       });
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockUserWithoutSensitiveFields);
+      expect(result).not.toHaveProperty('password');
     });
   });
 

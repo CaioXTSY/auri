@@ -3,6 +3,23 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import * as cookieParser from 'cookie-parser';
+
+type TestAuthUser = {
+  id: string;
+  email: string;
+};
+
+const getRefreshCookie = (response: request.Response) => {
+  const setCookie = response.headers['set-cookie'];
+  const cookies = Array.isArray(setCookie) ? setCookie : setCookie ? [String(setCookie)] : [];
+  const refreshCookie = cookies.find((cookie) => cookie.startsWith('refresh_token='));
+
+  expect(refreshCookie).toBeDefined();
+  expect(refreshCookie).toContain('HttpOnly');
+
+  return refreshCookie as string;
+};
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -14,6 +31,8 @@ describe('AuthController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');
+    app.use(cookieParser());
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -45,10 +64,11 @@ describe('AuthController (e2e)', () => {
         .expect(201);
 
       expect(response.body).toHaveProperty('access_token');
-      expect(response.body).toHaveProperty('refresh_token');
+      expect(response.body).not.toHaveProperty('refresh_token');
       expect(response.body).toHaveProperty('user');
       expect(response.body.user.email).toBe(registerDto.email);
       expect(response.body.user.password).toBeUndefined();
+      getRefreshCookie(response);
 
       // Cleanup
       await prisma.user.delete({ where: { email: registerDto.email } });
@@ -84,7 +104,7 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/auth/login (POST)', () => {
-    let testUser;
+    let testUser: TestAuthUser;
 
     beforeAll(async () => {
       const registerDto = {
@@ -117,8 +137,9 @@ describe('AuthController (e2e)', () => {
         .expect(201);
 
       expect(response.body).toHaveProperty('access_token');
-      expect(response.body).toHaveProperty('refresh_token');
+      expect(response.body).not.toHaveProperty('refresh_token');
       expect(response.body).toHaveProperty('user');
+      getRefreshCookie(response);
     });
 
     it('should fail with wrong password', async () => {
@@ -127,10 +148,7 @@ describe('AuthController (e2e)', () => {
         password: 'wrongpassword',
       };
 
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send(loginDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/api/v1/auth/login').send(loginDto).expect(401);
     });
 
     it('should fail with non-existent email', async () => {
@@ -139,16 +157,13 @@ describe('AuthController (e2e)', () => {
         password: 'password123',
       };
 
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send(loginDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/api/v1/auth/login').send(loginDto).expect(401);
     });
   });
 
   describe('/auth/refresh (POST)', () => {
-    let refreshToken: string;
-    let testUser;
+    let refreshCookie: string;
+    let testUser: TestAuthUser;
 
     beforeAll(async () => {
       const registerDto = {
@@ -162,7 +177,7 @@ describe('AuthController (e2e)', () => {
         .post('/api/v1/auth/register')
         .send(registerDto);
 
-      refreshToken = response.body.refresh_token;
+      refreshCookie = getRefreshCookie(response);
       testUser = response.body.user;
     });
 
@@ -173,23 +188,24 @@ describe('AuthController (e2e)', () => {
     it('should refresh token successfully', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
-        .send({ refreshToken })
+        .set('Cookie', refreshCookie)
         .expect(201);
 
       expect(response.body).toHaveProperty('access_token');
-      expect(response.body).toHaveProperty('refresh_token');
+      expect(response.body).not.toHaveProperty('refresh_token');
+      getRefreshCookie(response);
     });
 
     it('should fail with invalid refresh token', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
-        .send({ refreshToken: 'invalid-token' })
+        .set('Cookie', 'refresh_token=invalid-token')
         .expect(401);
     });
   });
 
   describe('/auth/forgot-password (POST)', () => {
-    let testUser;
+    let testUser: TestAuthUser;
 
     beforeAll(async () => {
       const registerDto = {
@@ -231,7 +247,7 @@ describe('AuthController (e2e)', () => {
 
   describe('/auth/logout (POST)', () => {
     let accessToken: string;
-    let testUser;
+    let testUser: TestAuthUser;
 
     beforeAll(async () => {
       const registerDto = {
@@ -263,9 +279,7 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should fail without token', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/logout')
-        .expect(401);
+      await request(app.getHttpServer()).post('/api/v1/auth/logout').expect(401);
     });
   });
 });

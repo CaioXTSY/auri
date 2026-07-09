@@ -2,7 +2,6 @@ import type { User } from '@/types/auth';
 
 export interface AuthTokens {
   access_token: string;
-  refresh_token: string;
 }
 
 export interface LoginResponse extends AuthTokens {
