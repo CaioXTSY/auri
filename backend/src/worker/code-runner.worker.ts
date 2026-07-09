@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import {
   CodeSubmissionMode,
   CodeSubmissionStatus,
+  NotificationType,
   PrismaClient,
   ProgrammingLanguage,
   TestCaseVisibility,
@@ -180,17 +181,11 @@ async function judgeSubmission(submissionId: string) {
     (total, result) => total + (result.runtimeMs ?? 0),
     0,
   );
-  const pointsAwarded =
-    submission.mode === CodeSubmissionMode.SUBMIT
-      ? await awardProgrammingPoints(submission.id, score)
-      : 0;
-
   await prisma.codeSubmission.update({
     where: { id: submissionId },
     data: {
       status: finalStatus,
       score,
-      pointsAwarded,
       passedTests,
       totalTests: testCases.length,
       runtimeMs,
@@ -198,6 +193,18 @@ async function judgeSubmission(submissionId: string) {
       errorMessage: finalStatus === CodeSubmissionStatus.ACCEPTED ? null : finalStatus,
     },
   });
+
+  if (submission.mode === CodeSubmissionMode.SUBMIT) {
+    const pointsAwarded = await processProgrammingGamification(
+      submission.id,
+      finalStatus,
+    );
+
+    await prisma.codeSubmission.update({
+      where: { id: submissionId },
+      data: { pointsAwarded },
+    });
+  }
 }
 
 function loadSubmission(id: string) {
@@ -216,24 +223,52 @@ function loadSubmission(id: string) {
   });
 }
 
-async function awardProgrammingPoints(submissionId: string, score: number) {
+async function processProgrammingGamification(
+  submissionId: string,
+  finalStatus: CodeSubmissionStatus,
+) {
+  const pointsAwarded = await awardProgrammingPoints(submissionId);
+
+  await checkProgrammingAchievements(submissionId, finalStatus);
+
+  const submission = await prisma.codeSubmission.findUnique({
+    where: { id: submissionId },
+    select: {
+      userId: true,
+      assignment: { select: { classId: true } },
+    },
+  });
+
+  if (submission) {
+    await refreshProgressionAfterPointsChange(submission.userId);
+
+    if (submission.assignment?.classId) {
+      await updateClassRanking(submission.assignment.classId);
+    }
+    await updateGlobalRanking();
+  }
+
+  return pointsAwarded;
+}
+
+async function awardProgrammingPoints(submissionId: string) {
   const submission = await prisma.codeSubmission.findUnique({
     where: { id: submissionId },
     select: {
       id: true,
       userId: true,
       assignmentId: true,
+      score: true,
       assignment: {
         select: {
           id: true,
           title: true,
-          classId: true,
         },
       },
     },
   });
 
-  if (!submission?.assignmentId || score <= 0) {
+  if (!submission?.assignmentId || submission.score <= 0) {
     return 0;
   }
 
@@ -251,7 +286,7 @@ async function awardProgrammingPoints(submissionId: string, score: number) {
     select: { score: true },
   });
 
-  const delta = Math.max(0, score - (bestPrevious?.score ?? 0));
+  const delta = Math.max(0, submission.score - (bestPrevious?.score ?? 0));
   if (delta <= 0) {
     return 0;
   }
@@ -266,12 +301,167 @@ async function awardProgrammingPoints(submissionId: string, score: number) {
     },
   });
 
-  if (submission.assignment?.classId) {
-    await updateClassRanking(submission.assignment.classId);
-  }
-  await updateGlobalRanking();
-
   return delta;
+}
+
+async function checkProgrammingAchievements(
+  submissionId: string,
+  finalStatus: CodeSubmissionStatus,
+) {
+  const submission = await prisma.codeSubmission.findUnique({
+    where: { id: submissionId },
+    select: {
+      userId: true,
+      language: true,
+      assignmentId: true,
+      score: true,
+      createdAt: true,
+      assignment: { select: { points: true } },
+    },
+  });
+
+  if (!submission) {
+    return;
+  }
+
+  await unlockAchievementByCondition(submission.userId, 'FIRST_SUBMISSION');
+  await checkSubmissionTimingAchievements(submission.userId, submission.createdAt);
+
+  if (finalStatus === CodeSubmissionStatus.ACCEPTED) {
+    await unlockAchievementByCondition(submission.userId, 'FIRST_APPROVED');
+    await unlockAchievementByCondition(submission.userId, 'PERFECT_SUBMISSION');
+  }
+
+  const acceptedCount = await prisma.codeSubmission.count({
+    where: {
+      userId: submission.userId,
+      mode: CodeSubmissionMode.SUBMIT,
+      status: CodeSubmissionStatus.ACCEPTED,
+    },
+  });
+
+  for (const milestone of [10, 25, 50, 100, 250, 500]) {
+    if (acceptedCount >= milestone) {
+      await unlockAchievementByCondition(
+        submission.userId,
+        `APPROVED_${milestone}`,
+      );
+    }
+  }
+
+  const languages = await prisma.codeSubmission.findMany({
+    where: {
+      userId: submission.userId,
+      mode: CodeSubmissionMode.SUBMIT,
+      status: {
+        in: [CodeSubmissionStatus.ACCEPTED, CodeSubmissionStatus.WRONG_ANSWER],
+      },
+    },
+    distinct: ['language'],
+    select: { language: true },
+  });
+
+  if (languages.length >= 2) {
+    await unlockAchievementByCondition(submission.userId, 'POLYGLOT');
+  }
+}
+
+async function checkSubmissionTimingAchievements(userId: string, date: Date) {
+  const saoPauloDateParts = getSaoPauloDateParts(date);
+
+  if (saoPauloDateParts.hour >= 0 && saoPauloDateParts.hour < 4) {
+    await unlockAchievementByCondition(userId, 'NIGHT_OWL');
+  }
+
+  if (saoPauloDateParts.hour >= 5 && saoPauloDateParts.hour < 9) {
+    await unlockAchievementByCondition(userId, 'EARLY_BIRD');
+  }
+
+  if (
+    saoPauloDateParts.weekday === 'Sat' ||
+    saoPauloDateParts.weekday === 'Sun'
+  ) {
+    await unlockAchievementByCondition(userId, 'WEEKEND_WARRIOR');
+  }
+}
+
+async function refreshProgressionAfterPointsChange(userId: string) {
+  const totalPoints = await getUserTotalPoints(userId);
+
+  for (const milestone of [100, 500, 1000, 5000, 10000]) {
+    if (totalPoints >= milestone) {
+      await unlockAchievementByCondition(userId, `POINTS_${milestone}`);
+    }
+  }
+
+  const currentLevel = Math.floor(Math.sqrt(totalPoints / 100));
+  for (const level of [5, 10]) {
+    if (currentLevel >= level) {
+      await unlockAchievementByCondition(userId, `LEVEL_${level}`);
+    }
+  }
+}
+
+async function unlockAchievementByCondition(userId: string, condition: string) {
+  const achievement = await prisma.achievement.findUnique({
+    where: { condition },
+  });
+
+  if (!achievement) {
+    return false;
+  }
+
+  const existing = await prisma.userAchievement.findUnique({
+    where: {
+      userId_achievementId: {
+        userId,
+        achievementId: achievement.id,
+      },
+    },
+  });
+
+  if (existing) {
+    return false;
+  }
+
+  await prisma.userAchievement.create({
+    data: {
+      userId,
+      achievementId: achievement.id,
+    },
+  });
+
+  if (achievement.points > 0) {
+    await prisma.userPoint.create({
+      data: {
+        userId,
+        points: achievement.points,
+        source: 'CONQUISTA',
+        description: `Desbloqueou: ${achievement.name}`,
+        referenceId: achievement.id,
+      },
+    });
+  }
+
+  await prisma.notification.create({
+    data: {
+      userId,
+      type: NotificationType.CONQUISTA,
+      title: `Conquista desbloqueada: ${achievement.name}`,
+      message: `${achievement.description} +${achievement.points} XP.`,
+    },
+  });
+
+  return true;
+}
+
+async function getUserTotalPoints(userId: string) {
+  const result = await prisma.userPoint.aggregate({
+    where: { userId },
+    _sum: { points: true },
+  });
+
+  return result._sum.points || 0;
 }
 
 async function updateGlobalRanking() {
@@ -522,6 +712,20 @@ function numberFromEnv(key: string, fallback: number) {
   const raw = process.env[key];
   const parsed = raw ? Number(raw) : NaN;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function getSaoPauloDateParts(date: Date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'short',
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? 0);
+  const weekday = parts.find((part) => part.type === 'weekday')?.value ?? '';
+
+  return { hour, weekday };
 }
 
 function sleep(ms: number) {
