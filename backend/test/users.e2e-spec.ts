@@ -193,6 +193,21 @@ describe('UsersController (e2e)', () => {
 
       expect(response.body.name).toBe('Updated Aluno Name');
     });
+
+    it('should reject role changes on own profile', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/users/me')
+        .set('Authorization', `Bearer ${alunoToken}`)
+        .send({ role: Role.ADMIN })
+        .expect(400);
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/users/me')
+        .set('Authorization', `Bearer ${alunoToken}`)
+        .expect(200);
+
+      expect(response.body.role).toBe(Role.ALUNO);
+    });
   });
 
   describe('/users/:id (PATCH)', () => {

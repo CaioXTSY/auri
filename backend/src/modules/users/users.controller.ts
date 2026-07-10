@@ -27,6 +27,7 @@ import { extname } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateOwnProfileDto } from './dto/update-own-profile.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -181,7 +182,7 @@ export class UsersController {
     description: 'Permite ao usuário atualizar seus próprios dados',
   })
   @ApiBody({
-    type: UpdateUserDto,
+    type: UpdateOwnProfileDto,
     examples: {
       update: {
         summary: 'Atualizar perfil',
@@ -208,7 +209,10 @@ export class UsersController {
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  updateProfile(@Request() req: AuthenticatedRequest, @Body() updateUserDto: UpdateUserDto) {
+  updateProfile(
+    @Request() req: AuthenticatedRequest,
+    @Body() updateUserDto: UpdateOwnProfileDto,
+  ) {
     return this.usersService.update(req.user.id, updateUserDto);
   }
 
