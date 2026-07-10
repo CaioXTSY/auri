@@ -93,6 +93,9 @@ export class ClassesService {
         include: {
           class: {
             include: {
+              createdBy: {
+                select: { id: true, name: true },
+              },
               _count: {
                 select: {
                   students: true,
@@ -635,6 +638,22 @@ export class ClassesService {
       ...enrollment.class,
       enrolledAt: enrollment.enrolledAt,
     }));
+  }
+
+  async getMyJoinRequests(userId: string) {
+    return this.prisma.classJoinRequest.findMany({
+      where: { userId, status: JoinRequestStatus.PENDING },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        class: {
+          include: {
+            createdBy: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+      },
+    });
   }
 
   async getMyCreatedClasses(userId: string): Promise<any[]> {

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { classService, type Class } from '@/services/class-service';
+import { classService, type Class, type PendingClassJoinRequest } from '@/services/class-service';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus } from 'lucide-react';
+import { Clock3, Plus } from 'lucide-react';
 
 export const MyClasses = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export const MyClasses = () => {
   const [classes, setClasses] = useState<Class[]>(joinedClass ? [joinedClass] : []);
   const [isLoading, setIsLoading] = useState(!joinedClass);
   const [error, setError] = useState<string | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<PendingClassJoinRequest[]>([]);
 
   const loadClasses = useCallback(async (showLoading = true) => {
     if (showLoading) {
@@ -20,7 +21,11 @@ export const MyClasses = () => {
     }
     setError(null);
     try {
-      const data = await classService.getMyClasses();
+      const [data, requests] = await Promise.all([
+        classService.getMyClasses(),
+        classService.getMyJoinRequests(),
+      ]);
+      setPendingRequests(requests);
       setClasses(
         joinedClass && !data.some((classroom) => classroom.id === joinedClass.id)
           ? [joinedClass, ...data]
@@ -99,6 +104,35 @@ export const MyClasses = () => {
               Você ainda não está matriculado em nenhuma turma.
             </p>
           </div>
+        )}
+
+        {!isLoading && pendingRequests.length > 0 && (
+          <section aria-labelledby="pending-requests-title" className="space-y-3">
+            <div>
+              <h2 id="pending-requests-title" className="text-lg font-bold text-brand-900">
+                Solicitações pendentes
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Aguarde a aprovação do professor para acessar estas turmas.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {pendingRequests.map((request) => (
+                <article key={request.id} className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+                  <div className="flex items-start gap-3">
+                    <Clock3 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
+                    <div>
+                      <p className="font-semibold text-amber-950">Aguardando aprovação do professor</p>
+                      <h3 className="mt-2 text-base font-bold text-slate-800">{request.class.name}</h3>
+                      {request.class.createdBy?.name && (
+                        <p className="mt-1 text-xs text-slate-600">Professor(a): {request.class.createdBy.name}</p>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

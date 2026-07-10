@@ -8,6 +8,10 @@ export interface Class {
   status: 'ATIVA' | 'ENCERRADA';
   enrolledAt?: string;
   settings?: ClassSettings | null;
+  createdBy?: {
+    id: string;
+    name: string;
+  } | null;
   _count?: {
     students: number;
     activities: number;
@@ -80,6 +84,21 @@ export interface ClassJoinRequest {
   };
 }
 
+export interface PendingClassJoinRequest {
+  id: string;
+  classId: string;
+  userId: string;
+  status: 'PENDING';
+  createdAt: string;
+  class: Class;
+}
+
+export interface JoinClassResult {
+  class: Class;
+  status?: 'PENDING_APPROVAL';
+  request?: PendingClassJoinRequest;
+}
+
 export const classService = {
   getAllClasses: async (): Promise<Class[]> => {
     const response = await api.get<{ data: Class[] }>('/classes');
@@ -101,8 +120,13 @@ export const classService = {
     return response.data;
   },
 
-  joinClass: async (code: string): Promise<{ class: Class; status?: 'PENDING_APPROVAL' }> => {
-    const response = await api.post<{ class: Class; status?: 'PENDING_APPROVAL' }>('/classes/join', { code });
+  joinClass: async (code: string): Promise<JoinClassResult> => {
+    const response = await api.post<JoinClassResult>('/classes/join', { code });
+    return response.data;
+  },
+
+  getMyJoinRequests: async (): Promise<PendingClassJoinRequest[]> => {
+    const response = await api.get<PendingClassJoinRequest[]>('/classes/my-join-requests');
     return response.data;
   },
 

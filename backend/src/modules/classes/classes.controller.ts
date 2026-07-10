@@ -94,6 +94,17 @@ export class ClassesController {
     return this.classesService.getMyClasses(req.user.id);
   }
 
+  @Get('my-join-requests')
+  @Roles(Role.ALUNO)
+  @ApiOperation({
+    summary: 'Listar minhas solicitações pendentes de entrada',
+    description: 'Retorna as solicitações de turma que ainda aguardam aprovação.',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de solicitações pendentes do aluno' })
+  getMyJoinRequests(@Request() req: AuthenticatedRequest) {
+    return this.classesService.getMyJoinRequests(req.user.id);
+  }
+
   @Get('my-created-classes')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({

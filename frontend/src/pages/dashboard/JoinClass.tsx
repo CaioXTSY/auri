@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Clock3, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { classService } from '@/services/class-service';
+import { classService, type PendingClassJoinRequest } from '@/services/class-service';
 
 const joinClassSchema = z.object({
   code: z.string().min(1, 'O código da turma é obrigatório'),
@@ -22,27 +22,59 @@ export const JoinClass = () => {
   const { notify } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<PendingClassJoinRequest[]>([]);
+  const [pendingRequest, setPendingRequest] = useState<PendingClassJoinRequest | null>(null);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<JoinClassForm>({
     resolver: zodResolver(joinClassSchema),
   });
 
+  const code = watch('code')?.trim().toLowerCase();
+  const pendingRequestForCode = useMemo(
+    () => pendingRequests.find((request) => request.class.code.toLowerCase() === code),
+    [code, pendingRequests],
+  );
+
+  useEffect(() => {
+    classService.getMyJoinRequests()
+      .then(setPendingRequests)
+      .catch(() => {
+        // A consulta não impede o aluno de tentar entrar em outra turma.
+      });
+  }, []);
+
   const onSubmit = async (data: JoinClassForm) => {
+    if (pendingRequestForCode) {
+      setPendingRequest(pendingRequestForCode);
+      setError(null);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
       const result = await classService.joinClass(data.code);
       if (result.status === 'PENDING_APPROVAL') {
+        const request = result.request;
+        if (request) {
+          setPendingRequest(request);
+          setPendingRequests((current) => [
+            request,
+            ...current.filter((item) => item.classId !== request.classId),
+          ]);
+        }
         notify({
           title: `Solicitação enviada para "${result.class.name}"`,
           description: 'Aguarde a aprovação do professor para entrar na turma.',
           variant: 'success',
         });
+        return;
       } else {
         notify({
           title: `Você entrou na turma "${result.class.name}"`,
@@ -50,15 +82,19 @@ export const JoinClass = () => {
           variant: 'success',
         });
       }
-      navigate('/dashboard/classes', {
-        state: result.status === 'PENDING_APPROVAL' ? undefined : { joinedClass: result.class },
-      });
+      navigate('/dashboard/classes', { state: { joinedClass: result.class } });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       const serverMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
 
       if (serverMessage === 'Turma não encontrada' || serverMessage === 'Turma nao encontrada') {
         setError('Código de turma inválido. Verifique e tente novamente.');
+      } else if (serverMessage?.includes('encerrada')) {
+        setError('Esta turma está encerrada e não aceita novas matrículas.');
+      } else if (serverMessage?.includes('bloqueadas')) {
+        setError('As matrículas nesta turma estão bloqueadas no momento.');
+      } else if (serverMessage?.includes('desativada')) {
+        setError('A entrada por código não está disponível nesta turma.');
       } else if (
         serverMessage === 'Você já está matriculado nesta turma' ||
         serverMessage === 'Voce ja esta matriculado nesta turma'
@@ -128,6 +164,25 @@ export const JoinClass = () => {
               )}
             </div>
 
+            {pendingRequest && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950" role="status" aria-live="polite">
+                <div className="flex items-start gap-3">
+                  <Clock3 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
+                  <div>
+                    <p className="font-semibold">Aguardando aprovação do professor</p>
+                    <p className="mt-1">
+                      Solicitação enviada para <strong>{pendingRequest.class.name}</strong>. Aguarde a aprovação do professor.
+                    </p>
+                    {pendingRequest.class.createdBy?.name && (
+                      <p className="mt-1 text-xs text-amber-900">
+                        Professor(a): {pendingRequest.class.createdBy.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 type="button"
@@ -140,15 +195,17 @@ export const JoinClass = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || Boolean(pendingRequestForCode)}
                 data-tour="join-class-submit"
                 className="w-full bg-brand-900 text-white hover:bg-brand-800"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
-                    Entrando...
+                    Enviando solicitação...
                   </>
+                ) : pendingRequestForCode ? (
+                  'Solicitação pendente'
                 ) : (
                   'Entrar na Turma'
                 )}
