@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { ConfirmAction } from '@/components/ui/confirm-action';
 import { ErrorState } from '@/components/ui/error-state';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,25 +35,25 @@ import {
 type MobileTab = 'statement' | 'code' | 'result' | 'history';
 
 const statusLabel: Record<CodeSubmissionStatus, string> = {
-  PENDING: 'Na fila',
+  PENDING: 'Aguardando avaliação',
   RUNNING: 'Executando',
-  ACCEPTED: 'Aceito',
-  WRONG_ANSWER: 'Resposta errada',
-  RUNTIME_ERROR: 'Erro de execucao',
+  ACCEPTED: 'Resposta correta',
+  WRONG_ANSWER: 'Saída diferente',
+  RUNTIME_ERROR: 'Erro de execução',
   TIME_LIMIT_EXCEEDED: 'Tempo excedido',
-  MEMORY_LIMIT_EXCEEDED: 'Memoria excedida',
-  INTERNAL_ERROR: 'Falha interna',
+  MEMORY_LIMIT_EXCEEDED: 'Memória excedida',
+  INTERNAL_ERROR: 'Falha interna da plataforma',
 };
 
 const statusMessage: Record<CodeSubmissionStatus, string> = {
-  PENDING: 'Sua execucao entrou na fila do judge.',
-  RUNNING: 'Seu codigo esta sendo executado em ambiente isolado.',
+  PENDING: 'Sua avaliação entrou na fila do judge.',
+  RUNNING: 'Seu código está sendo executado em ambiente isolado.',
   ACCEPTED: 'Todos os testes avaliados passaram.',
-  WRONG_ANSWER: 'Seu codigo executou, mas a saida nao bateu com o esperado.',
-  RUNTIME_ERROR: 'Seu codigo gerou erro durante a execucao.',
-  TIME_LIMIT_EXCEEDED: 'Seu codigo excedeu o limite de tempo.',
-  MEMORY_LIMIT_EXCEEDED: 'Seu codigo excedeu o limite de memoria.',
-  INTERNAL_ERROR: 'O judge encontrou uma falha interna. Tente novamente em instantes.',
+  WRONG_ANSWER: 'Seu código executou, mas a saída não bateu com o esperado.',
+  RUNTIME_ERROR: 'Seu código gerou um erro durante a execução.',
+  TIME_LIMIT_EXCEEDED: 'Seu código excedeu o limite de tempo.',
+  MEMORY_LIMIT_EXCEEDED: 'Seu código excedeu o limite de memória.',
+  INTERNAL_ERROR: 'A plataforma encontrou uma falha ao avaliar sua tentativa. Isso não indica um erro no seu código; tente novamente em instantes.',
 };
 
 const finalStatuses: CodeSubmissionStatus[] = [
@@ -109,6 +110,14 @@ const getStatusTone = (status?: CodeSubmissionStatus) => {
       shell: 'border-amber-200 bg-amber-50 text-amber-800',
       accent: 'text-amber-700',
       icon: AlertTriangle,
+    };
+  }
+
+  if (status === 'INTERNAL_ERROR') {
+    return {
+      shell: 'border-violet-200 bg-violet-50 text-violet-800',
+      accent: 'text-violet-700',
+      icon: ShieldAlert,
     };
   }
 
@@ -174,6 +183,7 @@ export const ActivitySolvePage = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingLanguage, setPendingLanguage] = useState<ProgrammingLanguage | null>(null);
   const { notify } = useToast();
 
   const loadData = useCallback(async () => {
@@ -238,10 +248,21 @@ export const ActivitySolvePage = () => {
 
   const handleLanguageChange = (nextLanguage: ProgrammingLanguage) => {
     if (!assignment || nextLanguage === language) return;
-    if (isDirty && !window.confirm('Trocar a linguagem vai substituir o codigo atual.')) {
+    if (isDirty) {
+      setPendingLanguage(nextLanguage);
       return;
     }
 
+    setLanguage(nextLanguage);
+    setCode(getDefaultCode(assignment, nextLanguage));
+    setIsDirty(false);
+  };
+
+  const confirmLanguageChange = () => {
+    if (!assignment || !pendingLanguage) return;
+
+    const nextLanguage = pendingLanguage;
+    setPendingLanguage(null);
     setLanguage(nextLanguage);
     setCode(getDefaultCode(assignment, nextLanguage));
     setIsDirty(false);
@@ -400,6 +421,15 @@ export const ActivitySolvePage = () => {
           </div>
         )}
       </div>
+      <ConfirmAction
+        open={Boolean(pendingLanguage)}
+        title="Trocar linguagem?"
+        description="O código atual será substituído pelo modelo inicial da nova linguagem."
+        body="Copie seu código antes de continuar se quiser mantê-lo."
+        confirmLabel="Trocar linguagem"
+        onConfirm={confirmLanguageChange}
+        onClose={() => setPendingLanguage(null)}
+      />
     </DashboardLayout>
   );
 };
@@ -557,9 +587,11 @@ const EditorWorkspace = ({
       </div>
     </div>
 
-    <p className="border-b border-slate-200 bg-white px-4 pb-3 text-xs leading-5 text-slate-500">
-      {ACTIVITY_COPY.examplesDoNotAwardPoints} {ACTIVITY_COPY.evaluationUsesHiddenTests}
-    </p>
+    <div className="space-y-1 border-b border-slate-200 bg-white px-4 pb-3 text-xs leading-5 text-slate-500">
+      <p>{ACTIVITY_COPY.examplesDoNotAwardPoints} {ACTIVITY_COPY.evaluationUsesHiddenTests}</p>
+      <p>Você recebe apenas a diferença em relação à sua melhor pontuação anterior.</p>
+      <p>Novas tentativas podem ser enviadas enquanto a atividade estiver disponível conforme as regras da turma.</p>
+    </div>
 
     <div className="min-h-0 bg-[#1e1e1e]">
       <Editor
@@ -603,6 +635,7 @@ const ResultPanel = ({ submission }: { submission: CodeSubmission | null }) => {
   const StatusIcon = tone.icon;
   const pending = submission.status === 'PENDING' || submission.status === 'RUNNING';
   const hint = getContractHint(submission, submission.language);
+  const isPlatformFailure = submission.status === 'INTERNAL_ERROR';
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -614,7 +647,7 @@ const ResultPanel = ({ submission }: { submission: CodeSubmission | null }) => {
               : ACTIVITY_COPY.evaluationResult}
           </p>
           <div className={cn('mt-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold', tone.shell)}>
-            <StatusIcon className={cn('h-4 w-4', pending && 'animate-spin')} />
+            <StatusIcon aria-hidden="true" className={cn('h-4 w-4', pending && 'animate-spin')} />
             {statusLabel[submission.status]}
           </div>
           <p className="mt-2 text-sm text-slate-600">{statusMessage[submission.status]}</p>
@@ -634,11 +667,19 @@ const ResultPanel = ({ submission }: { submission: CodeSubmission | null }) => {
         </div>
       ) : null}
 
+      {isPlatformFailure ? (
+        <div className="mt-3 flex gap-2 rounded-md border border-violet-200 bg-violet-50 p-3 text-sm text-violet-800">
+          <ShieldAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>A falha ocorreu durante a avaliação da plataforma. Seu código não foi marcado como incorreto.</span>
+        </div>
+      ) : null}
+
       {submission.results && submission.results.length > 0 ? (
         <div className="mt-4 space-y-3">
           {submission.results.map((result, index) => {
             const resultTone = getStatusTone(result.status);
             const hasError = Boolean(result.errorMessage);
+            const isPlatformFailure = result.status === 'INTERNAL_ERROR';
             return (
               <div key={result.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-2">
@@ -656,14 +697,18 @@ const ResultPanel = ({ submission }: { submission: CodeSubmission | null }) => {
                       <OutputBlock label="Entrada" value={result.input ?? ''} compact />
                       <OutputBlock label="Esperado" value={result.expected ?? ''} compact />
                     </div>
-                    {hasError ? (
+                    {isPlatformFailure ? (
+                      <div className="rounded border border-violet-200 bg-violet-50 p-3 text-sm text-violet-800">
+                        Falha interna da plataforma durante este caso. Seu código não foi considerado incorreto.
+                      </div>
+                    ) : hasError ? (
                       <OutputBlock
                         label="Erro"
                         value={result.errorMessage ?? ''}
                         tone="error"
                       />
                     ) : (
-                      <OutputBlock label="Obtido" value={result.actual ?? ''} />
+                      <OutputDiff expected={result.expected ?? ''} actual={result.actual ?? ''} />
                     )}
                   </div>
                 ) : (
@@ -778,3 +823,37 @@ const OutputBlock = ({
     </pre>
   </div>
 );
+
+const OutputDiff = ({ expected, actual }: { expected: string; actual: string }) => {
+  const expectedLines = expected.split('\n');
+  const actualLines = actual.split('\n');
+  const lineCount = Math.max(expectedLines.length, actualLines.length);
+  const hasDifference = expected !== actual;
+
+  return (
+    <div>
+      <p className="font-semibold text-slate-500">Comparação</p>
+      <div className="mt-1 overflow-auto rounded border border-slate-200 bg-white font-mono text-xs leading-relaxed">
+        {Array.from({ length: lineCount }).map((_, index) => {
+          const expectedLine = expectedLines[index] ?? '';
+          const actualLine = actualLines[index] ?? '';
+          const isDifferent = expectedLine !== actualLine;
+
+          return (
+            <div key={index} className={cn('grid grid-cols-[1fr_1fr] divide-x divide-slate-200', isDifferent && 'bg-amber-50')}>
+              <code className={cn('block min-w-0 whitespace-pre-wrap break-words px-2 py-1 text-slate-700', isDifferent && 'text-rose-800')}>
+                <span className="mr-1 select-none text-slate-400">−</span>{expectedLine || '∅'}
+              </code>
+              <code className={cn('block min-w-0 whitespace-pre-wrap break-words px-2 py-1 text-slate-700', isDifferent && 'text-emerald-800')}>
+                <span className="mr-1 select-none text-slate-400">+</span>{actualLine || '∅'}
+              </code>
+            </div>
+          );
+        })}
+      </div>
+      <p className={cn('mt-1 text-xs', hasDifference ? 'text-amber-800' : 'text-emerald-700')}>
+        {hasDifference ? 'Linhas destacadas diferem entre o esperado e o obtido.' : 'A saída corresponde ao esperado.'}
+      </p>
+    </div>
+  );
+};
