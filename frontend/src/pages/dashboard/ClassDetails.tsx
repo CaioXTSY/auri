@@ -20,10 +20,10 @@ export const ClassDetails = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [classData, rankingData] = await Promise.all([
-        classService.getClassDetails(id),
-        gamificationService.getRanking('TURMA', id, 10),
-      ]);
+      const classData = await classService.getClassDetails(id);
+      const rankingData = classData.settings?.showRankingToStudents === false
+        ? []
+        : await gamificationService.getRanking('TURMA', id, 10);
       setClassroom(classData);
       setRanking(rankingData);
     } catch {

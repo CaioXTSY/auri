@@ -1,4 +1,4 @@
-import { Trophy, Clock } from 'lucide-react';
+import { Trophy, Clock, CheckCircle2, LockKeyhole } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Achievement } from '@/services/gamification-service';
 
@@ -59,14 +59,19 @@ export const AchievementCard = ({ achievement, locked = false }: AchievementCard
               {rarityLabels[achievement.rarity]}
             </span>
           </div>
+
+          <p className={cn('flex items-center gap-1 text-xs font-semibold', locked ? 'text-slate-600' : 'text-emerald-700')}>
+            {locked ? <LockKeyhole aria-hidden="true" className="h-3.5 w-3.5" /> : <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />}
+            {locked ? 'Bloqueada' : 'Concluída'}
+          </p>
           
           <p className="text-xs text-slate-500 leading-relaxed mb-3">
-            {achievement.description}
+            {locked ? <><span className="font-semibold text-slate-700">Critério: </span>{achievement.description}</> : achievement.description}
           </p>
 
           <div className="space-y-2 pb-2">
             <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase tracking-widest">
-              <span>Progresso</span>
+              <span>{locked ? 'Aguardando critério' : 'Concluída'}</span>
               <span>{progressValue}%</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">

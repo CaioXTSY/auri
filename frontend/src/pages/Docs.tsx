@@ -496,6 +496,9 @@ curl -X POST ${API_URL}/auth/reset-password \\
                 O painel principal exibe um resumo completo da sua jornada: nível atual, XP acumulado,
                 progresso para o próximo nível, sequência diária, conquistas recentes, posição no ranking e missões.
               </p>
+              <p className="font-serif text-slate-600 leading-relaxed mb-4">
+                Atividades avaliam o código e missões propõem objetivos adicionais, podendo incluir quizzes. Ambas concedem XP válido; o XP aumenta o nível individual e pode desbloquear conquistas. O ranking é comparativo e pode ser ocultado pela configuração da turma.
+              </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Endpoint method="GET" path="/dashboard/student" description="Dados completos do painel do aluno" />
               </div>

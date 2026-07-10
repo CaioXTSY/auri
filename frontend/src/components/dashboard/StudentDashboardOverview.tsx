@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ArrowRight, GraduationCap, Medal, MessageSquareText, Sparkles, Target, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ProgressGuide } from '@/components/gamification/ProgressGuide';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import { STREAK_MILESTONES } from '@/constants/app';
@@ -65,10 +66,6 @@ export const StudentDashboardOverview = ({
   const rankingClass = dashboardData?.ranking.class;
   const missions = dashboardData?.missions;
   const streakCurrent = dashboardData?.streak?.current ?? 0;
-  const nextLevelXp =
-    levelInfo && levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel > 0
-      ? levelInfo.pointsInCurrentLevel + levelInfo.pointsNeededForNextLevel
-      : 0;
   const { nextMilestone, daysLeft, segmentProgress } = getStreakSegment(streakCurrent);
 
   return (
@@ -162,7 +159,7 @@ export const StudentDashboardOverview = ({
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Nível Atual</p>
                   <p className="mt-1 text-4xl font-display font-bold text-accent-600">Nível {level}</p>
-                  {levelInfo ? <p className="mt-1 text-xs text-slate-500">{currentXp} XP de {nextLevelXp} XP para o próximo nível</p> : null}
+                  {levelInfo ? <p className="mt-1 text-xs text-slate-500">{currentXp} XP total. Faltam {levelInfo.pointsNeededForNextLevel} XP para o próximo nível.</p> : null}
                 </div>
               </div>
             </div>
@@ -230,6 +227,8 @@ export const StudentDashboardOverview = ({
             </div>
           </section>
 
+          <ProgressGuide />
+
           <section className="grid gap-6 lg:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">
@@ -259,6 +258,7 @@ export const StudentDashboardOverview = ({
                 Ranking
               </h3>
               <div className="mt-4 space-y-4">
+                <p className="text-xs leading-5 text-slate-500">Ranking compara XP com outros alunos; nível e progresso são individuais.</p>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">🌍 Global</span>
                   <span className="text-lg font-bold text-slate-800">{rankingGlobal ? `#${rankingGlobal}` : '--'}</span>

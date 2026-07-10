@@ -40,6 +40,12 @@ const getStatusStyle = (status: MissionStatus) => {
   return 'border-amber-200 bg-amber-50 text-amber-700';
 };
 
+const getMissionKind = (mission: Mission) =>
+  mission.hasQuiz ? 'Missão com quiz' : 'Missão de objetivo';
+
+const formatMissionDeadline = (endDate: string) =>
+  new Date(endDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
 const getPageNumbers = (current: number, total: number) => {
   const start = Math.max(1, current - 2);
   const end = Math.min(total, start + 4);
@@ -518,6 +524,14 @@ export const MissionsPage = () => {
                     <span className="inline-flex items-center gap-1">
                       <Trophy className="h-3.5 w-3.5" />
                       {mission.points} XP
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Dices className="h-3.5 w-3.5" />
+                      {getMissionKind(mission)}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      Prazo: {formatMissionDeadline(mission.endDate)}
                     </span>
                     {mission.class && (
                       <span className="inline-flex items-center gap-1">
