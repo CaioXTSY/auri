@@ -1,24 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Dices, Flag, Loader2, Trophy } from 'lucide-react';
 import { MISSIONS_PAGE_SIZE } from '@/constants/app';
 import { LEARNING_TERMS } from '@/constants/ui-terminology';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
+import { MissionFilters, type MissionTypeFilter, type MissionsTab } from '@/components/missions/MissionFilters';
+import { useMissionsData } from '@/hooks/use-missions-data';
 import { Button } from '@/components/ui/button';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import {
-  missionsService,
   type Mission,
-  type MissionStats,
   type MissionStatus,
-  type UserMission,
 } from '@/services/missions-service';
-
-type MissionsTab = 'available' | 'history';
 
 const statusLabels: Record<MissionStatus, string> = {
   NAO_INICIADA: 'Não iniciada',
@@ -120,14 +117,10 @@ export const MissionsPage = () => {
   const tab = (searchParams.get('tab') as MissionsTab) ?? 'available';
   const searchTerm = searchParams.get('search') ?? '';
   const typeFilter =
-    (searchParams.get('type') as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') ?? 'ALL';
+    (searchParams.get('type') as MissionTypeFilter) ?? 'ALL';
   const statusFilter = (searchParams.get('status') as 'ALL' | MissionStatus) ?? 'ALL';
 
-  const [available, setAvailable] = useState<Mission[]>([]);
-  const [history, setHistory] = useState<UserMission[]>([]);
-  const [stats, setStats] = useState<MissionStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { available, history, stats, isLoading, error, loadData, getRandomQuizMission, completeMission } = useMissionsData();
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
   const [availablePage, setAvailablePage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
@@ -151,7 +144,7 @@ export const MissionsPage = () => {
       return prev;
     }, { replace: true });
 
-  const setTypeFilter = (value: 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA') =>
+  const setTypeFilter = (value: MissionTypeFilter) =>
     setSearchParams((prev) => {
       if (value !== 'ALL') {
         prev.set('type', value);
@@ -171,32 +164,6 @@ export const MissionsPage = () => {
       return prev;
     }, { replace: true });
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const [availableResponse, historyResponse, statsResponse] = await Promise.all([
-        missionsService.getAvailable(),
-        missionsService.getMyHistory(),
-        missionsService.getMyStats(),
-      ]);
-
-      setAvailable(availableResponse);
-      setHistory(historyResponse.data);
-      setStats(statsResponse);
-    } catch {
-      setError('Não foi possível carregar as missões.');
-      notify({ title: 'Falha ao carregar missões', variant: 'error' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [notify]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
   useEffect(() => {
     setAvailablePage(1);
     setHistoryPage(1);
@@ -208,13 +175,10 @@ export const MissionsPage = () => {
 
   const handleOpenRandomQuiz = async () => {
     setIsOpeningRandomQuiz(true);
-    setError(null);
-
     try {
-      const mission = await missionsService.getRandomQuizMission();
+      const mission = await getRandomQuizMission();
       setActiveMissionId(mission.id);
     } catch {
-      setError('Não há uma questão aleatória disponível para você agora.');
       notify({ title: 'Nenhuma questão aleatória disponível', variant: 'error' });
     } finally {
       setIsOpeningRandomQuiz(false);
@@ -223,11 +187,9 @@ export const MissionsPage = () => {
 
   const handleCompleteMission = async (missionId: string) => {
     try {
-      await missionsService.completeMission(missionId);
-      await loadData();
+      await completeMission(missionId);
       notify({ title: 'Missão concluída', variant: 'success' });
     } catch {
-      setError('Não foi possível concluir a missão.');
       notify({ title: 'Falha ao concluir missão', variant: 'error' });
     }
   };
@@ -370,69 +332,16 @@ export const MissionsPage = () => {
           {LEARNING_TERMS[1].description} {LEARNING_TERMS[2].description} {LEARNING_TERMS[3].description}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2" data-tour="missions-tabs">
-          <button
-            type="button"
-            onClick={() => setTab('available')}
-            className={cn(
-              'rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em]',
-              tab === 'available'
-                ? 'border-brand-900 bg-brand-900 text-white'
-                : 'border-slate-200 bg-white text-slate-500',
-            )}
-          >
-            Disponíveis
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('history')}
-            className={cn(
-              'rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em]',
-              tab === 'history'
-                ? 'border-brand-900 bg-brand-900 text-white'
-                : 'border-slate-200 bg-white text-slate-500',
-            )}
-          >
-            Histórico
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center" data-tour="missions-filters">
-          <div className="flex-1">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Buscar por título ou descrição"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-200"
-            />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={typeFilter}
-              onChange={(event) =>
-                setTypeFilter(event.target.value as 'ALL' | 'DIARIA' | 'SEMANAL' | 'PERSONALIZADA')
-              }
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
-            >
-              <option value="ALL">Todos os tipos</option>
-              <option value="DIARIA">Diárias</option>
-              <option value="SEMANAL">Semanais</option>
-              <option value="PERSONALIZADA">Personalizadas</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as 'ALL' | MissionStatus)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
-            >
-              <option value="ALL">Todos os status</option>
-              <option value="NAO_INICIADA">Não iniciada</option>
-              <option value="EM_PROGRESSO">Em progresso</option>
-              <option value="CONCLUIDA">Concluída</option>
-              <option value="EXPIRADA">Expirada</option>
-            </select>
-          </div>
-        </div>
+        <MissionFilters
+          tab={tab}
+          searchTerm={searchTerm}
+          typeFilter={typeFilter}
+          statusFilter={statusFilter}
+          onTabChange={setTab}
+          onSearchChange={setSearchTerm}
+          onTypeChange={setTypeFilter}
+          onStatusChange={setStatusFilter}
+        />
 
         {isLoading && (
           <div className="space-y-4">

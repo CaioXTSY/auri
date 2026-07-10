@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, Loader2, Plus, Save, Trash2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2, Save } from 'lucide-react';
+import { TestCasesEditor, type EditableTestCase } from '@/components/activities/TestCasesEditor';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,11 +11,9 @@ import { classService, type Class } from '@/services/class-service';
 import {
   programmingService,
   type Difficulty,
-  type ProblemTestCase,
   type ProgrammingAssignment,
   type ProgrammingProblem,
   type ProgrammingLanguage,
-  type TestCaseVisibility,
 } from '@/services/programming-service';
 
 const defaultStarter: Record<ProgrammingLanguage, string> = {
@@ -23,13 +22,6 @@ const defaultStarter: Record<ProgrammingLanguage, string> = {
   PYTHON: 'def solve(input: str) -> str:\n    return ""',
 };
 
-type EditableTestCase = Partial<ProblemTestCase> & {
-  localId: string;
-  input: string;
-  expected: string;
-  visibility: TestCaseVisibility;
-  weight: number;
-};
 
 const createEmptyTestCase = (): EditableTestCase => ({
   localId: crypto.randomUUID(),
@@ -429,89 +421,12 @@ export const TeacherActivityForm = () => {
               </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-brand-900">Casos de teste</h2>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setTestCases((current) => [...current, createEmptyTestCase()])}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Adicionar
-                </Button>
-              </div>
-              <div className="space-y-4">
-                {testCases.map((testCase, index) => (
-                  <div key={testCase.localId} className="rounded-md border border-slate-200 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <h3 className="font-medium text-slate-900">Teste {index + 1}</h3>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeTestCase(testCase)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Remover
-                      </Button>
-                    </div>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <Field htmlFor={`input-${testCase.localId}`} label="Entrada">
-                        <textarea
-                          id={`input-${testCase.localId}`}
-                          rows={4}
-                          value={testCase.input}
-                          onChange={(event) =>
-                            updateTestCase(testCase.localId, { input: event.target.value })
-                          }
-                          className="w-full rounded-md border border-slate-200 px-3 py-2 font-mono text-sm"
-                        />
-                      </Field>
-                      <Field htmlFor={`expected-${testCase.localId}`} label="Saida esperada">
-                        <textarea
-                          id={`expected-${testCase.localId}`}
-                          rows={4}
-                          value={testCase.expected}
-                          onChange={(event) =>
-                            updateTestCase(testCase.localId, { expected: event.target.value })
-                          }
-                          className="w-full rounded-md border border-slate-200 px-3 py-2 font-mono text-sm"
-                        />
-                      </Field>
-                      <Field htmlFor={`visibility-${testCase.localId}`} label="Visibilidade">
-                        <select
-                          id={`visibility-${testCase.localId}`}
-                          value={testCase.visibility}
-                          onChange={(event) =>
-                            updateTestCase(testCase.localId, {
-                              visibility: event.target.value as TestCaseVisibility,
-                            })
-                          }
-                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
-                        >
-                          <option value="PUBLIC">PUBLIC</option>
-                          <option value="HIDDEN">HIDDEN</option>
-                        </select>
-                      </Field>
-                      <Field htmlFor={`weight-${testCase.localId}`} label="Peso">
-                        <Input
-                          id={`weight-${testCase.localId}`}
-                          type="number"
-                          min={1}
-                          value={testCase.weight}
-                          onChange={(event) =>
-                            updateTestCase(testCase.localId, {
-                              weight: Number(event.target.value),
-                            })
-                          }
-                        />
-                      </Field>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <TestCasesEditor
+              testCases={testCases}
+              onAdd={() => setTestCases((current) => [...current, createEmptyTestCase()])}
+              onRemove={removeTestCase}
+              onChange={updateTestCase}
+            />
 
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <label className="mb-4 flex items-center gap-2 text-sm font-semibold text-brand-900">

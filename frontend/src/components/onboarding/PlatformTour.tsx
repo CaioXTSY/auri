@@ -10,6 +10,7 @@ import {
   PLATFORM_TOUR_STATE_CHANGED_EVENT,
   type PlatformTourRole,
 } from './platform-tour-events';
+import { platformTourIntroCopy } from './platform-tour-config';
 import { Button } from '@/components/ui/button';
 import { ModalDialog } from '@/components/ui/modal-dialog';
 
@@ -22,24 +23,6 @@ interface PlatformTourProps {
 }
 
 const MOBILE_BREAKPOINT = 768;
-
-const introCopy: Record<UserRole, { title: string; description: string }> = {
-  ALUNO: {
-    title: 'Quer ver por onde começar?',
-    description:
-      'Eu te mostro de uma vez onde entrar em turma, responder missões, acompanhar progresso e ajustar sua conta.',
-  },
-  PROFESSOR: {
-    title: 'Veja onde fica cada área principal',
-    description:
-      'Eu te mostro de uma vez onde criar turmas, acompanhar alunos, publicar avisos e ajustar sua conta.',
-  },
-  ADMIN: {
-    title: 'Quer um resumo do painel admin?',
-    description:
-      'Eu te mostro onde ficam usuários, turmas, missões e os atalhos principais para gerenciar a plataforma.',
-  },
-};
 
 const step = (
   element: string,
@@ -374,7 +357,7 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
     return getPlatformTourKey(userId, role);
   }, [role, userId]);
 
-  const intro = role ? introCopy[role] : null;
+  const intro = role ? platformTourIntroCopy[role] : null;
 
   const markCompleted = useCallback(() => {
     if (!tourKey) return;

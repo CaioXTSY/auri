@@ -1,10 +1,10 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import axios from 'axios';
-import { Eye, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
+import { AdminMissionList } from '@/components/missions/AdminMissionList';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
-import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -66,7 +66,7 @@ const missionTypeFilters = [
   { value: 'PERSONALIZADA', label: 'Personalizadas' },
 ];
 
-const AdminMissionsTableSkeleton = () => (
+export const AdminMissionsTableSkeleton = () => (
   <TableContainer>
     <Table>
       <TableHead>
@@ -348,61 +348,12 @@ export const AdminMissions = () => {
           </div>
         </div>
 
-        {isLoading ? (
-          <AdminMissionsTableSkeleton />
-        ) : filtered.length === 0 ? (
-          <EmptyState message="Nenhuma missão encontrada para o filtro atual." />
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <tr>
-                  <TableHeaderCell>Título</TableHeaderCell>
-                  <TableHeaderCell>Tipo</TableHeaderCell>
-                  <TableHeaderCell>Pontos</TableHeaderCell>
-                  <TableHeaderCell>Início</TableHeaderCell>
-                  <TableHeaderCell>Disponibilidade</TableHeaderCell>
-                  <TableHeaderCell>Quiz</TableHeaderCell>
-                  <TableHeaderCell className="text-right">Ações</TableHeaderCell>
-                </tr>
-              </TableHead>
-              <tbody>
-                {filtered.map((mission) => (
-                  <TableRow key={mission.id}>
-                    <TableCell className="font-medium text-slate-800">{mission.title}</TableCell>
-                    <TableCell className="text-slate-600">{mission.type}</TableCell>
-                    <TableCell className="text-slate-600">{mission.points}</TableCell>
-                    <TableCell className="text-slate-600">
-                      {new Date(mission.startDate).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-slate-600">Permanente</TableCell>
-                    <TableCell className="text-slate-600">{mission.hasQuiz ? 'Sim' : 'Não'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-3">
-                        {mission.hasQuiz ? (
-                          <button
-                            type="button"
-                            onClick={() => handleViewQuiz(mission)}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-900"
-                          >
-                            <Eye className="h-3 w-3" /> Ver
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => setMissionToDelete(mission)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-800"
-                        >
-                          <Trash2 className="h-3 w-3" /> Remover
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </Table>
-          </TableContainer>
-        )}
+        <AdminMissionList
+          missions={filtered}
+          isLoading={isLoading}
+          onViewQuiz={handleViewQuiz}
+          onDelete={setMissionToDelete}
+        />
 
         <ModalDialog
           open={isCreateModalOpen}
