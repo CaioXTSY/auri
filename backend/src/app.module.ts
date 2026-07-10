@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -20,10 +21,12 @@ import { ProgrammingModule } from './modules/programming/programming.module';
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 60 segundos
-      limit: 10, // 10 requisições
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 60 segundos
+        limit: 100, // limite geral; rotas sensíveis definem limites menores
+      },
+    ]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -35,6 +38,12 @@ import { ProgrammingModule } from './modules/programming/programming.module';
     PostsModule,
     AdminModule,
     ProgrammingModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

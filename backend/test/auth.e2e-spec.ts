@@ -4,6 +4,7 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import * as cookieParser from 'cookie-parser';
+import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
 
 type TestAuthUser = {
   id: string;
@@ -24,6 +25,7 @@ const getRefreshCookie = (response: request.Response) => {
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let throttlerStorage: ThrottlerStorageService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -43,6 +45,7 @@ describe('AuthController (e2e)', () => {
 
     await app.init();
     prisma = app.get<PrismaService>(PrismaService);
+    throttlerStorage = app.get<ThrottlerStorageService>(ThrottlerStorage);
   });
 
   afterAll(async () => {
@@ -158,6 +161,21 @@ describe('AuthController (e2e)', () => {
       };
 
       await request(app.getHttpServer()).post('/api/v1/auth/login').send(loginDto).expect(401);
+    });
+
+    it('should block repeated login attempts with HTTP 429', async () => {
+      throttlerStorage.storage.clear();
+
+      const loginDto = {
+        email: `rate-limit-${Date.now()}@example.com`,
+        password: 'wrongpassword',
+      };
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await request(app.getHttpServer()).post('/api/v1/auth/login').send(loginDto).expect(401);
+      }
+
+      await request(app.getHttpServer()).post('/api/v1/auth/login').send(loginDto).expect(429);
     });
   });
 
