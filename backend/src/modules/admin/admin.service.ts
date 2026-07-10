@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAchievementDto } from './dto/create-achievement.dto';
 import { UpdateAchievementDto } from './dto/update-achievement.dto';
@@ -229,7 +230,11 @@ export class AdminService {
   }
 
   async createAchievement(dto: CreateAchievementDto) {
-    return this.prisma.achievement.create({ data: dto });
+    try {
+      return await this.prisma.achievement.create({ data: dto });
+    } catch (error) {
+      this.handleAchievementUniqueError(error);
+    }
   }
 
   async updateAchievement(id: string, dto: UpdateAchievementDto) {
@@ -237,7 +242,11 @@ export class AdminService {
     if (!existing) {
       throw new NotFoundException('Conquista não encontrada');
     }
-    return this.prisma.achievement.update({ where: { id }, data: dto });
+    try {
+      return await this.prisma.achievement.update({ where: { id }, data: dto });
+    } catch (error) {
+      this.handleAchievementUniqueError(error);
+    }
   }
 
   async deleteAchievement(id: string) {
@@ -247,5 +256,16 @@ export class AdminService {
     }
     await this.prisma.achievement.delete({ where: { id } });
     return { message: 'Conquista removida' };
+  }
+
+  private handleAchievementUniqueError(error: unknown): never {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      throw new ConflictException('Já existe uma conquista com esta condição');
+    }
+
+    throw error;
   }
 }
