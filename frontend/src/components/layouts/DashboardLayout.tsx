@@ -6,6 +6,7 @@ import { DailyQuizModal } from '@/components/quiz/DailyQuizModal';
 import { NotificationsPopover } from '@/components/layouts/NotificationsPopover';
 import { SidebarNav } from '@/components/layouts/SidebarNav';
 import { PlatformTour } from '@/components/onboarding/PlatformTour';
+import { AppErrorBoundary } from '@/components/errors/AppErrorBoundary';
 import { useToast } from '@/components/ui/use-toast';
 import { useDashboardMenu } from '@/hooks/use-dashboard-menu';
 import { authService } from '@/services/auth-service';
@@ -162,7 +163,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           }
         />
 
-        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+          <AppErrorBoundary scope="dashboard">{children}</AppErrorBoundary>
+        </main>
       </div>
     </div>
   );
