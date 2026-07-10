@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/layouts/ProtectedRoute';
 import { PublicOnlyRoute } from '@/components/layouts/PublicOnlyRoute';
 import { RoleRoute } from '@/components/layouts/RoleRoute';
+import { LoadingStatus } from '@/components/ui/loading-status';
 
 const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.Home })));
 const Docs = lazy(() => import('@/pages/Docs').then(m => ({ default: m.Docs })));
@@ -36,9 +37,7 @@ const AdminNotifications = lazy(() => import('@/pages/admin/AdminNotifications')
 const NotFound = lazy(() => import('@/pages/NotFound').then(m => ({ default: m.NotFound })));
 
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-100">
-    <div className="h-8 w-8 rounded-full border-4 border-accent-600 border-t-transparent animate-spin" />
-  </div>
+  <LoadingStatus label="Carregando página" className="min-h-screen bg-slate-100" />
 );
 
 function App() {

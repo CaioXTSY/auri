@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { cloneElement, isValidElement, useId, type ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
@@ -21,14 +21,25 @@ export const Field = ({
   labelClassName,
   children,
 }: FieldProps) => {
+  const descriptionId = useId();
+  const errorId = useId();
+  const helperId = error ? errorId : description ? descriptionId : undefined;
+
+  const input = isValidElement<Record<string, unknown>>(children)
+    ? cloneElement(children, {
+        'aria-describedby': [children.props['aria-describedby'], helperId].filter(Boolean).join(' ') || undefined,
+        'aria-invalid': error ? true : children.props['aria-invalid'],
+      })
+    : children;
+
   return (
     <div className={cn('space-y-2', className)}>
       <Label htmlFor={htmlFor} className={cn('text-sm text-slate-900', labelClassName)}>
         {label}
       </Label>
-      {children}
-      {error ? <p className="text-xs text-red-500">{error}</p> : null}
-      {!error && description ? <p className="text-xs text-slate-500">{description}</p> : null}
+      {input}
+      {error ? <p id={errorId} role="alert" className="text-xs text-red-500">{error}</p> : null}
+      {!error && description ? <p id={descriptionId} className="text-xs text-slate-500">{description}</p> : null}
     </div>
   );
 };

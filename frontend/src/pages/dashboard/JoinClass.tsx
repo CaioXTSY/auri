@@ -82,7 +82,7 @@ export const JoinClass = () => {
             onClick={() => navigate('/dashboard/classes')}
             className="text-slate-500 hover:text-slate-900"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft aria-hidden="true" className="mr-2 h-4 w-4" />
             Voltar
           </Button>
           <h1
@@ -105,7 +105,7 @@ export const JoinClass = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {error && (
-              <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
+              <div role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
                 {error}
               </div>
             )}
@@ -115,6 +115,8 @@ export const JoinClass = () => {
               <Input
                 id="code"
                 placeholder="Ex: ckz123456"
+                aria-invalid={Boolean(errors.code)}
+                aria-describedby={errors.code ? 'join-class-code-error' : undefined}
                 {...register('code')}
                 data-tour="join-class-code"
                 className={`text-center font-mono text-lg tracking-wider ${errors.code ? 'border-red-500' : ''}`}
@@ -122,7 +124,7 @@ export const JoinClass = () => {
                 autoCapitalize="none"
               />
               {errors.code && (
-                <p className="text-sm text-red-500">{errors.code.message}</p>
+                <p id="join-class-code-error" role="alert" className="text-sm text-red-500">{errors.code.message}</p>
               )}
             </div>
 
@@ -144,7 +146,7 @@ export const JoinClass = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
                   </>
                 ) : (

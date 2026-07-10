@@ -40,6 +40,9 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         {toasts.map((toast) => (
           <div
             key={toast.id}
+            role={toast.variant === 'error' ? 'alert' : 'status'}
+            aria-live={toast.variant === 'error' ? 'assertive' : 'polite'}
+            aria-atomic="true"
             className={cn(
               'rounded-xl border bg-white px-4 py-3 text-sm shadow-lg transition-all',
               toast.variant === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-800',
@@ -55,9 +58,10 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
               <button
                 type="button"
                 onClick={() => dismiss(toast.id)}
-                className="text-slate-400 hover:text-slate-600"
+                aria-label="Fechar notificação"
+                className="rounded text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 focus-visible:ring-offset-2"
               >
-                <X className="h-4 w-4" />
+                <X aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
           </div>

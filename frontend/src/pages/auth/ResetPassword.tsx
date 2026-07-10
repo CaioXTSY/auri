@@ -82,7 +82,7 @@ export const ResetPassword = () => {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+          <div role="alert" className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
             {error}
           </div>
         )}
@@ -94,11 +94,13 @@ export const ResetPassword = () => {
               id="newPassword"
               type="password"
               placeholder="••••••••"
+              aria-invalid={Boolean(errors.newPassword)}
+              aria-describedby={errors.newPassword ? 'reset-new-password-error' : undefined}
               className={`h-11 ${errors.newPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
               {...register('newPassword')}
             />
             {errors.newPassword && (
-              <span className="text-xs text-red-500">{errors.newPassword.message}</span>
+              <span id="reset-new-password-error" role="alert" className="text-xs text-red-500">{errors.newPassword.message}</span>
             )}
           </div>
           <div className="space-y-2">
@@ -107,11 +109,13 @@ export const ResetPassword = () => {
               id="confirmPassword"
               type="password"
               placeholder="••••••••"
+              aria-invalid={Boolean(errors.confirmPassword)}
+              aria-describedby={errors.confirmPassword ? 'reset-confirm-password-error' : undefined}
               className={`h-11 ${errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
               {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
-              <span className="text-xs text-red-500">{errors.confirmPassword.message}</span>
+              <span id="reset-confirm-password-error" role="alert" className="text-xs text-red-500">{errors.confirmPassword.message}</span>
             )}
           </div>
         </div>
@@ -123,7 +127,7 @@ export const ResetPassword = () => {
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
               SALVANDO...
             </>
           ) : (

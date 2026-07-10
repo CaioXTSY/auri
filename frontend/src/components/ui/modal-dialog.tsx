@@ -130,7 +130,7 @@ export const ModalDialog = ({
         tabIndex={-1}
         onKeyDown={handlePanelKeyDown}
         className={cn(
-          'flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.55)] focus:outline-none',
+          'flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 focus-visible:ring-offset-2',
           panelClassName,
         )}
       >

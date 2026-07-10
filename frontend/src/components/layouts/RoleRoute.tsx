@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useSessionValidation } from '@/hooks/use-session-validation';
 import { useAuthStore } from '@/stores/auth-store';
 import type { User } from '@/types/auth';
+import { LoadingStatus } from '@/components/ui/loading-status';
 
 interface RoleRouteProps {
   children: ReactElement;
@@ -21,11 +22,7 @@ export const RoleRoute = ({ children, allow, redirectTo = '/dashboard' }: RoleRo
   }
 
   if (isValidating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="h-8 w-8 rounded-full border-4 border-accent-600 border-t-transparent animate-spin" />
-      </div>
-    );
+    return <LoadingStatus label="Validando permissões" className="min-h-screen bg-slate-100" />;
   }
 
   if (!user || !allow.includes(user.role)) {

@@ -59,7 +59,7 @@ export const ForgotPassword = () => {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+          <div role="alert" className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
             {error}
           </div>
         )}
@@ -70,11 +70,13 @@ export const ForgotPassword = () => {
             id="email"
             type="email"
             placeholder="seu@email.com"
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? 'forgot-email-error' : undefined}
             className={`h-11 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
             {...register('email')}
           />
           {errors.email && (
-            <span className="text-xs text-red-500">{errors.email.message}</span>
+            <span id="forgot-email-error" role="alert" className="text-xs text-red-500">{errors.email.message}</span>
           )}
         </div>
 
@@ -85,7 +87,7 @@ export const ForgotPassword = () => {
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
               ENVIANDO...
             </>
           ) : (

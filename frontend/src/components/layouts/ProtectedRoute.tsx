@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSessionValidation } from '@/hooks/use-session-validation';
 import { useAuthStore } from '@/stores/auth-store';
+import { LoadingStatus } from '@/components/ui/loading-status';
 
 interface ProtectedRouteProps {
   children: ReactElement;
@@ -17,11 +18,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (isValidating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="h-8 w-8 rounded-full border-4 border-accent-600 border-t-transparent animate-spin" />
-      </div>
-    );
+    return <LoadingStatus label="Validando sessão" className="min-h-screen bg-slate-100" />;
   }
 
   return children;

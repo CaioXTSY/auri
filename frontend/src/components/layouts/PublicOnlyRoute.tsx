@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { authService } from '@/services/auth-service';
 import { useAuthStore } from '@/stores/auth-store';
 import { getAppEntryPath } from '@/lib/navigation';
+import { LoadingStatus } from '@/components/ui/loading-status';
 
 interface PublicOnlyRouteProps {
   children: ReactElement;
@@ -54,11 +55,7 @@ export const PublicOnlyRoute = ({ children }: PublicOnlyRouteProps) => {
   }
 
   if (isCheckingSession) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="h-8 w-8 rounded-full border-4 border-accent-600 border-t-transparent animate-spin" />
-      </div>
-    );
+    return <LoadingStatus label="Verificando sessão" className="min-h-screen bg-slate-100" />;
   }
 
   return children;

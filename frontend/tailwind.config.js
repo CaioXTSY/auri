@@ -33,9 +33,9 @@ export default {
           400: '#ffcf4d',
           500: '#ffba1a',
           600: '#e69a00',
-          700: '#b37400', // Gold/Bronze
-          800: '#8c5a08',
-          900: '#734a0d',
+          700: '#8c5a08', // Gold/Bronze com contraste AA em texto e botões
+          800: '#734a0d',
+          900: '#593707',
         }
       }
     },

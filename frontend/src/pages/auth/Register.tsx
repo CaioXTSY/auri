@@ -88,40 +88,44 @@ export const Register = () => {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+          <div role="alert" className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
             {error}
           </div>
         )}
 
         {/* Role Selector */}
-        <div className="grid grid-cols-2 gap-4">
-          <div 
+        <div className="grid grid-cols-2 gap-4" role="group" aria-label="Perfil de cadastro">
+          <button
+            type="button"
             onClick={() => setValue('role', 'ALUNO')}
+            aria-pressed={role === 'ALUNO'}
             className={cn(
-              "cursor-pointer border-2 rounded-lg p-4 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+              "border-2 rounded-lg p-4 flex flex-col items-center justify-center gap-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 focus-visible:ring-offset-2",
               role === 'ALUNO' 
                 ? "border-brand-900 bg-brand-50 text-brand-900" 
                 : "border-slate-200 hover:border-brand-200 hover:bg-slate-50 text-slate-500"
             )}
           >
-            <User className="h-6 w-6" />
+            <User aria-hidden="true" className="h-6 w-6" />
             <span className="text-sm font-bold uppercase tracking-wide">Sou Aluno</span>
-          </div>
-          <div 
+          </button>
+          <button
+            type="button"
             onClick={() => setValue('role', 'PROFESSOR')}
+            aria-pressed={role === 'PROFESSOR'}
             className={cn(
-              "cursor-pointer border-2 rounded-lg p-4 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+              "border-2 rounded-lg p-4 flex flex-col items-center justify-center gap-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 focus-visible:ring-offset-2",
               role === 'PROFESSOR' 
                 ? "border-brand-900 bg-brand-50 text-brand-900" 
                 : "border-slate-200 hover:border-brand-200 hover:bg-slate-50 text-slate-500"
             )}
           >
-            <GraduationCap className="h-6 w-6" />
+            <GraduationCap aria-hidden="true" className="h-6 w-6" />
             <span className="text-sm font-bold uppercase tracking-wide">Sou Professor</span>
-          </div>
+          </button>
         </div>
         {errors.role && (
-          <span className="text-xs text-red-500 block text-center">{errors.role.message}</span>
+          <span role="alert" className="text-xs text-red-500 block text-center">{errors.role.message}</span>
         )}
 
         <div className="space-y-4">
@@ -130,11 +134,13 @@ export const Register = () => {
             <Input 
               id="name" 
               placeholder="Ex: João da Silva" 
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? 'register-name-error' : undefined}
               className={`h-11 ${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
               {...register('name')}
             />
             {errors.name && (
-              <span className="text-xs text-red-500">{errors.name.message}</span>
+              <span id="register-name-error" role="alert" className="text-xs text-red-500">{errors.name.message}</span>
             )}
           </div>
           
@@ -144,11 +150,13 @@ export const Register = () => {
               id="email" 
               type="email" 
               placeholder="aluno@universidade.edu" 
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'register-email-error' : undefined}
               className={`h-11 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
               {...register('email')}
             />
             {errors.email && (
-              <span className="text-xs text-red-500">{errors.email.message}</span>
+              <span id="register-email-error" role="alert" className="text-xs text-red-500">{errors.email.message}</span>
             )}
           </div>
           
@@ -158,11 +166,13 @@ export const Register = () => {
               id="password" 
               type="password" 
               placeholder="Mínimo 6 caracteres" 
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? 'register-password-error' : undefined}
               className={`h-11 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
               {...register('password')}
             />
             {errors.password && (
-              <span className="text-xs text-red-500">{errors.password.message}</span>
+              <span id="register-password-error" role="alert" className="text-xs text-red-500">{errors.password.message}</span>
             )}
           </div>
         </div>
@@ -174,7 +184,7 @@ export const Register = () => {
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
               CRIANDO CONTA...
             </>
           ) : (
