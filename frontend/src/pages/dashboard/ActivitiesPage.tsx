@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { ACTIVITY_COPY } from '@/constants/ui-terminology';
 import { cn } from '@/lib/utils';
 import {
   programmingService,
@@ -85,10 +86,10 @@ export const ActivitiesPage = () => {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-brand-900">
-              Atividades de codigo
+              {ACTIVITY_COPY.pluralName}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Resolva problemas de programacao das suas turmas.
+              Resolva atividades de programação publicadas nas suas turmas.
             </p>
           </div>
           <Button type="button" variant="outline" onClick={loadData}>
@@ -100,7 +101,7 @@ export const ActivitiesPage = () => {
           type="text"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por problema, turma ou enunciado"
+          placeholder="Buscar por atividade, turma ou enunciado"
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
 
@@ -129,7 +130,7 @@ export const ActivitiesPage = () => {
         )}
 
         {!isLoading && !error && filtered.length === 0 && (
-          <EmptyState message="Nenhuma atividade de codigo encontrada." />
+          <EmptyState message="Nenhuma atividade de programação encontrada." />
         )}
 
         {!isLoading && !error && filtered.length > 0 && (
@@ -191,7 +192,7 @@ export const ActivitiesPage = () => {
                     <div className="text-xs text-slate-500">
                       {lastSubmission
                         ? `${lastSubmission.score} pts - ${lastSubmission.passedTests}/${lastSubmission.totalTests} testes`
-                        : 'Comece pelo editor e execute os exemplos.'}
+                        : `Comece pelo editor e use “${ACTIVITY_COPY.runExamples}”.`}
                     </div>
                     <Button asChild className="bg-brand-900 text-white hover:bg-brand-800">
                       <Link to={`/dashboard/activities/${assignment.id}`}>

@@ -21,6 +21,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { ACTIVITY_COPY } from '@/constants/ui-terminology';
 import { cn } from '@/lib/utils';
 import {
   programmingService,
@@ -264,7 +265,7 @@ export const ActivitySolvePage = () => {
 
       if (!judged) {
         notify({
-          title: 'Submissao ainda em processamento',
+          title: 'Avaliação ainda em processamento',
           description: 'O resultado sera atualizado no historico em instantes.',
           variant: 'default',
         });
@@ -272,13 +273,16 @@ export const ActivitySolvePage = () => {
       }
 
       notify({
-        title: mode === 'run' ? 'Execucao finalizada' : 'Submissao julgada',
+        title: mode === 'run' ? 'Execução dos exemplos concluída' : 'Avaliação concluída',
         description: `${statusLabel[judged.status]} - ${judged.passedTests}/${judged.totalTests} testes`,
         variant: judged.status === 'ACCEPTED' ? 'success' : 'default',
       });
     } catch {
       notify({
-        title: mode === 'run' ? 'Falha ao executar exemplos' : 'Falha ao enviar solucao',
+        title:
+          mode === 'run'
+            ? 'Falha ao executar exemplos'
+            : 'Falha ao enviar para avaliação',
         variant: 'error',
       });
     } finally {
@@ -539,7 +543,7 @@ const EditorWorkspace = ({
           className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
         >
           {isRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-          Executar exemplos
+          {ACTIVITY_COPY.runExamples}
         </Button>
         <Button
           type="button"
@@ -548,10 +552,14 @@ const EditorWorkspace = ({
           className="bg-accent-600 font-bold text-brand-950 hover:bg-accent-700"
         >
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-          Enviar solucao
+          {ACTIVITY_COPY.sendForEvaluation}
         </Button>
       </div>
     </div>
+
+    <p className="border-b border-slate-200 bg-white px-4 pb-3 text-xs leading-5 text-slate-500">
+      {ACTIVITY_COPY.examplesDoNotAwardPoints} {ACTIVITY_COPY.evaluationUsesHiddenTests}
+    </p>
 
     <div className="min-h-0 bg-[#1e1e1e]">
       <Editor
@@ -586,7 +594,7 @@ const ResultPanel = ({ submission }: { submission: CodeSubmission | null }) => {
   if (!submission) {
     return (
       <section className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
-        Execute os exemplos ou envie sua solucao para ver o feedback aqui.
+        {ACTIVITY_COPY.runExamples} ou use {ACTIVITY_COPY.sendForEvaluation.toLowerCase()} para ver o feedback aqui.
       </section>
     );
   }
@@ -601,7 +609,9 @@ const ResultPanel = ({ submission }: { submission: CodeSubmission | null }) => {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            {submission.mode === 'RUN' ? 'Resultado dos exemplos' : 'Resultado oficial'}
+            {submission.mode === 'RUN'
+              ? ACTIVITY_COPY.examplesResult
+              : ACTIVITY_COPY.evaluationResult}
           </p>
           <div className={cn('mt-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold', tone.shell)}>
             <StatusIcon className={cn('h-4 w-4', pending && 'animate-spin')} />
@@ -702,7 +712,7 @@ const SubmissionHistory = ({
                   {new Date(submission.createdAt).toLocaleString('pt-BR')}
                 </span>
                 <span className="text-xs text-slate-500">
-                  {submission.mode === 'RUN' ? 'Execucao' : 'Envio oficial'}
+                  {submission.mode === 'RUN' ? 'Execução dos exemplos' : 'Avaliação enviada'}
                 </span>
               </span>
               <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold', tone.shell)}>

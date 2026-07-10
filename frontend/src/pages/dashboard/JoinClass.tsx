@@ -38,9 +38,17 @@ export const JoinClass = () => {
     try {
       const result = await classService.joinClass(data.code);
       if (result.status === 'PENDING_APPROVAL') {
-        notify({ title: `Solicitação enviada para "${result.class.name}"`, variant: 'success' });
+        notify({
+          title: `Solicitação enviada para "${result.class.name}"`,
+          description: 'Aguarde a aprovação do professor para entrar na turma.',
+          variant: 'success',
+        });
       } else {
-        notify({ title: `Você entrou na turma "${result.class.name}"`, variant: 'success' });
+        notify({
+          title: `Você entrou na turma "${result.class.name}"`,
+          description: 'As atividades publicadas já estão disponíveis para você.',
+          variant: 'success',
+        });
       }
       navigate('/dashboard/classes', {
         state: result.status === 'PENDING_APPROVAL' ? undefined : { joinedClass: result.class },

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { ACTIVITY_COPY } from '@/constants/ui-terminology';
 import {
   Table,
   TableCell,
@@ -110,12 +111,12 @@ export const TeacherActivities = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-brand-900">
-              Atividades de codigo
+              {ACTIVITY_COPY.pluralName}
             </h1>
             <p className="text-sm text-slate-500">
               {selectedClass
-                ? `Problemas publicados para ${selectedClass.name}.`
-                : 'Crie problemas, publique para turmas e acompanhe entregas.'}
+                ? `Atividades publicadas para ${selectedClass.name}.`
+                : 'Crie problemas, publique-os como atividades nas turmas e acompanhe as avaliações.'}
             </p>
           </div>
           <Button

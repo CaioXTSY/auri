@@ -4,8 +4,9 @@ import {
   BookOpen, Zap, Shield, Users, GraduationCap, Flag,
   Trophy, Code, ExternalLink, Menu, X,
   ChevronRight, Bell, Hash,
-  Settings, UserCog,
+  UserCog,
 } from 'lucide-react';
+import { ACTIVITY_COPY, LEARNING_TERMS } from '@/constants/ui-terminology';
 
 const API_ORIGIN = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001')
   .replace(/\/api\/v\d+\/?$/, '')
@@ -544,8 +545,8 @@ curl -X POST ${API_URL}/auth/reset-password \\
             <SubSection id="gerenciar-turma" title="Gerenciando alunos">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 Na página da turma, você visualiza alunos matriculados, mural, configurações,
-                solicitações de entrada e ranking da turma. O acompanhamento detalhado por atividades
-                ainda depende do módulo de atividades.
+                solicitações de entrada e ranking da turma. As atividades de programação ficam em uma
+                área própria para alunos e professores.
               </p>
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Endpoint method="GET" path="/classes/:id/students" description="Alunos da turma" />
@@ -600,35 +601,27 @@ curl -X POST ${API_URL}/auth/reset-password \\
 
           {/* ── Atividades ── */}
           <Section id="atividades" title="Atividades">
-            <SubSection id="status-atividades" title="Status atual">
+            <SubSection id="status-atividades" title="Como funcionam as atividades">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                A interface de turma já reserva uma aba para atividades, mas o módulo de atividades
-                de programação ainda não está implementado no backend. Hoje a plataforma cobre turmas,
-                mural, missões, quiz diário, gamificação, notificações e administração.
+                Uma atividade é um exercício de programação publicado em uma turma. O aluno pode
+                editar a solução, executar os exemplos públicos e enviar a atividade para avaliação.
               </p>
-              <Callout type="warning">
-                Atividades de programação ainda são escopo futuro: não existem endpoints, modelos Prisma
-                nem telas completas para criar exercícios corrigíveis.
+              <Callout type="info">
+                <strong>{ACTIVITY_COPY.runExamples}</strong> testa somente os exemplos públicos e não altera
+                sua pontuação. <strong>{ACTIVITY_COPY.sendForEvaluation}</strong> usa também casos ocultos para
+                confirmar a solução.
               </Callout>
             </SubSection>
 
-            <SubSection id="submissoes-codigo" title="Submissões de código">
+            <SubSection id="submissoes-codigo" title="Avaliação e tentativas">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
-                Submissões de código, execução de testes, correção automática e histórico de tentativas
-                ainda não estão disponíveis neste MVP.
+                O resultado informa quantos testes passaram, o tempo de execução e os detalhes dos
+                exemplos públicos. Casos ocultos mostram apenas o status para preservar a avaliação.
               </p>
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-5">
-                <div className="flex items-start gap-3">
-                  <Settings className="mt-0.5 h-5 w-5 text-slate-400" />
-                  <div>
-                    <p className="font-sans font-semibold text-brand-900">Planejado para evolução</p>
-                    <p className="mt-1 font-serif text-sm leading-relaxed text-slate-500">
-                      Quando implementado, este módulo deve incluir criação de atividades, editor de código,
-                      submissões, resultados de testes e painel de acompanhamento do professor.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p className="font-serif text-slate-600 leading-relaxed">
+                Em uma mesma atividade, o XP considera apenas a melhora em relação à melhor pontuação anterior.
+                Repetir a mesma nota não acrescenta XP.
+              </p>
             </SubSection>
           </Section>
 
@@ -673,6 +666,16 @@ curl -X POST ${API_URL}/missions/:id/quiz/answer \\
 
           {/* ── Gamificação ── */}
           <Section id="gamificacao" title="Gamificação">
+            <SubSection id="como-funciona-progresso" title="Como funciona seu progresso">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {LEARNING_TERMS.map((item) => (
+                  <div key={item.term} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                    <p className="font-sans text-sm font-semibold text-brand-900">{item.term}</p>
+                    <p className="mt-1 font-serif text-sm leading-relaxed text-slate-600">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            </SubSection>
             <SubSection id="xp-nivel" title="XP e Níveis">
               <p className="font-serif text-slate-600 leading-relaxed mb-4">
                 XP é concedido por missões concluídas, conquistas desbloqueadas e bônus de sequência.

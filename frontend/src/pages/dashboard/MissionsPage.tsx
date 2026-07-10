@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Dices, Flag, Loader2, Trophy } from 'lucide-react';
 import { MISSIONS_PAGE_SIZE } from '@/constants/app';
+import { LEARNING_TERMS } from '@/constants/ui-terminology';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { MissionQuizModal } from '@/components/quiz/MissionQuizModal';
 import { Button } from '@/components/ui/button';
@@ -295,7 +296,7 @@ export const MissionsPage = () => {
               Missões
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Acompanhe suas missões ativas e o histórico de conquistas.
+              Missões são desafios que podem incluir um quiz e conceder XP ao serem concluídas.
             </p>
           </div>
 
@@ -357,6 +358,11 @@ export const MissionsPage = () => {
             </div>
           </div>
         )}
+
+        <div className="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-900">
+          <span className="font-semibold">Missão, quiz e XP:</span>{' '}
+          {LEARNING_TERMS[1].description} {LEARNING_TERMS[2].description} {LEARNING_TERMS[3].description}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2" data-tour="missions-tabs">
           <button
