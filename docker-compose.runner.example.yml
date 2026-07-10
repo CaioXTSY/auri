@@ -1,0 +1,20 @@
+# Execute este compose somente em uma VM/host dedicado ao judge.
+# Nao o execute no mesmo host da API, frontend, banco ou outros servicos sensiveis.
+services:
+  runner:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runner
+    command: ["node", "dist-runner/worker/code-runner.worker.js"]
+    env_file:
+      - ./backend/.env
+    environment:
+      CODE_RUNNER_ENABLED: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped

@@ -38,7 +38,7 @@ O sistema atende três perfis atualmente:
 
 ### Backend
 
-- NestJS 10
+- NestJS 11
 - Prisma
 - MySQL
 - JWT + Passport
@@ -259,6 +259,7 @@ Modelos principais:
 ## Deploy
 
 - Docker para frontend e backend
+- O runner de codigo deve rodar em host/VM isolado; veja [RUNNER_DEPLOYMENT.md](RUNNER_DEPLOYMENT.md)
 - GitHub Actions com deploy via SSH em `main`
 - script remoto usado no workflow: `auri_deploy.sh`
 

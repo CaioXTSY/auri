@@ -5,6 +5,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { isOriginAllowed } from './common/http/cors';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,47 +19,9 @@ async function bootstrap() {
   const apiPrefix = process.env.API_PREFIX || 'api/v1';
   app.setGlobalPrefix(apiPrefix);
 
-  const corsEnv =
-    process.env.CORS_ORIGINS ||
-    process.env.CORS_ORIGIN ||
-    process.env.FRONTEND_URL ||
-    '';
-  const allowedOrigins = corsEnv
-    ? corsEnv
-        .split(',')
-        .map((o) => o.trim())
-        .filter(Boolean)
-    : [];
-
-  if (process.env.NODE_ENV !== 'production') {
-    for (const developmentOrigin of [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-    ]) {
-      if (!allowedOrigins.includes(developmentOrigin)) {
-        allowedOrigins.push(developmentOrigin);
-      }
-    }
-  }
-
-  const port = process.env.PORT || '3001';
-  const localBackendOrigin = `http://localhost:${port}`;
-  if (!allowedOrigins.includes(localBackendOrigin)) {
-    allowedOrigins.push(localBackendOrigin);
-  }
-
-  const backendUrl = process.env.BACKEND_URL || '';
-  if (backendUrl && !allowedOrigins.includes(backendUrl)) {
-    allowedOrigins.push(backendUrl);
-  }
-
-  const allowAllOrigins = allowedOrigins.includes('*');
-
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowAllOrigins || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`Origin not allowed: ${origin}`));
@@ -95,6 +58,7 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
+  const port = process.env.PORT || '3001';
   const numericPort = Number(port);
   await app.listen(numericPort);
 
