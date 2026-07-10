@@ -306,10 +306,15 @@ describe('UsersController (e2e)', () => {
           role: Role.ALUNO,
         });
 
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .delete(`/api/v1/users/${tempUser.body.user.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
+
+      expect(response.body).toEqual({ id: tempUser.body.user.id });
+      expect(response.body.password).toBeUndefined();
+      expect(response.body.refreshToken).toBeUndefined();
+      expect(response.body.resetToken).toBeUndefined();
     });
 
     it('should fail as non-admin', async () => {

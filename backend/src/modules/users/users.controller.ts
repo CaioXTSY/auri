@@ -349,7 +349,7 @@ export class UsersController {
     description: 'Usuário deletado',
     schema: {
       example: {
-        message: 'User successfully deleted',
+        id: 'uuid-here',
       },
     },
   })

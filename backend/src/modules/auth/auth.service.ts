@@ -117,7 +117,7 @@ export class AuthService {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 3600000); // 1 hora
 
-    await this.usersService.updateResetToken(user.id, resetToken, expires);
+    await this.usersService.updateResetToken(user.id, this.hashResetToken(resetToken), expires);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:5173';
     const resetUrl = `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${resetToken}`;
 
@@ -138,7 +138,9 @@ export class AuthService {
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const user = await this.usersService.findByResetToken(resetPasswordDto.token);
+    const user = await this.usersService.findByResetToken(
+      this.hashResetToken(resetPasswordDto.token),
+    );
 
     if (!user) {
       throw new BadRequestException('Token inválido ou expirado');
@@ -178,6 +180,10 @@ export class AuthService {
   private async updateRefreshToken(userId: string, refreshToken: string) {
     const hashedToken = await bcrypt.hash(refreshToken, 10);
     await this.usersService.updateRefreshToken(userId, hashedToken);
+  }
+
+  private hashResetToken(token: string) {
+    return crypto.createHash('sha256').update(token).digest('hex');
   }
 
   async validateToken(token: string) {

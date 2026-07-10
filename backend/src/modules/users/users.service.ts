@@ -145,9 +145,10 @@ export class UsersService {
     return this.update(userId, { avatar: avatarPath });
   }
 
-  async remove(id: string): Promise<User> {
+  async remove(id: string): Promise<{ id: string }> {
     return this.prisma.user.delete({
       where: { id },
+      select: { id: true },
     });
   }
 

@@ -7,6 +7,7 @@ import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { GamificationService } from '../gamification/gamification.service';
 import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -217,6 +218,18 @@ describe('AuthService', () => {
           name: mockUser.name,
         }),
       );
+
+      const resetUrl = mockMailService.sendPasswordResetEmail.mock.calls[0][0].resetUrl;
+      const sentToken = new URL(resetUrl).searchParams.get('token');
+      const storedToken = mockUsersService.updateResetToken.mock.calls[0][1];
+
+      if (!sentToken) {
+        throw new Error('Reset token was not included in the email URL');
+      }
+
+      expect(storedToken).toBe(
+        crypto.createHash('sha256').update(sentToken).digest('hex'),
+      );
     });
 
     it('should return success message even if email does not exist', async () => {
@@ -246,6 +259,9 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('message');
       expect(mockUsersService.updatePassword).toHaveBeenCalled();
       expect(mockUsersService.clearResetToken).toHaveBeenCalled();
+      expect(mockUsersService.findByResetToken).toHaveBeenCalledWith(
+        crypto.createHash('sha256').update(resetPasswordDto.token).digest('hex'),
+      );
     });
 
     it('should throw BadRequestException if token is invalid', async () => {
