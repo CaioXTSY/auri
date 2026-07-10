@@ -164,6 +164,9 @@ export const ActivitySolvePage = () => {
   const [code, setCode] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [activeTab, setActiveTab] = useState<MobileTab>('statement');
+  const [isDesktopLayout, setIsDesktopLayout] = useState(() =>
+    typeof window === 'undefined' ? true : window.matchMedia('(min-width: 1024px)').matches,
+  );
   const [submissions, setSubmissions] = useState<CodeSubmission[]>([]);
   const [activeSubmission, setActiveSubmission] = useState<CodeSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -201,6 +204,15 @@ export const ActivitySolvePage = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleChange = () => setIsDesktopLayout(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const pollSubmission = useCallback(async (submissionId: string) => {
     for (let attempt = 0; attempt < 40; attempt += 1) {
@@ -361,26 +373,28 @@ export const ActivitySolvePage = () => {
           </div>
         </div>
 
-        <div className="hidden min-h-0 flex-1 grid-cols-[minmax(330px,0.82fr)_minmax(520px,1.18fr)] gap-3 lg:grid">
-          <aside className="min-h-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            {statementPanel}
-          </aside>
-          <main className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-3">
-            {editorPanel}
-            <ResultPanel submission={activeSubmission} />
-          </main>
-        </div>
-
-        <div className="lg:hidden">
-          {activeTab === 'statement' && (
-            <div className="rounded-lg border border-slate-200 bg-white shadow-sm">{statementPanel}</div>
-          )}
-          {activeTab === 'code' && editorPanel}
-          {activeTab === 'result' && <ResultPanel submission={activeSubmission} />}
-          {activeTab === 'history' && (
-            <SubmissionHistory submissions={submissions} onSelect={setActiveSubmission} />
-          )}
-        </div>
+        {isDesktopLayout ? (
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(330px,0.82fr)_minmax(520px,1.18fr)] gap-3">
+            <aside className="min-h-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              {statementPanel}
+            </aside>
+            <main className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-3">
+              {editorPanel}
+              <ResultPanel submission={activeSubmission} />
+            </main>
+          </div>
+        ) : (
+          <div>
+            {activeTab === 'statement' && (
+              <div className="rounded-lg border border-slate-200 bg-white shadow-sm">{statementPanel}</div>
+            )}
+            {activeTab === 'code' && editorPanel}
+            {activeTab === 'result' && <ResultPanel submission={activeSubmission} />}
+            {activeTab === 'history' && (
+              <SubmissionHistory submissions={submissions} onSelect={setActiveSubmission} />
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

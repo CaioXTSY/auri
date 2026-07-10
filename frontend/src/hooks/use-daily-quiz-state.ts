@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  getPlatformTourKey,
+  PLATFORM_TOUR_STATE_CHANGED_EVENT,
+  type PlatformTourRole,
+} from '@/components/onboarding/platform-tour-events';
 import { gamificationService, type UserStats } from '@/services/gamification-service';
 
 interface UseDailyQuizStateProps {
@@ -16,14 +21,43 @@ export const useDailyQuizState = ({ userId, userRole }: UseDailyQuizStateProps) 
     return `auri-daily-quiz-${userId}-${today}`;
   }, [userId]);
 
+  const platformTourKey = useMemo(() => {
+    if (!userId || !userRole) return null;
+    return getPlatformTourKey(userId, userRole as PlatformTourRole);
+  }, [userId, userRole]);
+
   useEffect(() => {
     if (userRole !== 'ALUNO' || !dailyQuizKey) return;
     if (localStorage.getItem(dailyQuizKey)) return;
 
-    const timeoutId = window.setTimeout(() => setShowDailyQuiz(true), 0);
-    localStorage.setItem(dailyQuizKey, 'seen');
-    return () => window.clearTimeout(timeoutId);
-  }, [dailyQuizKey, userRole]);
+    let timeoutId: number | null = null;
+
+    const openDailyQuiz = () => {
+      if (localStorage.getItem(dailyQuizKey)) return;
+      localStorage.setItem(dailyQuizKey, 'seen');
+      timeoutId = window.setTimeout(() => setShowDailyQuiz(true), 0);
+    };
+
+    if (platformTourKey && !localStorage.getItem(platformTourKey)) {
+      const handleTourStateChange = (event: Event) => {
+        const customEvent = event as CustomEvent<{ tourKey?: string }>;
+        if (customEvent.detail?.tourKey !== platformTourKey) return;
+        window.removeEventListener(PLATFORM_TOUR_STATE_CHANGED_EVENT, handleTourStateChange);
+        openDailyQuiz();
+      };
+
+      window.addEventListener(PLATFORM_TOUR_STATE_CHANGED_EVENT, handleTourStateChange);
+      return () => {
+        window.removeEventListener(PLATFORM_TOUR_STATE_CHANGED_EVENT, handleTourStateChange);
+        if (timeoutId) window.clearTimeout(timeoutId);
+      };
+    }
+
+    openDailyQuiz();
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [dailyQuizKey, platformTourKey, userRole]);
 
   useEffect(() => {
     if (userRole !== 'ALUNO') return;

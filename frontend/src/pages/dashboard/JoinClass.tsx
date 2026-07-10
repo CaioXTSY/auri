@@ -42,7 +42,9 @@ export const JoinClass = () => {
       } else {
         notify({ title: `Você entrou na turma "${result.class.name}"`, variant: 'success' });
       }
-      navigate('/dashboard/classes');
+      navigate('/dashboard/classes', {
+        state: result.status === 'PENDING_APPROVAL' ? undefined : { joinedClass: result.class },
+      });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       const serverMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message;

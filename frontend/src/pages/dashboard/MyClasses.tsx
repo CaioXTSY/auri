@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { classService, type Class } from '@/services/class-service';
 import { Button } from '@/components/ui/button';
@@ -8,26 +8,41 @@ import { Plus } from 'lucide-react';
 
 export const MyClasses = () => {
   const navigate = useNavigate();
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const joinedClass = (location.state as { joinedClass?: Class } | null)?.joinedClass;
+  const [classes, setClasses] = useState<Class[]>(joinedClass ? [joinedClass] : []);
+  const [isLoading, setIsLoading] = useState(!joinedClass);
   const [error, setError] = useState<string | null>(null);
 
-  const loadClasses = useCallback(async () => {
-    setIsLoading(true);
+  const loadClasses = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setIsLoading(true);
+    }
     setError(null);
     try {
       const data = await classService.getMyClasses();
-      setClasses(data);
+      setClasses(
+        joinedClass && !data.some((classroom) => classroom.id === joinedClass.id)
+          ? [joinedClass, ...data]
+          : data,
+      );
     } catch {
       setError('Não foi possível carregar suas turmas.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [joinedClass]);
 
   useEffect(() => {
-    loadClasses();
-  }, [loadClasses]);
+    if (joinedClass) {
+      setClasses((current) => {
+        const exists = current.some((classroom) => classroom.id === joinedClass.id);
+        return exists ? current : [joinedClass, ...current];
+      });
+    }
+
+    loadClasses(!joinedClass);
+  }, [joinedClass, loadClasses]);
 
   return (
     <DashboardLayout>
@@ -70,7 +85,7 @@ export const MyClasses = () => {
             <span>{error}</span>
             <button
               type="button"
-              onClick={loadClasses}
+              onClick={() => loadClasses()}
               className="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:text-red-800"
             >
               Tentar novamente

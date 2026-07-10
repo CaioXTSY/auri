@@ -4,13 +4,16 @@ import { driver, type DriveStep } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import {
   CLOSE_MOBILE_TOUR_MENU_EVENT,
+  getPlatformTourKey,
   OPEN_MOBILE_TOUR_MENU_EVENT,
   OPEN_TOUR_EVENT,
+  PLATFORM_TOUR_STATE_CHANGED_EVENT,
+  type PlatformTourRole,
 } from './platform-tour-events';
 import { Button } from '@/components/ui/button';
 import { ModalDialog } from '@/components/ui/modal-dialog';
 
-type UserRole = 'ADMIN' | 'PROFESSOR' | 'ALUNO';
+type UserRole = PlatformTourRole;
 
 interface PlatformTourProps {
   userId: string | undefined;
@@ -18,7 +21,6 @@ interface PlatformTourProps {
   disabled?: boolean;
 }
 
-const TOUR_VERSION = 'v2';
 const MOBILE_BREAKPOINT = 768;
 
 const introCopy: Record<UserRole, { title: string; description: string }> = {
@@ -38,9 +40,6 @@ const introCopy: Record<UserRole, { title: string; description: string }> = {
       'Eu te mostro onde ficam usuários, turmas, missões e os atalhos principais para gerenciar a plataforma.',
   },
 };
-
-const getTourKey = (userId: string, role: UserRole) =>
-  `auri-platform-tour:${userId}:${role}:${TOUR_VERSION}`;
 
 const step = (
   element: string,
@@ -372,7 +371,7 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
 
   const tourKey = useMemo(() => {
     if (!userId || !role) return null;
-    return getTourKey(userId, role);
+    return getPlatformTourKey(userId, role);
   }, [role, userId]);
 
   const intro = role ? introCopy[role] : null;
@@ -380,11 +379,17 @@ export const PlatformTour = ({ userId, role, disabled = false }: PlatformTourPro
   const markCompleted = useCallback(() => {
     if (!tourKey) return;
     localStorage.setItem(tourKey, 'completed');
+    window.dispatchEvent(
+      new CustomEvent(PLATFORM_TOUR_STATE_CHANGED_EVENT, { detail: { tourKey } }),
+    );
   }, [tourKey]);
 
   const markDismissed = useCallback(() => {
     if (!tourKey) return;
     localStorage.setItem(tourKey, 'dismissed');
+    window.dispatchEvent(
+      new CustomEvent(PLATFORM_TOUR_STATE_CHANGED_EVENT, { detail: { tourKey } }),
+    );
   }, [tourKey]);
 
   const handleStartTour = useCallback(() => {
