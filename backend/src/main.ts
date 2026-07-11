@@ -51,6 +51,7 @@ async function bootstrap() {
     .addTag('notifications', 'Notificações')
     .addTag('posts', 'Postagens e respostas em markdown')
     .addTag('dashboard', 'Visão consolidada do aluno')
+    .addTag('activities', 'Atividades, questionários, entregas e correções')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -25,3 +25,4 @@ frontend/.env.*
 **/temp/
 **/*.log
 backend/tmp-backend.log
+backend/private-uploads/

@@ -503,21 +503,25 @@ model SubmissionTestResult {
 }
 
 model Activity {
-  id                   String         @id @default(uuid())
-  classId              String         @map("class_id")
-  createdById          String         @map("created_by_id")
-  type                 ActivityType
-  status               ActivityStatus @default(DRAFT)
-  title                String         @db.VarChar(200)
-  description          String         @db.Text
-  maxScore             Int            @default(100) @map("max_score")
-  xpReward             Int            @default(0) @map("xp_reward")
-  dueDate              DateTime?      @map("due_date")
-  allowLateSubmissions Boolean        @default(false) @map("allow_late_submissions")
-  allowResubmission    Boolean        @default(false) @map("allow_resubmission")
-  maxAttempts          Int            @default(1) @map("max_attempts")
-  createdAt            DateTime       @default(now()) @map("created_at")
-  updatedAt            DateTime       @updatedAt @map("updated_at")
+  id                     String         @id @default(uuid())
+  classId                String         @map("class_id")
+  createdById            String         @map("created_by_id")
+  type                   ActivityType
+  status                 ActivityStatus @default(DRAFT)
+  title                  String         @db.VarChar(200)
+  description            String         @db.Text
+  maxScore               Int            @default(100) @map("max_score")
+  xpReward               Int            @default(0) @map("xp_reward")
+  dueDate                DateTime?      @map("due_date")
+  allowLateSubmissions   Boolean        @default(false) @map("allow_late_submissions")
+  allowResubmission      Boolean        @default(false) @map("allow_resubmission")
+  maxAttempts            Int            @default(1) @map("max_attempts")
+  allowedFileTypes       Json?          @map("allowed_file_types")
+  maxFileSize            Int            @default(10485760) @map("max_file_size")
+  maxFiles               Int            @default(5) @map("max_files")
+  showResultsImmediately Boolean        @default(false) @map("show_results_immediately")
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
 
   class       Class                @relation(fields: [classId], references: [id], onDelete: Cascade)
   createdBy   User                 @relation("ActivityCreator", fields: [createdById], references: [id])
@@ -588,6 +592,7 @@ model ActivitySubmission {
   status        SubmissionStatus @default(DRAFT)
   textAnswer    String?          @map("text_answer") @db.Text
   score         Int?
+  xpAwarded     Int              @default(0) @map("xp_awarded")
   feedback      String?          @db.Text
   submittedAt   DateTime?        @map("submitted_at")
   gradedAt      DateTime?        @map("graded_at")

@@ -14,6 +14,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { PostsModule } from './modules/posts/posts.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ProgrammingModule } from './modules/programming/programming.module';
+import { ActivitiesModule } from './modules/activities/activities.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProgrammingModule } from './modules/programming/programming.module';
     PostsModule,
     AdminModule,
     ProgrammingModule,
+    ActivitiesModule,
   ],
   providers: [
     {
