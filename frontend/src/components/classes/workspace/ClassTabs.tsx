@@ -1,4 +1,5 @@
-import { Check, Loader2, Plus, ShieldCheck, Trash2, X } from "lucide-react";
+import { Archive, Check, Clock3, Code2, Edit3, Eye, FileUp, HelpCircle, Loader2, Plus, Send, ShieldCheck, Trash2, Type, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -17,6 +18,8 @@ import type {
 } from "@/services/class-service";
 import type { RankingEntry } from "@/services/gamification-service";
 import type { PostReply } from "@/services/posts-service";
+import { activityService, type Activity, type ActivityType } from "@/services/activity-service";
+import { programmingService, type ProgrammingAssignment } from "@/services/programming-service";
 import { useNavigate } from "react-router-dom";
 
 export const ClassPostsTab = ({
@@ -124,26 +127,96 @@ export const ClassActivitiesTab = ({
   classId: string;
 }) => {
   const navigate = useNavigate();
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [codeActivities, setCodeActivities] = useState<ProgrammingAssignment[]>([]);
+  const [isLoading, setIsLoading] = useState(activitiesEnabled);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!activitiesEnabled) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (isTeacherView) {
+        const [general, code] = await Promise.all([
+          activityService.listTeacher(classId),
+          programmingService.getAssignments(1, 100),
+        ]);
+        setActivities(general.data);
+        setCodeActivities(code.data.filter((item) => item.classId === classId));
+      } else {
+        const [general, code] = await Promise.all([
+          activityService.listMine(classId),
+          programmingService.getMyAssignments(),
+        ]);
+        setActivities(general.data);
+        setCodeActivities(code.filter((item) => item.classId === classId));
+      }
+    } catch {
+      setError("Não foi possível carregar as atividades desta turma.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activitiesEnabled, classId, isTeacherView]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const publish = async (activityId: string) => {
+    try { await activityService.publish(activityId); await load(); }
+    catch { setError("Não foi possível publicar a atividade."); }
+  };
+  const archive = async (activityId: string) => {
+    try { await activityService.archive(activityId); await load(); }
+    catch { setError("Não foi possível arquivar a atividade."); }
+  };
+
+  if (!activitiesEnabled) {
+    return <SectionCard className="p-6"><EmptyState message="Atividades estão desativadas nesta turma." className="border-slate-200 bg-white py-12" /></SectionCard>;
+  }
+
   return (
-    <SectionCard className="p-6">
-      <EmptyState
-        message={
-          !activitiesEnabled
-            ? "Atividades estão desativadas nesta turma."
-            : isTeacherView
-              ? "Crie atividades, acompanhe entregas e devolva correções desta turma."
-              : "Consulte as atividades, prazos e correções desta turma."
-        }
-        action={activitiesEnabled ? (
-          <Button onClick={() => navigate(isTeacherView ? `/dashboard/teacher/classes/${classId}/activities` : `/dashboard/activities?classId=${classId}`)}>
-            {isTeacherView ? <Plus className="mr-2 h-4 w-4" /> : null}
-            {isTeacherView ? "Gerenciar atividades" : "Ver atividades"}
-          </Button>
-        ) : undefined}
-        className="border-slate-200 bg-white py-12"
+    <div className="space-y-5">
+      <PageHeader
+        title="Atividades"
+        description={isTeacherView ? "Crie atividades e acompanhe as entregas desta turma." : "Acompanhe prazos, entregas e correções desta turma."}
+        actions={isTeacherView ? <Button onClick={() => navigate(`/dashboard/teacher/activities/new?classId=${classId}`)}><Plus className="mr-2 h-4 w-4" />Nova atividade</Button> : null}
       />
-    </SectionCard>
+      {error ? <ErrorState message={error} action={<Button size="sm" variant="outline" onClick={load}>Tentar novamente</Button>} /> : null}
+      {isLoading ? <SectionCard className="flex justify-center py-14"><Loader2 className="h-7 w-7 animate-spin text-brand-600" /></SectionCard> : null}
+      {!isLoading && !activities.length && !codeActivities.length ? (
+        <SectionCard className="p-6"><EmptyState message={isTeacherView ? "Nenhuma atividade criada nesta turma." : "Nenhuma atividade publicada nesta turma."} action={isTeacherView ? <Button onClick={() => navigate(`/dashboard/teacher/activities/new?classId=${classId}`)}>Criar primeira atividade</Button> : undefined} className="border-slate-200 bg-white py-12" /></SectionCard>
+      ) : null}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {activities.map((activity) => <ClassActivityCard key={activity.id} activity={activity} isTeacherView={isTeacherView} onNavigate={navigate} onPublish={publish} onArchive={archive} />)}
+        {codeActivities.map((activity) => (
+          <article key={activity.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start gap-3"><div className="rounded-lg bg-brand-50 p-2 text-brand-700"><Code2 className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Código</p><h3 className="mt-1 font-semibold text-brand-900">{activity.title}</h3></div></div>
+            <p className="mt-4 text-xs text-slate-500"><Clock3 className="mr-1 inline h-3.5 w-3.5" />{formatActivityDate(activity.dueDate)} · {activity.points} pontos</p>
+            <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
+              {isTeacherView ? <><Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/teacher/activities/code/${activity.id}/edit`)}><Edit3 className="mr-1 h-3.5 w-3.5" />Editar</Button><Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/teacher/activities/code/${activity.id}/submissions`)}><Eye className="mr-1 h-3.5 w-3.5" />Envios</Button></> : <Button size="sm" onClick={() => navigate(`/dashboard/activities/code/${activity.id}`)}>Resolver atividade</Button>}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
   );
+};
+
+const activityTypes: Record<ActivityType, { label: string; icon: typeof Type }> = {
+  TEXT: { label: "Resposta escrita", icon: Type }, FILE: { label: "Arquivo", icon: FileUp }, QUIZ: { label: "Questionário", icon: HelpCircle }, CODE: { label: "Código", icon: Code2 },
+};
+const formatActivityDate = (value?: string | null) => value ? new Date(value).toLocaleString("pt-BR") : "Sem prazo";
+
+const ClassActivityCard = ({ activity, isTeacherView, onNavigate, onPublish, onArchive }: { activity: Activity; isTeacherView: boolean; onNavigate: ReturnType<typeof useNavigate>; onPublish: (id: string) => void; onArchive: (id: string) => void }) => {
+  const info = activityTypes[activity.type];
+  const Icon = info.icon;
+  const submission = activity.submissions?.[0];
+  return <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="flex items-start justify-between gap-3"><div className="flex items-start gap-3"><div className="rounded-lg bg-brand-50 p-2 text-brand-700"><Icon className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{info.label}</p><h3 className="mt-1 font-semibold text-brand-900">{activity.title}</h3></div></div><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{isTeacherView ? activity.status === "PUBLISHED" ? "Publicada" : activity.status === "DRAFT" ? "Rascunho" : "Arquivada" : submission?.status === "GRADED" ? "Corrigida" : submission ? "Entregue" : "Pendente"}</span></div>
+    <p className="mt-3 line-clamp-2 text-sm text-slate-600">{activity.description}</p>
+    <p className="mt-4 text-xs text-slate-500"><Clock3 className="mr-1 inline h-3.5 w-3.5" />{formatActivityDate(activity.dueDate)} · {activity.maxScore} pontos · {activity.xpReward} XP</p>
+    <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">{isTeacherView ? <><Button size="sm" variant="outline" onClick={() => onNavigate(`/dashboard/teacher/activities/${activity.id}/edit`)}><Edit3 className="mr-1 h-3.5 w-3.5" />Editar</Button><Button size="sm" variant="outline" onClick={() => onNavigate(`/dashboard/teacher/activities/${activity.id}/submissions`)}><Eye className="mr-1 h-3.5 w-3.5" />Entregas</Button>{activity.status === "DRAFT" ? <Button size="sm" onClick={() => onPublish(activity.id)}><Send className="mr-1 h-3.5 w-3.5" />Publicar</Button> : null}{activity.status === "PUBLISHED" ? <Button size="sm" variant="ghost" onClick={() => onArchive(activity.id)}><Archive className="mr-1 h-3.5 w-3.5" />Arquivar</Button> : null}</> : <Button className="w-full" onClick={() => onNavigate(`/dashboard/activities/${activity.id}`)}>{submission?.status === "GRADED" ? "Ver correção" : "Abrir atividade"}</Button>}</div>
+  </article>;
 };
 
 export const ClassMembersTab = ({

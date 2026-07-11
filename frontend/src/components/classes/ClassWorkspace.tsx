@@ -11,7 +11,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ConfirmAction } from "@/components/ui/confirm-action";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionCard } from "@/components/ui/section-card";
@@ -58,8 +58,10 @@ export const ClassWorkspace = ({
 }) => {
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isTeacherView = role !== "ALUNO";
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("mural");
+  const requestedTab = searchParams.get("tab") as WorkspaceTab | null;
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(requestedTab && requestedTab in tabs ? requestedTab : "mural");
   const [copiedCode, setCopiedCode] = useState(false);
   const [studentToRemove, setStudentToRemove] = useState<StudentInClass | null>(
     null,
@@ -92,6 +94,10 @@ export const ClassWorkspace = ({
   );
 
   const selectedTab = visibleTabs.includes(activeTab) ? activeTab : "mural";
+  const selectTab = (tab: WorkspaceTab) => {
+    setActiveTab(tab);
+    setSearchParams(tab === "mural" ? {} : { tab }, { replace: true });
+  };
 
   const copyCode = async () => {
     await navigator.clipboard.writeText(classroom.code);
@@ -182,7 +188,7 @@ export const ClassWorkspace = ({
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => selectTab(tab)}
                   className={cn(
                     "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold",
                     selectedTab === tab

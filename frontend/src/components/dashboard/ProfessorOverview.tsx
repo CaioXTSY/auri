@@ -58,9 +58,9 @@ export const ProfessorOverview = ({ firstName }: ProfessorOverviewProps) => {
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
             <MessageSquare className="h-4 w-4" /> Postagens
           </p>
-          <p className="mt-2 text-xs text-slate-400">Acesse postagens das suas turmas no menu lateral.</p>
-          <Button variant="outline" size="sm" className="mt-3 w-fit" onClick={() => navigate('/dashboard/posts')}>
-            Ver Postagens
+          <p className="mt-2 text-xs text-slate-400">Mural e atividades ficam organizados dentro de cada turma.</p>
+          <Button variant="outline" size="sm" className="mt-3 w-fit" onClick={() => navigate('/dashboard/teacher/classes')}>
+            Abrir turmas
           </Button>
         </div>
       </section>

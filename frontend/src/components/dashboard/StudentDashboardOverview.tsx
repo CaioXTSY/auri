@@ -338,8 +338,8 @@ export const StudentDashboardOverview = ({
                   <MessageSquareText className="h-4 w-4 text-brand-700" />
                   Últimos Posts
                 </h3>
-                <Link to="/dashboard/posts" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 transition-colors hover:text-brand-900">
-                  Ver mural <ArrowRight className="h-3.5 w-3.5" />
+                <Link to="/dashboard/classes" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 transition-colors hover:text-brand-900">
+                  Ver turmas <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
 
@@ -360,7 +360,7 @@ export const StudentDashboardOverview = ({
                   recentPosts.map((post) => (
                     <Link
                       key={post.id}
-                      to={`/dashboard/posts?postId=${post.id}`}
+                      to={post.class ? `/dashboard/classes/${post.class.id}?tab=mural` : '/dashboard/classes'}
                       className="block rounded-xl border border-slate-100 p-4 transition-colors hover:border-brand-200 hover:bg-slate-50"
                     >
                       <div className="flex items-start justify-between gap-3">
