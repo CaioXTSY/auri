@@ -9,7 +9,7 @@ const steps = [
 ];
 
 export const ProgressGuide = () => (
-  <section aria-labelledby="progress-guide-title" className="rounded-xl border border-brand-100 bg-brand-50 p-5">
+  <section aria-labelledby="progress-guide-title" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className="flex items-start gap-3">
       <ListChecks aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" />
       <div>
@@ -19,7 +19,7 @@ export const ProgressGuide = () => (
     </div>
     <ol className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {steps.map(({ icon: Icon, title, description }, index) => (
-        <li key={title} className="rounded-lg border border-brand-100 bg-white p-3">
+        <li key={title} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-brand-900">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-900 text-[11px] text-white">{index + 1}</span>
             <Icon aria-hidden="true" className="h-4 w-4" />

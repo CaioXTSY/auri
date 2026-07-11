@@ -98,6 +98,10 @@ export class GamificationService {
     return this.rankingService.getUserRankingPosition(userId, type, referenceId);
   }
 
+  getGlobalRankingAroundUser(userId: string, size?: number) {
+    return this.rankingService.getGlobalRankingAroundUser(userId, size);
+  }
+
   private getEffectiveStreak(user: {
     currentStreak: number;
     streakLastDate: Date | null;

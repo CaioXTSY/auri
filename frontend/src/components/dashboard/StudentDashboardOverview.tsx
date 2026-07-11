@@ -63,7 +63,7 @@ export const StudentDashboardOverview = ({
   const currentXp = levelInfo?.totalPoints ?? 0;
   const recentAchievements = dashboardData?.achievements.recent ?? [];
   const rankingGlobal = dashboardData?.ranking.global;
-  const rankingClass = dashboardData?.ranking.class;
+  const nearbyGlobalRanking = dashboardData?.ranking.nearby ?? [];
   const missions = dashboardData?.missions;
   const streakCurrent = dashboardData?.streak?.current ?? 0;
   const { nextMilestone, daysLeft, segmentProgress } = getStreakSegment(streakCurrent);
@@ -257,16 +257,41 @@ export const StudentDashboardOverview = ({
                 <Medal className="h-4 w-4 text-slate-500" />
                 Ranking
               </h3>
-              <div className="mt-4 space-y-4">
-                <p className="text-xs leading-5 text-slate-500">Ranking compara XP com outros alunos; nível e progresso são individuais.</p>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">🌍 Global</span>
-                  <span className="text-lg font-bold text-slate-800">{rankingGlobal ? `#${rankingGlobal}` : '--'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">🧑‍🎓 Turma</span>
-                  <span className="text-lg font-bold text-slate-800">{rankingClass ? `#${rankingClass}` : '--'}</span>
-                </div>
+              <div className="mt-4 space-y-3">
+                {nearbyGlobalRanking.length > 0 ? (
+                  <div className="divide-y divide-slate-100">
+                    {nearbyGlobalRanking.map((entry) => {
+                      const isCurrentUser = entry.user.id === levelInfo?.userId;
+                      return (
+                        <div
+                          key={entry.user.id}
+                          className={`flex items-center gap-3 py-2 ${isCurrentUser ? 'font-semibold text-brand-800' : 'text-slate-600'}`}
+                        >
+                          <span className="w-7 shrink-0 text-xs font-bold">#{entry.position}</span>
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
+                            {entry.user.avatar ? (
+                              <img
+                                src={getAssetUrl(entry.user.avatar) ?? ''}
+                                alt={entry.user.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              getUserInitials(entry.user.name)
+                            )}
+                          </div>
+                          <span className="min-w-0 flex-1 truncate text-sm">
+                            {entry.user.name}{isCurrentUser ? ' (Você)' : ''}
+                          </span>
+                          <span className="shrink-0 text-xs font-semibold">{entry.points} XP</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    {rankingGlobal ? `Sua posição global é #${rankingGlobal}.` : 'Nenhum aluno pontuou ainda.'}
+                  </p>
+                )}
               </div>
             </div>
 

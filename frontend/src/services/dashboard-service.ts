@@ -61,8 +61,15 @@ export interface StudentDashboard {
   };
   ranking: {
     global: number | null;
-    class: number | null;
-    classId: string | null;
+    nearby: Array<{
+      position: number;
+      points: number;
+      user: {
+        id: string;
+        name: string;
+        avatar?: string | null;
+      };
+    }>;
   };
   missions: MissionStats;
   streak: {

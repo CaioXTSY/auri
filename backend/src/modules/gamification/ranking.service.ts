@@ -137,4 +137,42 @@ export class RankingService {
       },
     });
   }
+
+  async getGlobalRankingAroundUser(userId: string, size = 5) {
+    const current = await this.getUserRankingPosition(userId, 'GLOBAL');
+    if (!current) {
+      return [];
+    }
+
+    const total = await this.prisma.ranking.count({
+      where: {
+        type: 'GLOBAL',
+        referenceId: 'GLOBAL',
+        user: { role: 'ALUNO' },
+      },
+    });
+    const positionsBefore = Math.floor((size - 1) / 2);
+    const startPosition = Math.min(
+      Math.max(1, current.position - positionsBefore),
+      Math.max(1, total - size + 1),
+    );
+
+    return this.prisma.ranking.findMany({
+      where: {
+        type: 'GLOBAL',
+        referenceId: 'GLOBAL',
+        position: { gte: startPosition },
+        user: { role: 'ALUNO' },
+      },
+      select: {
+        position: true,
+        points: true,
+        user: {
+          select: { id: true, name: true, avatar: true },
+        },
+      },
+      orderBy: { position: 'asc' },
+      take: size,
+    });
+  }
 }

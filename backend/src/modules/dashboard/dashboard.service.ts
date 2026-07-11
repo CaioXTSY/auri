@@ -16,7 +16,6 @@ export class DashboardService {
       gamification,
       missions,
       recentAchievements,
-      classEnrollment,
     ] = await Promise.all([
       this.gamificationService.getUserGamificationStats(userId),
       this.missionsService.getUserMissionStats(userId),
@@ -38,11 +37,6 @@ export class DashboardService {
           },
         },
       }),
-      this.prisma.classStudent.findFirst({
-        where: { userId },
-        orderBy: { enrolledAt: 'desc' },
-        select: { classId: true },
-      }),
     ]);
 
     let globalRanking = await this.gamificationService.getUserRankingPosition(
@@ -58,23 +52,9 @@ export class DashboardService {
       );
     }
 
-    let classRanking = null;
-    if (classEnrollment?.classId) {
-      classRanking = await this.gamificationService.getUserRankingPosition(
-        userId,
-        'TURMA',
-        classEnrollment.classId,
-      );
-
-      if (!classRanking) {
-        await this.gamificationService.updateClassRanking(classEnrollment.classId);
-        classRanking = await this.gamificationService.getUserRankingPosition(
-          userId,
-          'TURMA',
-          classEnrollment.classId,
-        );
-      }
-    }
+    const nearbyGlobalRanking = globalRanking
+      ? await this.gamificationService.getGlobalRankingAroundUser(userId, 5)
+      : [];
 
     return {
       points: gamification.points,
@@ -88,8 +68,7 @@ export class DashboardService {
       },
       ranking: {
         global: globalRanking?.position || null,
-        class: classRanking?.position || null,
-        classId: classEnrollment?.classId || null,
+        nearby: nearbyGlobalRanking,
       },
       missions,
       streak: gamification.streak,
