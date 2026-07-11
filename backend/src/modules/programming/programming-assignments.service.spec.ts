@@ -1,6 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Role } from '@prisma/client';
+import { CodeSubmissionMode, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProgrammingAssignmentsService } from './programming-assignments.service';
 
@@ -59,6 +59,11 @@ describe('ProgrammingAssignmentsService', () => {
             },
           },
         },
+        include: expect.objectContaining({
+          submissions: expect.objectContaining({
+            where: { userId: 'student-1', mode: CodeSubmissionMode.SUBMIT },
+          }),
+        }),
       }),
     );
   });

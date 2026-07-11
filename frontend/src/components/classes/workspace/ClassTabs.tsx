@@ -1,4 +1,4 @@
-import { Archive, Check, Clock3, Code2, Edit3, Eye, FileUp, HelpCircle, Loader2, Plus, Send, ShieldCheck, Trash2, Type, X } from "lucide-react";
+import { Archive, Check, CheckCircle2, Clock3, Code2, Edit3, Eye, FileUp, HelpCircle, Loader2, Plus, Send, ShieldCheck, Trash2, Type, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -189,11 +189,12 @@ export const ClassActivitiesTab = ({
       <div className="grid gap-4 lg:grid-cols-2">
         {activities.map((activity) => <ClassActivityCard key={activity.id} activity={activity} isTeacherView={isTeacherView} onNavigate={navigate} onPublish={publish} onArchive={archive} />)}
         {codeActivities.map((activity) => (
-          <article key={activity.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-start gap-3"><div className="rounded-lg bg-brand-50 p-2 text-brand-700"><Code2 className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Código</p><h3 className="mt-1 font-semibold text-brand-900">{activity.title}</h3></div></div>
+          <article key={activity.id} className={`rounded-xl border bg-white p-5 shadow-sm ${!isTeacherView && activity.submissions?.[0] ? "border-emerald-200" : "border-slate-200"}`}>
+            <div className="flex items-start justify-between gap-3"><div className="flex items-start gap-3"><div className={`rounded-lg p-2 ${!isTeacherView && activity.submissions?.[0] ? "bg-emerald-50 text-emerald-700" : "bg-brand-50 text-brand-700"}`}><Code2 className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Código</p><h3 className="mt-1 font-semibold text-brand-900">{activity.title}</h3></div></div>{!isTeacherView ? <CodeSubmissionBadge submission={activity.submissions?.[0]} /> : null}</div>
             <p className="mt-4 text-xs text-slate-500"><Clock3 className="mr-1 inline h-3.5 w-3.5" />{formatActivityDate(activity.dueDate)} · {activity.points} pontos</p>
+            {!isTeacherView && activity.submissions?.[0] ? <p className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800"><CheckCircle2 className="h-4 w-4 shrink-0" />Enviada em {formatActivityDate(activity.submissions[0].createdAt)} · Nota {activity.submissions[0].score}/{activity.points}</p> : null}
             <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
-              {isTeacherView ? <><Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/teacher/activities/code/${activity.id}/edit`)}><Edit3 className="mr-1 h-3.5 w-3.5" />Editar</Button><Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/teacher/activities/code/${activity.id}/submissions`)}><Eye className="mr-1 h-3.5 w-3.5" />Envios</Button></> : <Button size="sm" onClick={() => navigate(`/dashboard/activities/code/${activity.id}`)}>Resolver atividade</Button>}
+              {isTeacherView ? <><Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/teacher/activities/code/${activity.id}/edit`)}><Edit3 className="mr-1 h-3.5 w-3.5" />Editar</Button><Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/teacher/activities/code/${activity.id}/submissions`)}><Eye className="mr-1 h-3.5 w-3.5" />Envios</Button></> : <Button size="sm" variant={activity.submissions?.[0] ? "outline" : "default"} onClick={() => navigate(`/dashboard/activities/code/${activity.id}`)}>{activity.submissions?.[0] ? "Ver envio ou tentar novamente" : "Resolver atividade"}</Button>}
             </div>
           </article>
         ))}
@@ -207,14 +208,23 @@ const activityTypes: Record<ActivityType, { label: string; icon: typeof Type }> 
 };
 const formatActivityDate = (value?: string | null) => value ? new Date(value).toLocaleString("pt-BR") : "Sem prazo";
 
+const CodeSubmissionBadge = ({ submission }: { submission?: NonNullable<ProgrammingAssignment["submissions"]>[number] }) => {
+  if (!submission) return <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">Pendente</span>;
+  const accepted = submission.status === "ACCEPTED";
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${accepted ? "bg-emerald-100 text-emerald-800" : "bg-blue-50 text-blue-700"}`}><CheckCircle2 className="h-3.5 w-3.5" />{accepted ? "Concluída" : "Enviada"}</span>;
+};
+
 const ClassActivityCard = ({ activity, isTeacherView, onNavigate, onPublish, onArchive }: { activity: Activity; isTeacherView: boolean; onNavigate: ReturnType<typeof useNavigate>; onPublish: (id: string) => void; onArchive: (id: string) => void }) => {
   const info = activityTypes[activity.type];
   const Icon = info.icon;
   const submission = activity.submissions?.[0];
-  return <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div className="flex items-start justify-between gap-3"><div className="flex items-start gap-3"><div className="rounded-lg bg-brand-50 p-2 text-brand-700"><Icon className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{info.label}</p><h3 className="mt-1 font-semibold text-brand-900">{activity.title}</h3></div></div><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{isTeacherView ? activity.status === "PUBLISHED" ? "Publicada" : activity.status === "DRAFT" ? "Rascunho" : "Arquivada" : submission?.status === "GRADED" ? "Corrigida" : submission ? "Entregue" : "Pendente"}</span></div>
+  const completed = !isTeacherView && submission && submission.status !== "DRAFT" && submission.status !== "RETURNED";
+  const studentStatus = !submission ? "Pendente" : submission.status === "DRAFT" ? "Rascunho" : submission.status === "RETURNED" ? "Requer ajustes" : submission.status === "GRADED" ? "Corrigida" : "Enviada";
+  return <article className={`rounded-xl border bg-white p-5 shadow-sm ${completed ? "border-emerald-200" : "border-slate-200"}`}>
+    <div className="flex items-start justify-between gap-3"><div className="flex items-start gap-3"><div className={`rounded-lg p-2 ${completed ? "bg-emerald-50 text-emerald-700" : "bg-brand-50 text-brand-700"}`}><Icon className="h-5 w-5" /></div><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{info.label}</p><h3 className="mt-1 font-semibold text-brand-900">{activity.title}</h3></div></div><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${completed ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{completed ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}{isTeacherView ? activity.status === "PUBLISHED" ? "Publicada" : activity.status === "DRAFT" ? "Rascunho" : "Arquivada" : studentStatus}</span></div>
     <p className="mt-3 line-clamp-2 text-sm text-slate-600">{activity.description}</p>
     <p className="mt-4 text-xs text-slate-500"><Clock3 className="mr-1 inline h-3.5 w-3.5" />{formatActivityDate(activity.dueDate)} · {activity.maxScore} pontos · {activity.xpReward} XP</p>
+    {!isTeacherView && submission?.submittedAt ? <p className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800"><CheckCircle2 className="h-4 w-4 shrink-0" />Enviada em {formatActivityDate(submission.submittedAt)}{submission.status === "GRADED" && submission.score != null ? ` · Nota ${submission.score}/${activity.maxScore}` : " · Aguardando correção"}</p> : null}
     <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">{isTeacherView ? <><Button size="sm" variant="outline" onClick={() => onNavigate(`/dashboard/teacher/activities/${activity.id}/edit`)}><Edit3 className="mr-1 h-3.5 w-3.5" />Editar</Button><Button size="sm" variant="outline" onClick={() => onNavigate(`/dashboard/teacher/activities/${activity.id}/submissions`)}><Eye className="mr-1 h-3.5 w-3.5" />Entregas</Button>{activity.status === "DRAFT" ? <Button size="sm" onClick={() => onPublish(activity.id)}><Send className="mr-1 h-3.5 w-3.5" />Publicar</Button> : null}{activity.status === "PUBLISHED" ? <Button size="sm" variant="ghost" onClick={() => onArchive(activity.id)}><Archive className="mr-1 h-3.5 w-3.5" />Arquivar</Button> : null}</> : <Button className="w-full" onClick={() => onNavigate(`/dashboard/activities/${activity.id}`)}>{submission?.status === "GRADED" ? "Ver correção" : "Abrir atividade"}</Button>}</div>
   </article>;
 };

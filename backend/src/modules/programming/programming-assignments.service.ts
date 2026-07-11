@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Role, TestCaseVisibility } from '@prisma/client';
+import { CodeSubmissionMode, Role, TestCaseVisibility } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateProgrammingAssignmentDto,
@@ -157,7 +157,7 @@ export class ProgrammingAssignmentsService {
         },
         class: true,
         submissions: {
-          where: { userId },
+          where: { userId, mode: CodeSubmissionMode.SUBMIT },
           orderBy: { createdAt: 'desc' },
           take: 1,
           select: {
