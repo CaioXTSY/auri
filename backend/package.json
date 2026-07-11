@@ -25,7 +25,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:seed:achievements": "ts-node prisma/seed-achievements.ts"
+    "prisma:seed:achievements": "ts-node prisma/seed-achievements.ts",
+    "prisma:seed:activities": "ts-node prisma/seed-activities.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.28",

@@ -78,6 +78,34 @@ enum TestCaseVisibility {
   HIDDEN
 }
 
+enum ActivityType {
+  TEXT
+  FILE
+  QUIZ
+  CODE
+}
+
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  LATE
+  UNDER_REVIEW
+  GRADED
+  RETURNED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -107,6 +135,9 @@ model User {
   classJoinRequests   ClassJoinRequest[]
   programmingProblems ProgrammingProblem[]
   codeSubmissions     CodeSubmission[]
+  createdActivities   Activity[]           @relation("ActivityCreator")
+  activitySubmissions ActivitySubmission[] @relation("SubmissionStudent")
+  gradedSubmissions   ActivitySubmission[] @relation("SubmissionGrader")
 
   @@map("users")
 }
@@ -128,6 +159,7 @@ model Class {
   settings               ClassSettings?
   joinRequests           ClassJoinRequest[]
   programmingAssignments ProgrammingAssignment[]
+  activities             Activity[]
 
   @@map("classes")
 }
@@ -468,4 +500,147 @@ model SubmissionTestResult {
   testCase   ProblemTestCase? @relation(fields: [testCaseId], references: [id])
 
   @@map("submission_test_results")
+}
+
+model Activity {
+  id                   String         @id @default(uuid())
+  classId              String         @map("class_id")
+  createdById          String         @map("created_by_id")
+  type                 ActivityType
+  status               ActivityStatus @default(DRAFT)
+  title                String         @db.VarChar(200)
+  description          String         @db.Text
+  maxScore             Int            @default(100) @map("max_score")
+  xpReward             Int            @default(0) @map("xp_reward")
+  dueDate              DateTime?      @map("due_date")
+  allowLateSubmissions Boolean        @default(false) @map("allow_late_submissions")
+  allowResubmission    Boolean        @default(false) @map("allow_resubmission")
+  maxAttempts          Int            @default(1) @map("max_attempts")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  class       Class                @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdBy   User                 @relation("ActivityCreator", fields: [createdById], references: [id])
+  questions   ActivityQuestion[]
+  materials   ActivityMaterial[]
+  submissions ActivitySubmission[]
+
+  @@index([classId, status, dueDate])
+  @@index([createdById, status])
+  @@map("activities")
+}
+
+model ActivityQuestion {
+  id         String       @id @default(uuid())
+  activityId String       @map("activity_id")
+  type       QuestionType
+  prompt     String       @db.Text
+  points     Int          @default(0)
+  position   Int
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  activity Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  options  QuestionOption[]
+  answers  QuestionAnswer[]
+
+  @@unique([activityId, position])
+  @@index([activityId, type])
+  @@map("activity_questions")
+}
+
+model QuestionOption {
+  id         String  @id @default(uuid())
+  questionId String  @map("question_id")
+  text       String  @db.Text
+  isCorrect  Boolean @default(false) @map("is_correct")
+  position   Int
+
+  question ActivityQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  QuestionAnswer[]
+
+  @@unique([questionId, position])
+  @@index([questionId, isCorrect])
+  @@map("question_options")
+}
+
+model ActivityMaterial {
+  id           String   @id @default(uuid())
+  activityId   String   @map("activity_id")
+  originalName String   @map("original_name") @db.VarChar(255)
+  storedName   String   @map("stored_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  size         Int
+  path         String   @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@map("activity_materials")
+}
+
+model ActivitySubmission {
+  id            String           @id @default(uuid())
+  activityId    String           @map("activity_id")
+  userId        String           @map("user_id")
+  attemptNumber Int              @map("attempt_number")
+  status        SubmissionStatus @default(DRAFT)
+  textAnswer    String?          @map("text_answer") @db.Text
+  score         Int?
+  feedback      String?          @db.Text
+  submittedAt   DateTime?        @map("submitted_at")
+  gradedAt      DateTime?        @map("graded_at")
+  gradedById    String?          @map("graded_by_id")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  activity    Activity               @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user        User                   @relation("SubmissionStudent", fields: [userId], references: [id], onDelete: Cascade)
+  gradedBy    User?                  @relation("SubmissionGrader", fields: [gradedById], references: [id], onDelete: SetNull)
+  attachments SubmissionAttachment[]
+  answers     QuestionAnswer[]
+
+  @@unique([activityId, userId, attemptNumber])
+  @@index([activityId, status, submittedAt])
+  @@index([userId, status, updatedAt])
+  @@index([gradedById])
+  @@map("activity_submissions")
+}
+
+model SubmissionAttachment {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  originalName String   @map("original_name") @db.VarChar(255)
+  storedName   String   @map("stored_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  size         Int
+  path         String   @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  submission ActivitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@map("submission_attachments")
+}
+
+model QuestionAnswer {
+  id               String   @id @default(uuid())
+  submissionId     String   @map("submission_id")
+  questionId       String   @map("question_id")
+  selectedOptionId String?  @map("selected_option_id")
+  textAnswer       String?  @map("text_answer") @db.Text
+  score            Int?
+  feedback         String?  @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  submission     ActivitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question       ActivityQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption QuestionOption?    @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  @@unique([submissionId, questionId])
+  @@index([questionId])
+  @@index([selectedOptionId])
+  @@map("question_answers")
 }
