@@ -17,6 +17,7 @@ import type {
 } from "@/services/class-service";
 import type { RankingEntry } from "@/services/gamification-service";
 import type { PostReply } from "@/services/posts-service";
+import { useNavigate } from "react-router-dom";
 
 export const ClassPostsTab = ({
   board,
@@ -116,23 +117,34 @@ export const ClassPostsTab = ({
 export const ClassActivitiesTab = ({
   isTeacherView,
   activitiesEnabled,
+  classId,
 }: {
   isTeacherView: boolean;
   activitiesEnabled: boolean;
-}) => (
-  <SectionCard className="p-6">
-    <EmptyState
-      message={
-        !activitiesEnabled
-          ? "Atividades estão desativadas nesta turma."
-          : isTeacherView
-            ? "As atividades da turma serão centralizadas aqui quando o módulo estiver disponível."
-            : "Nenhuma atividade publicada para esta turma."
-      }
-      className="border-slate-200 bg-white py-12"
-    />
-  </SectionCard>
-);
+  classId: string;
+}) => {
+  const navigate = useNavigate();
+  return (
+    <SectionCard className="p-6">
+      <EmptyState
+        message={
+          !activitiesEnabled
+            ? "Atividades estão desativadas nesta turma."
+            : isTeacherView
+              ? "Crie atividades, acompanhe entregas e devolva correções desta turma."
+              : "Consulte as atividades, prazos e correções desta turma."
+        }
+        action={activitiesEnabled ? (
+          <Button onClick={() => navigate(isTeacherView ? `/dashboard/teacher/classes/${classId}/activities` : `/dashboard/activities?classId=${classId}`)}>
+            {isTeacherView ? <Plus className="mr-2 h-4 w-4" /> : null}
+            {isTeacherView ? "Gerenciar atividades" : "Ver atividades"}
+          </Button>
+        ) : undefined}
+        className="border-slate-200 bg-white py-12"
+      />
+    </SectionCard>
+  );
+};
 
 export const ClassMembersTab = ({
   students,

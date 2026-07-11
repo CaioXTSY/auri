@@ -212,6 +212,7 @@ export const ClassWorkspace = ({
         <ClassActivitiesTab
           isTeacherView={isTeacherView}
           activitiesEnabled={settings.settings?.activitiesEnabled !== false}
+          classId={classroom.id}
         />
       ) : null}
       {selectedTab === "students" ? (
