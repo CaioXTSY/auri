@@ -490,7 +490,11 @@ export class ClassesService {
     });
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userRole: Role): Promise<void> {
+    if (userRole !== Role.ADMIN) {
+      throw new ForbiddenException('Apenas administradores podem remover turmas');
+    }
+
     const classEntity = await this.prisma.class.findUnique({ where: { id } });
     if (!classEntity) {
       throw new NotFoundException('Turma não encontrada');

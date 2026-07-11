@@ -254,7 +254,7 @@ export class ClassesController {
   @ApiResponse({ status: 404, description: 'Turma não encontrada' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissão (apenas Admin)' })
-  remove(@Param('id') id: string) {
-    return this.classesService.remove(id);
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.classesService.remove(id, req.user.role);
   }
 }
