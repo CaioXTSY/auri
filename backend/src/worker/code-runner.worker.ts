@@ -22,6 +22,7 @@ const config = {
   jsImage: process.env.CODE_RUNNER_JS_IMAGE ?? 'node:20-alpine',
   pyImage: process.env.CODE_RUNNER_PY_IMAGE ?? 'python:3.12-alpine',
   defaultTimeoutMs: numberFromEnv('CODE_RUNNER_DEFAULT_TIMEOUT_MS', 2000),
+  startupGraceMs: numberFromEnv('CODE_RUNNER_STARTUP_GRACE_MS', 5000),
   defaultMemoryMb: numberFromEnv('CODE_RUNNER_DEFAULT_MEMORY_MB', 128),
   defaultCpus: process.env.CODE_RUNNER_DEFAULT_CPUS ?? '0.5',
   maxOutputBytes: numberFromEnv('CODE_RUNNER_MAX_OUTPUT_BYTES', 64 * 1024),
@@ -225,6 +226,7 @@ async function runSingleTest(
     return runDocker({
       image: config.jsImage,
       timeoutMs,
+      startupGraceMs: config.startupGraceMs,
       memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
       cpus: config.defaultCpus,
       maxOutputBytes: config.maxOutputBytes,
@@ -236,6 +238,7 @@ async function runSingleTest(
   return runDocker({
     image: config.pyImage,
     timeoutMs,
+    startupGraceMs: config.startupGraceMs,
     memoryMb: submission.problem.memoryLimitMb ?? config.defaultMemoryMb,
     cpus: config.defaultCpus,
     maxOutputBytes: config.maxOutputBytes,
@@ -273,6 +276,7 @@ const solutionModule = { exports: {} };
 const solutionExports = solutionModule.exports;
 const loadSolution = new Function("module", "exports", "require", code + "\\n; return module.exports;");
 const solve = loadSolution(solutionModule, solutionExports, require);
+const executionStartedAt = process.hrtime.bigint();
 
 Promise.resolve(solve(input))
   .then((result) => {
@@ -281,6 +285,10 @@ Promise.resolve(solve(input))
   .catch((err) => {
     console.error(err?.message || String(err));
     process.exit(1);
+  })
+  .finally(() => {
+    const runtimeMs = Number((process.hrtime.bigint() - executionStartedAt) / 1000000n);
+    process.stderr.write("\\n" + process.env.AURI_RUNTIME_MARKER + ":" + runtimeMs + "\\n");
   });
 `.trimStart();
 
@@ -288,12 +296,14 @@ const pythonLauncher = `
 import base64
 import os
 import sys
+import time
 
 code = base64.b64decode(os.environ.get("AURI_CODE_B64", "")).decode("utf-8")
 input_value = base64.b64decode(os.environ.get("AURI_INPUT_B64", "")).decode("utf-8")
 namespace = {}
 
 try:
+    execution_started_at = time.perf_counter_ns()
     exec(compile(code, "solution.py", "exec"), namespace)
     solve = namespace["solve"]
     result = solve(input_value)
@@ -301,6 +311,10 @@ try:
 except Exception as exc:
     sys.stderr.write(str(exc))
     sys.exit(1)
+finally:
+    if "execution_started_at" in locals():
+        runtime_ms = (time.perf_counter_ns() - execution_started_at) // 1_000_000
+        sys.stderr.write("\\n" + os.environ.get("AURI_RUNTIME_MARKER", "") + ":" + str(runtime_ms) + "\\n")
 `.trimStart();
 
 if (require.main === module) {

@@ -58,7 +58,7 @@ export const TeacherActivityForm = () => {
   ]);
   const [starterCode, setStarterCode] =
     useState<Record<ProgrammingLanguage, string>>(defaultStarter);
-  const [timeLimitMs, setTimeLimitMs] = useState(2000);
+  const [timeLimitMs, setTimeLimitMs] = useState(5000);
   const [memoryLimitMb, setMemoryLimitMb] = useState(128);
   const [testCases, setTestCases] = useState<EditableTestCase[]>([createEmptyTestCase()]);
   const [deletedTestCaseIds, setDeletedTestCaseIds] = useState<string[]>([]);

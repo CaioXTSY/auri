@@ -12,6 +12,7 @@ export type DockerRunResult = {
 export type DockerRunOptions = {
   image: string;
   timeoutMs: number;
+  startupGraceMs: number;
   memoryMb: number;
   cpus: string;
   maxOutputBytes: number;
@@ -21,6 +22,7 @@ export type DockerRunOptions = {
 
 export function runDocker(options: DockerRunOptions): Promise<DockerRunResult> {
   const containerName = createDockerContainerName();
+  const runtimeMarker = `__AURI_RUNTIME_${Math.random().toString(16).slice(2)}__`;
   const args = [
     'run',
     '--rm',
@@ -49,7 +51,7 @@ export function runDocker(options: DockerRunOptions): Promise<DockerRunResult> {
     'ALL',
     '--security-opt',
     'no-new-privileges',
-    ...options.env.flatMap((env) => ['-e', env]),
+    ...[...options.env, `AURI_RUNTIME_MARKER=${runtimeMarker}`].flatMap((env) => ['-e', env]),
     options.image,
     ...options.command,
   ];
@@ -86,7 +88,7 @@ export function runDocker(options: DockerRunOptions): Promise<DockerRunResult> {
     const timer = setTimeout(() => {
       killedByTimeout = true;
       requestContainerStop();
-    }, options.timeoutMs);
+    }, options.timeoutMs + options.startupGraceMs);
 
     child.stdout.on('data', (chunk: Buffer) => {
       stdout = appendLimited(stdout, chunk.toString('utf8'), options.maxOutputBytes);
@@ -116,9 +118,11 @@ export function runDocker(options: DockerRunOptions): Promise<DockerRunResult> {
 
     child.on('close', (code) => {
       clearTimeout(timer);
+      const measured = extractMeasuredRuntime(stderr, runtimeMarker);
+      stderr = measured.stderr;
 
       let status: CodeSubmissionStatus = CodeSubmissionStatus.ACCEPTED;
-      if (killedByTimeout) {
+      if (killedByTimeout || (measured.runtimeMs !== null && measured.runtimeMs > options.timeoutMs)) {
         status = CodeSubmissionStatus.TIME_LIMIT_EXCEEDED;
       } else if (outputLimitExceeded) {
         status = CodeSubmissionStatus.RUNTIME_ERROR;
@@ -133,10 +137,19 @@ export function runDocker(options: DockerRunOptions): Promise<DockerRunResult> {
         status,
         stdout,
         stderr,
-        runtimeMs: Date.now() - startedAt,
+        runtimeMs: killedByTimeout ? options.timeoutMs : measured.runtimeMs ?? Date.now() - startedAt,
       });
     });
   });
+}
+
+function extractMeasuredRuntime(stderr: string, marker: string) {
+  const expression = new RegExp(`(?:^|\\n)${marker}:(\\d+)(?:\\n|$)`);
+  const match = stderr.match(expression);
+  return {
+    runtimeMs: match ? Number(match[1]) : null,
+    stderr: stderr.replace(expression, '\n').trim(),
+  };
 }
 
 function createDockerContainerName() {

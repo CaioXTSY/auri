@@ -409,7 +409,7 @@ model ProgrammingProblem {
   difficulty       Difficulty @default(FACIL)
   allowedLanguages Json       @map("allowed_languages")
   starterCode      Json       @map("starter_code")
-  timeLimitMs      Int        @default(2000) @map("time_limit_ms")
+  timeLimitMs      Int        @default(5000) @map("time_limit_ms")
   memoryLimitMb    Int        @default(128) @map("memory_limit_mb")
   createdById      String     @map("created_by_id")
   createdAt        DateTime   @default(now()) @map("created_at")
