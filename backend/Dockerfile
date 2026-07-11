@@ -32,7 +32,12 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
 
-RUN mkdir -p /app/uploads
+ENV UPLOAD_DIR=/app/uploads
+ENV PRIVATE_UPLOAD_DIR=/app/private-uploads
+
+RUN mkdir -p /app/uploads/avatars /app/private-uploads/activity-submissions
+
+VOLUME ["/app/uploads", "/app/private-uploads"]
 
 EXPOSE 3001
 

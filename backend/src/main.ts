@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
+import { resolve } from 'path';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { isOriginAllowed } from './common/http/cors';
@@ -12,7 +12,8 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  const uploadDirectory = resolve(process.env.UPLOAD_DIR || './uploads');
+  app.useStaticAssets(uploadDirectory, {
     prefix: '/uploads/',
   });
 

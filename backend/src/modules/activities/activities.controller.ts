@@ -37,7 +37,10 @@ import {
   UpdateActivityQuestionDto,
 } from './dto';
 
-const privateUploadDirectory = resolve(process.cwd(), 'private-uploads', 'activity-submissions');
+const privateUploadDirectory = resolve(
+  process.env.PRIVATE_UPLOAD_DIR || resolve(process.cwd(), 'private-uploads'),
+  'activity-submissions',
+);
 const allowedUploadMimeTypes = new Set([
   'application/pdf',
   'image/jpeg',

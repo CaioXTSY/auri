@@ -23,7 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, resolve } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -222,7 +222,7 @@ export class UsersController {
     FileInterceptor('avatar', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          const uploadPath = './uploads/avatars';
+          const uploadPath = resolve(process.env.UPLOAD_DIR || './uploads', 'avatars');
           if (!existsSync(uploadPath)) {
             mkdirSync(uploadPath, { recursive: true });
           }
