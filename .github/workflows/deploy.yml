@@ -29,6 +29,6 @@ jobs:
             AMBIENTE="prod"
             
             cd ${SSH_PATH}
-            bash auri_deploy.sh "$COMMIT_HASH" "$REPO_NAME" "main" "$AMBIENTE" "$TOKEN_GITHUB"
+            bash ./auri_deploy.sh "$COMMIT_HASH" "$REPO_NAME" "main" "$AMBIENTE" "$TOKEN_GITHUB"
         env:
           REPO_NAME: ${{ env.REPO_NAME }}
