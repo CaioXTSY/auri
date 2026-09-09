@@ -384,11 +384,13 @@ export const ClassProgressTab = ({
 export const ClassJoinRequestsTab = ({
   requests,
   isLoading,
+  error,
   reviewingId,
   onReview,
 }: {
   requests: ClassJoinRequest[];
   isLoading: boolean;
+  error: string | null;
   reviewingId: string | null;
   onReview: (id: string, action: "approve" | "reject") => void;
 }) => (
@@ -407,6 +409,10 @@ export const ClassJoinRequestsTab = ({
     {isLoading ? (
       <div className="flex justify-center p-8">
         <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
+      </div>
+    ) : error ? (
+      <div className="p-5">
+        <ErrorState message={error} />
       </div>
     ) : !requests.length ? (
       <div className="p-5 text-sm text-slate-500">
@@ -452,19 +458,11 @@ export const ClassSettingsTab = ({
   error,
   savingSetting,
   onChange,
-  requests,
-  requestsLoading,
-  reviewingId,
-  onReview,
 }: {
   settings: ClassSettings | null;
   error: string | null;
   savingSetting: keyof UpdateClassSettingsPayload | null;
   onChange: (key: keyof UpdateClassSettingsPayload, value: boolean) => void;
-  requests: ClassJoinRequest[];
-  requestsLoading: boolean;
-  reviewingId: string | null;
-  onReview: (id: string, action: "approve" | "reject") => void;
 }) => {
   if (!settings)
     return (
@@ -502,7 +500,7 @@ export const ClassSettingsTab = ({
     ],
   ];
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="space-y-5">
       <div className="space-y-5">
         {error ? <ErrorState message={error} /> : null}
         {groups.map(([title, items]) => (
@@ -527,12 +525,6 @@ export const ClassSettingsTab = ({
           </SectionCard>
         ))}
       </div>
-      <ClassJoinRequestsTab
-        requests={requests}
-        isLoading={requestsLoading}
-        reviewingId={reviewingId}
-        onReview={onReview}
-      />
     </div>
   );
 };

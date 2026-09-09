@@ -26,6 +26,7 @@ import type { RankingEntry } from "@/services/gamification-service";
 import type { PostReply } from "@/services/posts-service";
 import {
   ClassActivitiesTab,
+  ClassJoinRequestsTab,
   ClassMembersTab,
   ClassPostsTab,
   ClassProgressTab,
@@ -222,14 +223,25 @@ export const ClassWorkspace = ({
         />
       ) : null}
       {selectedTab === "students" ? (
-        <ClassMembersTab
-          students={members.students}
-          isLoading={members.isLoading}
-          error={members.error}
-          onRetry={members.reload}
-          onRequestRemove={setStudentToRemove}
-          canManage={isTeacherView}
-        />
+        <div className="space-y-5">
+          {isTeacherView ? (
+            <ClassJoinRequestsTab
+              requests={requests.requests}
+              isLoading={requests.isLoading}
+              error={requests.error}
+              reviewingId={requests.reviewingId}
+              onReview={requests.review}
+            />
+          ) : null}
+          <ClassMembersTab
+            students={members.students}
+            isLoading={members.isLoading}
+            error={members.error}
+            onRetry={members.reload}
+            onRequestRemove={setStudentToRemove}
+            canManage={isTeacherView}
+          />
+        </div>
       ) : null}
       {selectedTab === "progress" ? (
         <ClassProgressTab
@@ -244,13 +256,9 @@ export const ClassWorkspace = ({
       {selectedTab === "settings" && isTeacherView ? (
         <ClassSettingsTab
           settings={settings.settings}
-          error={settings.error ?? requests.error}
+          error={settings.error}
           savingSetting={settings.savingSetting}
           onChange={settings.update}
-          requests={requests.requests}
-          requestsLoading={requests.isLoading}
-          reviewingId={requests.reviewingId}
-          onReview={requests.review}
         />
       ) : null}
       <ConfirmAction
