@@ -54,6 +54,12 @@ export interface AIGenerationListItem {
   type: string;
   createdAt: string;
   promptPreview: string;
+  model: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
+  generationAttempts: number | null;
+  validationCalls: number | null;
 }
 
 export interface AIGenerationDetail {
@@ -62,6 +68,12 @@ export interface AIGenerationDetail {
   prompt: string;
   response: string;
   createdAt: string;
+  model: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
+  generationAttempts: number | null;
+  validationCalls: number | null;
   missionQuizzes: Array<{ id: string; title: string; missionId: string; createdAt: string }>;
 }
 

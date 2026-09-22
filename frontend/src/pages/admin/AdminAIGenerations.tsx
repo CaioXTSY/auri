@@ -23,6 +23,7 @@ const AIGenerationsTableSkeleton = () => (
         <tr>
           <TableHeaderCell>Tipo</TableHeaderCell>
           <TableHeaderCell>Prompt (preview)</TableHeaderCell>
+          <TableHeaderCell>Métricas</TableHeaderCell>
           <TableHeaderCell>Criado em</TableHeaderCell>
           <TableHeaderCell className="text-right">Ações</TableHeaderCell>
         </tr>
@@ -35,6 +36,9 @@ const AIGenerationsTableSkeleton = () => (
             </TableCell>
             <TableCell>
               <Skeleton className="h-4 w-96 max-w-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-28" />
             </TableCell>
             <TableCell>
               <Skeleton className="h-4 w-32" />
@@ -103,6 +107,7 @@ export const AdminAIGenerations = () => {
                 <tr>
                   <TableHeaderCell>Tipo</TableHeaderCell>
                   <TableHeaderCell>Prompt (preview)</TableHeaderCell>
+                  <TableHeaderCell>Métricas</TableHeaderCell>
                   <TableHeaderCell>Criado em</TableHeaderCell>
                   <TableHeaderCell className="text-right">Ações</TableHeaderCell>
                 </tr>
@@ -110,7 +115,7 @@ export const AdminAIGenerations = () => {
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={5}>
                       <EmptyState message="Nenhuma geração." className="border-0 py-6" />
                     </TableCell>
                   </tr>
@@ -118,6 +123,9 @@ export const AdminAIGenerations = () => {
                   <TableRow key={g.id}>
                     <TableCell className="font-medium text-slate-800">{g.type}</TableCell>
                     <TableCell className="max-w-md truncate text-slate-600">{g.promptPreview}</TableCell>
+                    <TableCell className="text-xs text-slate-600">
+                      {g.totalTokens === null ? 'Não disponível' : `${g.totalTokens.toLocaleString('pt-BR')} tokens`}
+                    </TableCell>
                     <TableCell className="text-slate-600">{new Date(g.createdAt).toLocaleString('pt-BR')}</TableCell>
                     <TableCell className="text-right">
                       <button onClick={() => openDetail(g.id)} className="text-brand-700 hover:text-brand-900 text-xs font-semibold">Ver</button>
@@ -156,6 +164,18 @@ export const AdminAIGenerations = () => {
                 <SectionCard className="p-4">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Tipo</p>
                   <p className="text-sm">{selected.type}</p>
+                </SectionCard>
+                <SectionCard className="p-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Métricas de consumo</p>
+                  <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+                    <div><dt className="text-slate-500">Modelo</dt><dd>{selected.model ?? 'Não disponível'}</dd></div>
+                    <div><dt className="text-slate-500">Entrada</dt><dd>{selected.inputTokens?.toLocaleString('pt-BR') ?? 'Não disponível'}</dd></div>
+                    <div><dt className="text-slate-500">Saída</dt><dd>{selected.outputTokens?.toLocaleString('pt-BR') ?? 'Não disponível'}</dd></div>
+                    <div><dt className="text-slate-500">Total</dt><dd>{selected.totalTokens?.toLocaleString('pt-BR') ?? 'Não disponível'}</dd></div>
+                    <div><dt className="text-slate-500">Tentativas</dt><dd>{selected.generationAttempts ?? 'Não disponível'}</dd></div>
+                    <div><dt className="text-slate-500">Validações</dt><dd>{selected.validationCalls ?? 'Não disponível'}</dd></div>
+                  </dl>
+                  <p className="mt-3 text-xs text-slate-500">Gerado em {new Date(selected.createdAt).toLocaleString('pt-BR')}</p>
                 </SectionCard>
                 <SectionCard className="p-4">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Prompt</p>

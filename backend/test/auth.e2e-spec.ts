@@ -52,6 +52,15 @@ describe('AuthController (e2e)', () => {
     await app.close();
   });
 
+  describe('/health (GET)', () => {
+    it('should report API and database availability', async () => {
+      const response = await request(app.getHttpServer()).get('/api/v1/health').expect(200);
+
+      expect(response.body).toMatchObject({ status: 'ok', database: 'connected' });
+      expect(new Date(response.body.timestamp).toString()).not.toBe('Invalid Date');
+    });
+  });
+
   describe('/auth/register (POST)', () => {
     it('should register a new user', async () => {
       const registerDto = {

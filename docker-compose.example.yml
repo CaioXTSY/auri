@@ -1,16 +1,40 @@
 services:
+  db:
+    image: mysql:8.4
+    env_file:
+      - ./backend/.env
+    volumes:
+      - auri_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
   api:
     build:
       context: .
       dockerfile: backend/Dockerfile
       target: production
-    command: ["node", "dist/main"]
+    command: ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
     env_file:
       - ./backend/.env
     ports:
       - "3001:3001"
     volumes:
       - auri_uploads:/app/uploads
+      - auri_private_uploads:/app/private-uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   frontend:
@@ -18,12 +42,21 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_API_URL: http://localhost:3001
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
     ports:
       - "3010:3010"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3010').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
 
 volumes:
+  auri_mysql:
   auri_uploads:
+  auri_private_uploads:

@@ -22,8 +22,12 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:runner": "jest --runInBand src/worker/code-runner.worker.spec.ts",
+    "test:runner:integration": "jest --config ./test/jest-runner-integration.json --runInBand",
+    "verify": "npm run lint && npm run build && npm run test && npm run test:e2e",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed:achievements": "ts-node prisma/seed-achievements.ts",
     "prisma:seed:activities": "ts-node prisma/seed-activities.ts"

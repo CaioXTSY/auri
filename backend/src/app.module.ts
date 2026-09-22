@@ -15,6 +15,7 @@ import { PostsModule } from './modules/posts/posts.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ProgrammingModule } from './modules/programming/programming.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ActivitiesModule } from './modules/activities/activities.module';
     AdminModule,
     ProgrammingModule,
     ActivitiesModule,
+    HealthModule,
   ],
   providers: [
     {

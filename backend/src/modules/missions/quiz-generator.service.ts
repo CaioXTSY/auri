@@ -35,6 +35,24 @@ type GeneratedDailyQuizMission = {
   attempt: null;
 };
 
+type OpenAIUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+};
+
+type OpenAICompletion = {
+  content: string;
+  usage: OpenAIUsage | null;
+};
+
+type QuizValidation = {
+  isValid: boolean;
+  correctIndex: number | null;
+  reason: string;
+  usage: OpenAIUsage | null;
+};
+
 @Injectable()
 export class QuizGeneratorService {
   private readonly logger = new Logger(QuizGeneratorService.name);
@@ -107,6 +125,20 @@ export class QuizGeneratorService {
     let content = '';
     let quiz: GeneratedQuiz | null = null;
     let lastValidationReason = '';
+    let generationAttempts = 0;
+    let validationCalls = 0;
+    let usageComplete = true;
+    const usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+
+    const includeUsage = (callUsage: OpenAIUsage | null) => {
+      if (!callUsage) {
+        usageComplete = false;
+        return;
+      }
+      usage.inputTokens += callUsage.inputTokens;
+      usage.outputTokens += callUsage.outputTokens;
+      usage.totalTokens += callUsage.totalTokens;
+    };
 
     try {
       for (let attempt = 1; attempt <= DAILY_QUIZ_GENERATION_MAX_ATTEMPTS; attempt += 1) {
@@ -131,9 +163,14 @@ export class QuizGeneratorService {
                 '- Se houver codigo, explicite escopo, ordem de execucao, valor final ou erro sem ambiguidades.',
               ].join('\n');
 
-        content = await this.requestQuizGeneration(apiKey, model, promptUsed);
+        generationAttempts += 1;
+        const generation = await this.requestQuizGeneration(apiKey, model, promptUsed);
+        content = generation.content;
+        includeUsage(generation.usage);
         quiz = this.normalizeGeneratedQuiz(content, targetDifficulty);
+        validationCalls += 1;
         const validation = await this.validateGeneratedQuiz(apiKey, model, quiz);
+        includeUsage(validation.usage);
 
         if (validation.isValid && validation.correctIndex === quiz.correctIndex) {
           break;
@@ -174,6 +211,12 @@ export class QuizGeneratorService {
             type: 'QUIZ',
             prompt: promptUsed,
             response: content,
+            model,
+            inputTokens: usageComplete ? usage.inputTokens : null,
+            outputTokens: usageComplete ? usage.outputTokens : null,
+            totalTokens: usageComplete ? usage.totalTokens : null,
+            generationAttempts,
+            validationCalls,
           },
         });
 
@@ -225,7 +268,11 @@ export class QuizGeneratorService {
     }
   }
 
-  private async requestQuizGeneration(apiKey: string, model: string, prompt: string) {
+  private async requestQuizGeneration(
+    apiKey: string,
+    model: string,
+    prompt: string,
+  ): Promise<OpenAICompletion> {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -259,7 +306,7 @@ export class QuizGeneratorService {
       throw new BadRequestException('Resposta vazia da OpenAI');
     }
 
-    return content;
+    return { content, usage: this.extractUsage(data?.usage) };
   }
 
   private normalizeGeneratedQuiz(content: string, fallbackDifficulty: Difficulty): GeneratedQuiz {
@@ -329,7 +376,7 @@ export class QuizGeneratorService {
     apiKey: string,
     model: string,
     quiz: GeneratedQuiz,
-  ): Promise<{ isValid: boolean; correctIndex: number | null; reason: string }> {
+  ): Promise<QuizValidation> {
     const validationPrompt = buildDailyQuizValidationPrompt(quiz);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -355,14 +402,24 @@ export class QuizGeneratorService {
     if (!response.ok) {
       const text = await response.text();
       this.logger.error(`Falha na validacao OpenAI (${response.status}): ${text}`);
-      return { isValid: false, correctIndex: null, reason: 'Falha na chamada de validacao' };
+      return {
+        isValid: false,
+        correctIndex: null,
+        reason: 'Falha na chamada de validacao',
+        usage: null,
+      };
     }
 
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
       this.logger.error(`Validacao da IA sem conteudo: ${JSON.stringify(data)}`);
-      return { isValid: false, correctIndex: null, reason: 'Resposta de validacao vazia' };
+      return {
+        isValid: false,
+        correctIndex: null,
+        reason: 'Resposta de validacao vazia',
+        usage: this.extractUsage(data?.usage),
+      };
     }
 
     try {
@@ -372,11 +429,37 @@ export class QuizGeneratorService {
       const correctIndex = Number.isInteger(validationCorrectIndex) ? validationCorrectIndex : null;
       const reason = String(parsed?.reason || '').trim();
 
-      return { isValid, correctIndex, reason };
+      return { isValid, correctIndex, reason, usage: this.extractUsage(data?.usage) };
     } catch {
       this.logger.error(`Falha ao fazer parse do JSON de validacao da IA: ${content}`);
-      return { isValid: false, correctIndex: null, reason: 'JSON de validacao invalido' };
+      return {
+        isValid: false,
+        correctIndex: null,
+        reason: 'JSON de validacao invalido',
+        usage: this.extractUsage(data?.usage),
+      };
     }
+  }
+
+  private extractUsage(rawUsage: unknown): OpenAIUsage | null {
+    if (!rawUsage || typeof rawUsage !== 'object') {
+      return null;
+    }
+
+    const usage = rawUsage as Record<string, unknown>;
+    const inputTokens = Number(usage.prompt_tokens ?? usage.input_tokens);
+    const outputTokens = Number(usage.completion_tokens ?? usage.output_tokens);
+    const totalTokens = Number(usage.total_tokens);
+
+    if (
+      !Number.isFinite(inputTokens) ||
+      !Number.isFinite(outputTokens) ||
+      !Number.isFinite(totalTokens)
+    ) {
+      return null;
+    }
+
+    return { inputTokens, outputTokens, totalTokens };
   }
 
   private parseJsonFromText(text: string) {
