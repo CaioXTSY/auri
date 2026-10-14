@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-13",
+  "actualCalls": 257,
+  "generated": 92,
+  "persisted": 60,
+  "pending": 60,
+  "difficulties": [
+    {
+      "difficulty": "FACIL",
+      "requested": 28,
+      "persisted": 20
+    },
+    {
+      "difficulty": "MEDIO",
+      "requested": 29,
+      "persisted": 20
+    },
+    {
+      "difficulty": "DIFICIL",
+      "requested": 35,
+      "persisted": 20
+    }
+  ],
+  "positions": [
+    {
+      "alternative": "A",
+      "count": 17,
+      "percentage": 28.333333333333332
+    },
+    {
+      "alternative": "B",
+      "count": 12,
+      "percentage": 20
+    },
+    {
+      "alternative": "C",
+      "count": 17,
+      "percentage": 28.333333333333332
+    },
+    {
+      "alternative": "D",
+      "count": 14,
+      "percentage": 23.333333333333332
+    }
+  ],
+  "integrityFailures": 0
+}

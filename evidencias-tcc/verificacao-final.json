@@ -1,0 +1,16 @@
+{
+  "sensitiveValueMatches": 0,
+  "tests": 141,
+  "passed": 141,
+  "failed": 0,
+  "notExecuted": 0,
+  "savedQuizzes": 60,
+  "roundTrips": 60,
+  "optionExplanationPairs": 60,
+  "pending": 47,
+  "automaticRejections": 13,
+  "changedSourceHashes": 0,
+  "push": false,
+  "deploy": false,
+  "productionDatabaseAccess": false
+}

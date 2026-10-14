@@ -1,0 +1,282 @@
+{
+  "date": "2026-10-13",
+  "timezone": "America/Sao_Paulo",
+  "testedCodeCommit": "090eb79d018261abadd904f2beec44b29b0e6ecb",
+  "final": {
+    "slots": 92,
+    "persisted": 60,
+    "failedSlots": 32,
+    "generatedCandidates": 183,
+    "rejectedCandidates": 123,
+    "calls": 257,
+    "structuralRejections": 6,
+    "semanticRejections": 14,
+    "retrospectiveWarningCandidates": 110,
+    "retrospectiveWarningCounts": {
+      "EXPLICACAO_REFERENCIA_POSICAO": 110
+    },
+    "positions": [
+      {
+        "alternative": "A",
+        "count": 17,
+        "percentage": 28.333333333333332
+      },
+      {
+        "alternative": "B",
+        "count": 12,
+        "percentage": 20
+      },
+      {
+        "alternative": "C",
+        "count": 17,
+        "percentage": 28.333333333333332
+      },
+      {
+        "alternative": "D",
+        "count": 14,
+        "percentage": 23.333333333333332
+      }
+    ],
+    "rawPositions": [
+      {
+        "alternative": "A",
+        "count": 30
+      },
+      {
+        "alternative": "B",
+        "count": 21
+      },
+      {
+        "alternative": "C",
+        "count": 7
+      },
+      {
+        "alternative": "D",
+        "count": 2
+      }
+    ],
+    "requested": [
+      {
+        "difficulty": "FACIL",
+        "slots": 28,
+        "persisted": 20
+      },
+      {
+        "difficulty": "MEDIO",
+        "slots": 29,
+        "persisted": 20
+      },
+      {
+        "difficulty": "DIFICIL",
+        "slots": 35,
+        "persisted": 20
+      }
+    ],
+    "persistedDifficultyDivergences": 0,
+    "estimatedDifficulty": {
+      "FACIL": {
+        "FACIL": 20
+      },
+      "MEDIO": {
+        "FACIL": 10,
+        "MEDIO": 10
+      },
+      "DIFICIL": {
+        "FACIL": 16,
+        "MEDIO": 4
+      }
+    },
+    "exactRepeatedQuestions": 1,
+    "shuffleIntegrityFailures": 0,
+    "costs": [
+      {
+        "model": "gpt-4o-mini-2024-07-18",
+        "operation": "generation",
+        "calls": 183,
+        "inputTokens": 250884,
+        "outputTokens": 52246,
+        "cachedTokens": 110464,
+        "missingUsage": 0,
+        "estimatedUSD": 0.06069539999999999,
+        "httpFailures": 0
+      },
+      {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "operation": "semantic_review",
+        "calls": 74,
+        "inputTokens": 46055,
+        "outputTokens": 9173,
+        "cachedTokens": 0,
+        "missingUsage": 0,
+        "estimatedUSD": 0.0330988,
+        "httpFailures": 0
+      }
+    ],
+    "totalEstimatedUSD": 0.0937942,
+    "meanEstimatedUSDPerSavedQuestion": 0.0015632366666666665,
+    "humanApprovals": 0,
+    "humanRejections": 0
+  },
+  "preliminary": {
+    "slots": 72,
+    "persisted": 60,
+    "failedSlots": 12,
+    "generatedCandidates": 112,
+    "rejectedCandidates": 52,
+    "calls": 214,
+    "structuralRejections": 10,
+    "semanticRejections": 42,
+    "retrospectiveWarningCandidates": 38,
+    "retrospectiveWarningCounts": {
+      "POSSIVEL_EXPLICACAO_CONTRADITORIA": 2,
+      "EXPLICACAO_REFERENCIA_POSICAO": 36
+    },
+    "positions": [
+      {
+        "alternative": "A",
+        "count": 16,
+        "percentage": 26.666666666666668
+      },
+      {
+        "alternative": "B",
+        "count": 11,
+        "percentage": 18.333333333333332
+      },
+      {
+        "alternative": "C",
+        "count": 17,
+        "percentage": 28.333333333333332
+      },
+      {
+        "alternative": "D",
+        "count": 16,
+        "percentage": 26.666666666666668
+      }
+    ],
+    "rawPositions": [
+      {
+        "alternative": "A",
+        "count": 25
+      },
+      {
+        "alternative": "B",
+        "count": 20
+      },
+      {
+        "alternative": "C",
+        "count": 14
+      },
+      {
+        "alternative": "D",
+        "count": 1
+      }
+    ],
+    "requested": [
+      {
+        "difficulty": "FACIL",
+        "slots": 27,
+        "persisted": 20
+      },
+      {
+        "difficulty": "MEDIO",
+        "slots": 22,
+        "persisted": 20
+      },
+      {
+        "difficulty": "DIFICIL",
+        "slots": 23,
+        "persisted": 20
+      }
+    ],
+    "persistedDifficultyDivergences": 0,
+    "estimatedDifficulty": {
+      "FACIL": {
+        "FACIL": 20
+      },
+      "MEDIO": {
+        "MEDIO": 17,
+        "FACIL": 3
+      },
+      "DIFICIL": {
+        "MEDIO": 16,
+        "DIFICIL": 2,
+        "FACIL": 2
+      }
+    },
+    "exactRepeatedQuestions": 1,
+    "shuffleIntegrityFailures": 0,
+    "costs": [
+      {
+        "model": "gpt-4o-mini-2024-07-18",
+        "operation": "generation",
+        "calls": 111,
+        "inputTokens": 137739,
+        "outputTokens": 31461,
+        "cachedTokens": 40192,
+        "missingUsage": 0,
+        "estimatedUSD": 0.03652305,
+        "httpFailures": 0
+      },
+      {
+        "model": "gpt-4o-mini-2024-07-18",
+        "operation": "semantic_review",
+        "calls": 102,
+        "inputTokens": 57429,
+        "outputTokens": 8482,
+        "cachedTokens": 0,
+        "missingUsage": 0,
+        "estimatedUSD": 0.013703549999999997,
+        "httpFailures": 0
+      },
+      {
+        "model": "gpt-4o-mini",
+        "operation": "generation",
+        "calls": 1,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "missingUsage": 1,
+        "estimatedUSD": 0,
+        "httpFailures": 1
+      }
+    ],
+    "totalEstimatedUSD": 0.050226599999999996,
+    "meanEstimatedUSDPerSavedQuestion": 0.00083711,
+    "humanApprovals": 0,
+    "humanRejections": 0
+  },
+  "databaseChecks": {
+    "finalQuizRecords": 60,
+    "pending": 47,
+    "automaticallyRejected": 13,
+    "completeRoundTrips": 60,
+    "matchingUsageAudits": 92,
+    "failures": []
+  },
+  "pricing": {
+    "gpt-4o-mini": {
+      "input": 0.15,
+      "cached": 0.075,
+      "output": 0.6,
+      "source": "https://developers.openai.com/api/docs/models/gpt-4o-mini"
+    },
+    "gpt-4.1-mini": {
+      "input": 0.4,
+      "cached": 0.1,
+      "output": 1.6,
+      "source": "https://developers.openai.com/api/docs/models/gpt-4.1-mini"
+    }
+  },
+  "accountingLimitations": [
+    "Provider billing statements were not available.",
+    "An initial interrupted pilot may have completed calls that were not durably recorded. The observed combined cost is a lower bound for the entire session, not a complete invoice. Final phase calls are durably recorded."
+  ],
+  "finalCodeExecution": {
+    "OUTPUT_MATCHES_KEY": 26,
+    "INCONCLUSIVE": 34
+  },
+  "preliminaryCodeExecution": {
+    "OUTPUT_MATCHES_KEY": 32,
+    "INCONCLUSIVE": 28
+  }
+}

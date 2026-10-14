@@ -1,0 +1,8 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": MySQL database "auri_tcc_20261013" at "127.0.0.1:33307"
+
+3 migrations found in prisma/migrations
+
+
+No pending migrations to apply.

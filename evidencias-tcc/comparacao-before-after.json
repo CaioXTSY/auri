@@ -1,0 +1,30 @@
+{
+  "baseCommit": "4fdd914a07fdca80c70dd43af47f48fb8eb4a38c",
+  "environment": "isolated local MariaDB",
+  "externalCalls": 0,
+  "comparableRanking": {
+    "before": {
+      "xp": 480,
+      "global": 475,
+      "classroom": 475,
+      "visiblePosition": 2
+    },
+    "repaired": {
+      "xp": 480,
+      "global": 480,
+      "classroom": 480,
+      "visiblePosition": 1
+    },
+    "afterRepeat": 480
+  },
+  "structuralValidation": {
+    "beforeAccepted": true,
+    "beforeCorrectIndex": 0,
+    "beforeDifficulty": "MEDIO",
+    "afterRejected": true
+  },
+  "limitations": [
+    "Progression/achievement callbacks stubbed only in this comparison; full services separately tested in API integration suite.",
+    "Historical AI records are not recreated by this synthetic comparison."
+  ]
+}

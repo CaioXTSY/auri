@@ -1,0 +1,25 @@
+{
+  "node": "v26.4.0",
+  "backend": {
+    "@nestjs/core": "11.1.28",
+    "@nestjs/common": "11.1.28",
+    "@prisma/client": "5.22.0",
+    "typescript": "5.9.3",
+    "jest": "29.7.0",
+    "openai": "4.104.0"
+  },
+  "frontend": {
+    "react": "19.2.4",
+    "vite": "7.3.6",
+    "typescript": "5.9.3",
+    "@playwright/test": "1.58.1"
+  },
+  "mariaDB": "10.4.32",
+  "initialBranch": "main",
+  "initialCommit": "4fdd914a07fdca80c70dd43af47f48fb8eb4a38c",
+  "preexistingChanges": [],
+  "implementationCommit": "090eb79d018261abadd904f2beec44b29b0e6ecb",
+  "productionChanges": false,
+  "push": false,
+  "deploy": false
+}

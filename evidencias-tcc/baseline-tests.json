@@ -1,0 +1,297 @@
+{
+  "suites": 10,
+  "passedSuites": 10,
+  "tests": 57,
+  "passed": 57,
+  "failed": 0,
+  "results": [
+    {
+      "file": "\\backend\\src\\modules\\auth\\auth.service.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "AuthService should be defined",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService validateUser should return user without password if credentials are valid",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService validateUser should return null if user not found",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService validateUser should return null if password is incorrect",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService login should return tokens and user on successful login",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService login should throw UnauthorizedException if credentials are invalid",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService register should create user and return tokens",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService refreshToken should return new tokens if refresh token is valid",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService refreshToken should throw UnauthorizedException if refresh token is invalid",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService forgotPassword should return success message",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService forgotPassword should return success message even if email does not exist",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService resetPassword should reset password successfully",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService resetPassword should throw BadRequestException if token is invalid",
+          "status": "passed"
+        },
+        {
+          "name": "AuthService logout should clear refresh token",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\modules\\classes\\classes.service.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "ClassesService.remove impede que professor remova qualquer turma",
+          "status": "passed"
+        },
+        {
+          "name": "ClassesService.remove permite que administrador remova uma turma existente",
+          "status": "passed"
+        },
+        {
+          "name": "ClassesService.remove retorna not found quando a turma nao existe",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\modules\\activities\\activities.service.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "ActivitiesService authorization blocks a professor from creating an activity in another teacher class",
+          "status": "passed"
+        },
+        {
+          "name": "ActivitiesService authorization hides an activity from a student who is not enrolled",
+          "status": "passed"
+        },
+        {
+          "name": "ActivitiesService authorization blocks a professor from viewing another teacher submission",
+          "status": "passed"
+        },
+        {
+          "name": "ActivitiesService authorization rejects a grade above the activity maximum",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\modules\\users\\users.service.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "UsersService should be defined",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService create should create a new user with hashed password",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService findAll should return paginated users",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService findAll should filter by role",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService findAll should filter by name",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService findAll should sort results",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService findOne should return a user by id",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService findOne should throw NotFoundException if user not found",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService findByEmail should return a user by email",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService update should update a user",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService update should hash password when updating",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService updateAvatar should update user avatar",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService remove should delete a user",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService updateRefreshToken should update refresh token",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService clearRefreshToken should clear refresh token",
+          "status": "passed"
+        },
+        {
+          "name": "UsersService updatePassword should update user password",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\modules\\missions\\quiz-generator.service.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "QuizGeneratorService usage metrics persists the approved first attempt and the aggregate generation and validation usage",
+          "status": "passed"
+        },
+        {
+          "name": "QuizGeneratorService usage metrics aggregates rejected and approved calls but persists only the approved prompt and response",
+          "status": "passed"
+        },
+        {
+          "name": "QuizGeneratorService usage metrics keeps token metrics unavailable when an OpenAI response omits usage",
+          "status": "passed"
+        },
+        {
+          "name": "QuizGeneratorService usage metrics stops after the maximum of three rejected attempts and persists no rejected generation",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\modules\\programming\\programming-assignments.service.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "ProgrammingAssignmentsService should list only published student assignments from classes with activities enabled",
+          "status": "passed"
+        },
+        {
+          "name": "ProgrammingAssignmentsService should not open solve view when assignment is unpublished, inaccessible or disabled",
+          "status": "passed"
+        },
+        {
+          "name": "ProgrammingAssignmentsService should restrict professor assignment list to classes they created",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\health\\health.controller.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "HealthController reports API and database availability without exposing internals",
+          "status": "passed"
+        },
+        {
+          "name": "HealthController returns a sanitized 503 response when the database is unavailable",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\modules\\programming\\code-submissions.service.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CodeSubmissionsService should reject official submission after due date when late submissions are disabled",
+          "status": "passed"
+        },
+        {
+          "name": "CodeSubmissionsService should allow official submission after due date when class allows late submissions",
+          "status": "passed"
+        },
+        {
+          "name": "CodeSubmissionsService should require enabled activities and student enrollment before creating run submission",
+          "status": "passed"
+        },
+        {
+          "name": "CodeSubmissionsService should hide input, expected, actual and error from hidden tests for students",
+          "status": "passed"
+        },
+        {
+          "name": "CodeSubmissionsService should block professor from viewing submissions from another teacher class",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\worker\\code-runner.worker.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "code-runner.worker getFinalStatus should accept when all tests passed",
+          "status": "passed"
+        },
+        {
+          "name": "code-runner.worker getFinalStatus should return wrong answer when execution is valid but at least one test failed",
+          "status": "passed"
+        },
+        {
+          "name": "code-runner.worker getFinalStatus should prioritize timeout over wrong answer",
+          "status": "passed"
+        },
+        {
+          "name": "code-runner.worker getFinalStatus should prioritize runtime error over wrong answer",
+          "status": "passed"
+        },
+        {
+          "name": "code-runner.worker normalizeOutput should trim trailing spaces per line and trailing blank lines",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "\\backend\\src\\common\\http\\cors.spec.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CORS origins uses configured origins and never treats wildcard as an allowed origin",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

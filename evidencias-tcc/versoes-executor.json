@@ -1,0 +1,65 @@
+[
+  {
+    "command": [
+      "wsl.exe",
+      "-d",
+      "AURI-TCC-Judge",
+      "--",
+      "docker",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "node:20-alpine",
+      "node",
+      "--version"
+    ],
+    "output": "v20.20.2"
+  },
+  {
+    "command": [
+      "wsl.exe",
+      "-d",
+      "AURI-TCC-Judge",
+      "--",
+      "docker",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "python:3.12-alpine",
+      "python",
+      "--version"
+    ],
+    "output": "Python 3.12.15"
+  },
+  {
+    "command": [
+      "wsl.exe",
+      "-d",
+      "AURI-TCC-Judge",
+      "--",
+      "docker",
+      "version",
+      "--format",
+      "{{.Server.Version}}"
+    ],
+    "output": "29.9.0"
+  },
+  {
+    "command": [
+      "wsl.exe",
+      "-d",
+      "AURI-TCC-Judge",
+      "--",
+      "docker",
+      "image",
+      "inspect",
+      "node:20-alpine",
+      "python:3.12-alpine",
+      "--format",
+      "{{.Id}} {{json .RepoDigests}}"
+    ],
+    "output": "sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 [\"node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293\"]\nsha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4 [\"python@sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4\"]"
+  }
+]

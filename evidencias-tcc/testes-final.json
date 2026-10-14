@@ -1,0 +1,1032 @@
+{
+  "codeCommit": "090eb79d018261abadd904f2beec44b29b0e6ecb",
+  "suites": [
+    {
+      "name": "unit",
+      "total": 84,
+      "passed": 84,
+      "failed": 0,
+      "notExecuted": 0,
+      "tests": [
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics persists the approved first attempt and the aggregate generation and validation usage",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics aggregates rejected and approved calls but persists only the approved prompt and response",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics keeps token metrics unavailable when an OpenAI response omits usage",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics stops after three rejections, audits failed costs and creates no usable quiz",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics selects actual daily difficulty for 0 correct answers out of 20",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics selects actual daily difficulty for 10 correct answers out of 20",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics selects actual daily difficulty for 20 correct answers out of 20",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics blocks evaluation against a nonlocal or non-evaluation database before calling OpenAI",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "test": "QuizGeneratorService usage metrics rejects a repeated question before semantic review and records all generation costs",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService should be defined",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService validateUser should return user without password if credentials are valid",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService validateUser should return null if user not found",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService validateUser should return null if password is incorrect",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService login should return tokens and user on successful login",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService login should throw UnauthorizedException if credentials are invalid",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService register should create user and return tokens",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService refreshToken should return new tokens if refresh token is valid",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService refreshToken should throw UnauthorizedException if refresh token is invalid",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService forgotPassword should return success message",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService forgotPassword should return success message even if email does not exist",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService resetPassword should reset password successfully",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService resetPassword should throw BadRequestException if token is invalid",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "test": "AuthService logout should clear refresh token",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/classes/classes.service.spec.ts",
+          "test": "ClassesService.remove impede que professor remova qualquer turma",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/classes/classes.service.spec.ts",
+          "test": "ClassesService.remove permite que administrador remova uma turma existente",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/classes/classes.service.spec.ts",
+          "test": "ClassesService.remove retorna not found quando a turma nao existe",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService should be defined",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService create should create a new user with hashed password",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService findAll should return paginated users",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService findAll should filter by role",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService findAll should filter by name",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService findAll should sort results",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService findOne should return a user by id",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService findOne should throw NotFoundException if user not found",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService findByEmail should return a user by email",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService update should update a user",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService update should hash password when updating",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService updateAvatar should update user avatar",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService remove should delete a user",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService updateRefreshToken should update refresh token",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService clearRefreshToken should clear refresh token",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "test": "UsersService updatePassword should update user password",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/programming-assignments.service.spec.ts",
+          "test": "ProgrammingAssignmentsService should list only published student assignments from classes with activities enabled",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/programming-assignments.service.spec.ts",
+          "test": "ProgrammingAssignmentsService should not open solve view when assignment is unpublished, inaccessible or disabled",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/programming-assignments.service.spec.ts",
+          "test": "ProgrammingAssignmentsService should restrict professor assignment list to classes they created",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle preserves requested difficulty FACIL",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle preserves requested difficulty MEDIO",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle preserves requested difficulty DIFICIL",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects missing title",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects missing question",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects empty option",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects duplicate option",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects case duplicate",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects three options",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects invalid option type",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects missing index",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects null index",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects string index",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects negative index",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects outside index",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects fraction index",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects empty explanation",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects missing explanations",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects invalid difficulty",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle rejects malformed JSON and difficulty disagreement rather than silently replacing it",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle preserves every option/explanation and correct answer across all 24 permutations",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "test": "Quiz structural validation and unbiased shuffle identifies warnings as suspicions for review",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/health/health.controller.spec.ts",
+          "test": "HealthController reports API and database availability without exposing internals",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/health/health.controller.spec.ts",
+          "test": "HealthController returns a sanitized 503 response when the database is unavailable",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "test": "CodeSubmissionsService should reject official submission after due date when late submissions are disabled",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "test": "CodeSubmissionsService should allow official submission after due date when class allows late submissions",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "test": "CodeSubmissionsService should require enabled activities and student enrollment before creating run submission",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "test": "CodeSubmissionsService should hide input, expected, actual and error from hidden tests for students",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "test": "CodeSubmissionsService should block professor from viewing submissions from another teacher class",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "test": "ActivitiesService authorization blocks a professor from creating an activity in another teacher class",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "test": "ActivitiesService authorization hides an activity from a student who is not enrolled",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "test": "ActivitiesService authorization blocks a professor from viewing another teacher submission",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "test": "ActivitiesService authorization rejects a grade above the activity maximum",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "test": "code-runner.worker getFinalStatus should accept when all tests passed",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "test": "code-runner.worker getFinalStatus should return wrong answer when execution is valid but at least one test failed",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "test": "code-runner.worker getFinalStatus should prioritize timeout over wrong answer",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "test": "code-runner.worker getFinalStatus should prioritize runtime error over wrong answer",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "test": "code-runner.worker normalizeOutput should trim trailing spaces per line and trailing blank lines",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/src/common/http/cors.spec.ts",
+          "test": "CORS origins uses configured origins and never treats wildcard as an allowed origin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        }
+      ]
+    },
+    {
+      "name": "api",
+      "total": 45,
+      "passed": 45,
+      "failed": 0,
+      "notExecuted": 0,
+      "tests": [
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (GET) should return paginated users for admin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (GET) should return paginated users for professor",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (GET) should filter users by role",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (GET) should paginate results",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (GET) should fail without authentication",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (GET) should fail for aluno role",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/me (GET) should return current user profile",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/me (GET) should fail without authentication",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/:id (GET) should return user by id",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/:id (GET) should return 404 for non-existent user",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/me (PATCH) should update own profile",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/me (PATCH) should reject role changes on own profile",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/:id (PATCH) should update user as admin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/:id (PATCH) should fail as non-admin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/me/avatar (POST) should upload avatar for current user",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/me/avatar (POST) should fail without file",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (POST) should create user as admin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users (POST) should fail as non-admin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/:id (DELETE) should delete user as admin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "test": "UsersController (e2e) /users/:id (DELETE) should fail as non-admin",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /health (GET) should report API and database availability",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/register (POST) should register a new user",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/register (POST) should fail with invalid email",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/register (POST) should fail with short password",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/login (POST) should login successfully",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/login (POST) should fail with wrong password",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/login (POST) should fail with non-existent email",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/login (POST) should block repeated login attempts with HTTP 429",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/refresh (POST) should refresh token successfully",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/refresh (POST) should fail with invalid refresh token",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/forgot-password (POST) should send reset password email",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/forgot-password (POST) should return success even for non-existent email",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/logout (POST) should logout successfully",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "test": "AuthController (e2e) /auth/logout (POST) should fail without token",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation counts one enrolled student, includes owner only in participants, excludes pending enrollment",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation keeps XP and both persisted rankings at 475, 480, 485, with no repeated mission or quiz credit",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation rejects fractional answer and blocks completing a quiz without answering",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation applies shared structural validation and author audit to manually published quizzes",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation gates pending content, enforces reviewer permissions and publishes only after recorded approval",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation grants one achievement reward under concurrency and rolls back state together with XP",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation credits grading once under concurrency",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation keeps exactly one daily pending quiz across two generator instances and exposes no future quiz",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation awards a seven-day streak bonus once despite simultaneous updates",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation credits programming from the ledger, including reprocessing and score improvement",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "test": "TCC real isolated database and API validation excludes staff before positioning, breaks ties deterministically, removes unenrolled stale entries and supports >100 students",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        }
+      ]
+    },
+    {
+      "name": "docker",
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "notExecuted": 0,
+      "tests": [
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "test": "Docker code runner integration executes JavaScript and returns stdout",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "test": "Docker code runner integration executes Python and returns stdout",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "test": "Docker code runner integration enforces the configured execution timeout",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "test": "Docker code runner integration does not allow outbound network access",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "test": "Docker code runner integration runs with a read-only root filesystem",
+          "status": "passed",
+          "expected": "All assertions in the named test must hold",
+          "obtained": "All asserted contracts verified"
+        }
+      ]
+    },
+    {
+      "name": "browser",
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "notExecuted": 0,
+      "tests": [
+        {
+          "file": "accessibility.spec.ts",
+          "test": "/ has no critical or serious axe violations",
+          "status": "passed",
+          "expected": "UI assertions in the named scenario must hold",
+          "obtained": "passed"
+        },
+        {
+          "file": "accessibility.spec.ts",
+          "test": "/login has no critical or serious axe violations",
+          "status": "passed",
+          "expected": "UI assertions in the named scenario must hold",
+          "obtained": "passed"
+        },
+        {
+          "file": "accessibility.spec.ts",
+          "test": "/register has no critical or serious axe violations",
+          "status": "passed",
+          "expected": "UI assertions in the named scenario must hold",
+          "obtained": "passed"
+        },
+        {
+          "file": "accessibility.spec.ts",
+          "test": "/forgot-password has no critical or serious axe violations",
+          "status": "passed",
+          "expected": "UI assertions in the named scenario must hold",
+          "obtained": "passed"
+        },
+        {
+          "file": "accessibility.spec.ts",
+          "test": "login remains usable by keyboard at 320px",
+          "status": "passed",
+          "expected": "UI assertions in the named scenario must hold",
+          "obtained": "passed"
+        },
+        {
+          "file": "basic.spec.ts",
+          "test": "home renders and can navigate to login",
+          "status": "passed",
+          "expected": "UI assertions in the named scenario must hold",
+          "obtained": "passed"
+        },
+        {
+          "file": "quiz-review.spec.ts",
+          "test": "authorized review UI displays key and explanations, records a reason and removes approved quiz",
+          "status": "passed",
+          "expected": "UI assertions in the named scenario must hold",
+          "obtained": "passed"
+        }
+      ]
+    }
+  ],
+  "total": 141,
+  "passed": 141,
+  "failed": 0,
+  "notExecuted": 0
+}

@@ -1,0 +1,130 @@
+{
+  "actor": "Automated technical audit and Codex-assisted inspection, not a human teacher",
+  "humanReviews": 0,
+  "analyzed": 60,
+  "automaticRejections": 13,
+  "remainingPending": 47,
+  "executionKeyMismatches": 6,
+  "positionReferenceCandidates": 7,
+  "duplicateQuestions": 1,
+  "findings": [
+    {
+      "missionId": "7f3d1668-2d0c-4a0a-88e4-35d1d1737108",
+      "title": "Entendendo Funções e Parâmetros em Python",
+      "flags": [
+        "CODE_EXECUTION_KEY_MISMATCH"
+      ],
+      "executionFinding": "Python printed 1010101010 without TypeError. None of the options gives the actual output; key and explanations wrongly deny string repetition.",
+      "duplicateOf": null
+    },
+    {
+      "missionId": "7cacfa45-cdc5-4413-a2a6-50020bc44fad",
+      "title": "Análise de Strings em Python",
+      "flags": [
+        "EXPLICACAO_REFERENCIA_POSICAO"
+      ],
+      "executionFinding": null,
+      "duplicateOf": null
+    },
+    {
+      "missionId": "45a26a4b-becd-4ed5-a267-dc157c521696",
+      "title": "Laços de Repetição em JavaScript",
+      "flags": [
+        "REPEATED_QUESTION"
+      ],
+      "executionFinding": null,
+      "duplicateOf": "f94fae42-b1a3-408d-b6b4-1a2311ad10e1"
+    },
+    {
+      "missionId": "55ac1950-c27a-4539-968d-a8859bcfd04e",
+      "title": "Análise de Condicionais em Python",
+      "flags": [
+        "EXPLICACAO_REFERENCIA_POSICAO"
+      ],
+      "executionFinding": null,
+      "duplicateOf": null
+    },
+    {
+      "missionId": "58c09147-0e50-452b-aa1f-3c204816843a",
+      "title": "Análise de Funções e Parâmetros em Python",
+      "flags": [
+        "CODE_EXECUTION_KEY_MISMATCH"
+      ],
+      "executionFinding": "Python printed 50 5555555555 without TypeError. None of the options gives the actual output; the keyed TypeError is incorrect.",
+      "duplicateOf": null
+    },
+    {
+      "missionId": "62340d9e-0a90-44b7-a70a-a806fef26c74",
+      "title": "Análise de Complexidade de Algoritmos com Listas",
+      "flags": [
+        "EXPLICACAO_REFERENCIA_POSICAO"
+      ],
+      "executionFinding": null,
+      "duplicateOf": null
+    },
+    {
+      "missionId": "16ddd341-5d23-44f3-b76f-faadf6708f55",
+      "title": "Entendendo Recursão com Números de Fibonacci",
+      "flags": [
+        "EXPLICACAO_REFERENCIA_POSICAO"
+      ],
+      "executionFinding": null,
+      "duplicateOf": null
+    },
+    {
+      "missionId": "de4a3516-539e-44da-8549-575f30a062ae",
+      "title": "Laços de Repetição e Contagem de Números",
+      "flags": [
+        "EXPLICACAO_REFERENCIA_POSICAO"
+      ],
+      "executionFinding": null,
+      "duplicateOf": null
+    },
+    {
+      "missionId": "e8aa8278-83a3-4f90-b213-160ea62e046d",
+      "title": "Análise de Funções com Parâmetros Opcionais",
+      "flags": [
+        "CODE_EXECUTION_KEY_MISMATCH"
+      ],
+      "executionFinding": "Python printed 40.0, whereas the key says 20.0. The explanation uses a denominator not present in the code; no option gives 40.0.",
+      "duplicateOf": null
+    },
+    {
+      "missionId": "5967b803-c7d5-41f3-a8cc-f165bab5346b",
+      "title": "Análise de Strings em Python",
+      "flags": [
+        "EXPLICACAO_REFERENCIA_POSICAO",
+        "CODE_EXECUTION_KEY_MISMATCH"
+      ],
+      "executionFinding": "Python printed OACAMARGORP, whereas the key says OACIMARGORP. No option gives the actual output; explanation also refers to positions.",
+      "duplicateOf": null
+    },
+    {
+      "missionId": "7898d568-c345-451c-bcf4-f25ecc639e43",
+      "title": "Desvendando Recursão com Estruturas de Dados",
+      "flags": [
+        "CODE_EXECUTION_KEY_MISMATCH"
+      ],
+      "executionFinding": "JavaScript printed 10 without error for the provided four-element array. The question presupposes an error and selects conditional stack overflow for a different input size; the actual output is option A.",
+      "duplicateOf": null
+    },
+    {
+      "missionId": "f630bc71-e9d1-4183-a10e-726c50c9bb7b",
+      "title": "Análise de Funções com Parâmetros Múltiplos",
+      "flags": [
+        "CODE_EXECUTION_KEY_MISMATCH"
+      ],
+      "executionFinding": "Python printed 10.0, whereas the key says 15.0. The fourth option gives the actual output; the explanation incorrectly evaluates 30/3 as 15.",
+      "duplicateOf": null
+    },
+    {
+      "missionId": "6dc6a903-ec2f-47be-8b62-08f4f743a293",
+      "title": "Desvendando o Comportamento de Funções em Python",
+      "flags": [
+        "EXPLICACAO_REFERENCIA_POSICAO"
+      ],
+      "executionFinding": null,
+      "duplicateOf": null
+    }
+  ]
+}
