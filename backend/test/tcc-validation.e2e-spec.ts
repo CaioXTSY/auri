@@ -126,7 +126,9 @@ describe('TCC real isolated database and API validation', () => {
       await prisma.class.deleteMany({ where: { id: { in: classes } } });
       await prisma.achievement.deleteMany({ where: { id: { in: achievements } } });
       await prisma.user.deleteMany({ where: { id: { in: users } } });
-      const dir = resolve(__dirname, '../../evidencias-tcc');
+      const dir = process.env.TCC_EVIDENCE_DIR
+        ? resolve(process.env.TCC_EVIDENCE_DIR)
+        : resolve(__dirname, '../../evidencias-tcc');
       mkdirSync(dir, { recursive: true });
       writeFileSync(resolve(dir, 'integracao-resultados.json'), JSON.stringify(evidence, null, 2));
     }
