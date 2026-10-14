@@ -1,0 +1,21 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": MySQL database "auri_tcc_final_20261013" at "127.0.0.1:33308"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20260921000000_initial_schema`
+Applying migration `20260921120000_add_ai_generation_usage_metrics`
+Applying migration `20261013000000_tcc_validation`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260921000000_initial_schema/
+    └─ migration.sql
+  └─ 20260921120000_add_ai_generation_usage_metrics/
+    └─ migration.sql
+  └─ 20261013000000_tcc_validation/
+    └─ migration.sql
+
+All migrations have been successfully applied.

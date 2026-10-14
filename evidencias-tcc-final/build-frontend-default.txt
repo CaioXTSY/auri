@@ -1,0 +1,35 @@
+
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+npm.cmd : X [ERROR] Cannot read directory "../../../..": Access is denied.
+At line:2 char:1
++ npm.cmd run build *> '../evidencias-tcc-final/build-frontend-default. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (X [ERROR] Canno...cess is denied.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+X [ERROR] Could not resolve "C:\\Users\\extas\\OneDrive\\Documentos\\GitHub\\auri\\frontend\\vite.config.ts"
+
+failed to load config from C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\vite.config.ts
+error during build:
+Error: Build failed with 2 errors:
+error: Cannot read directory "../../../..": Access is denied.
+error: Could not resolve "C:\\Users\\extas\\OneDrive\\Documentos\\GitHub\\auri\\frontend\\vite.config.ts"
+    at failureErrorWithLog
+(C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:926:25
+    at runOnEndCallbacks
+(C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:1307:45)
+    at buildResponseToResult
+(C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:924:7)
+    at C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:951:16
+    at responseCallbacks.<computed>
+(C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket
+(C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout
+(C:\Users\extas\OneDrive\Documentos\GitHub\auri\frontend\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:509:20)
+    at addChunk (node:internal/streams/readable:568:12)

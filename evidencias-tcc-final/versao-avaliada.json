@@ -1,0 +1,165 @@
+{
+  "generatedAt": "2026-10-14T01:56:48.124Z",
+  "branch": "main",
+  "initialCommit": "98f7ff3edafc6c9fb1aa263f49dd1f0f7a53b372",
+  "testedCommit": "e7232418923d5f5bf61ba3615b27bdca2c950d71",
+  "priorSourceCommit": "090eb79d018261abadd904f2beec44b29b0e6ecb",
+  "initialWorkingTree": "clean",
+  "node": "v26.4.0",
+  "database": {
+    "engine": "MariaDB 10.4.32",
+    "host": "127.0.0.1",
+    "port": 33308,
+    "name": "auri_tcc_final_20261013",
+    "dataDirectory": "C:/Users/extas/AppData/Local/Temp/auri-tcc-final-20261013/db"
+  },
+  "dependencies": {
+    "backend/@nestjs/core": "11.1.28",
+    "backend/@prisma/client": "5.22.0",
+    "backend/prisma": "5.22.0",
+    "backend/jest": "29.7.0",
+    "backend/typescript": "5.9.3",
+    "backend/openai": "4.104.0",
+    "frontend/react": "19.2.4",
+    "frontend/vite": "7.3.6",
+    "frontend/typescript": "5.9.3",
+    "frontend/@playwright/test": "1.58.1"
+  },
+  "sourceDifferencesFromPreviousHashManifest": [
+    "backend/test/tcc-validation.e2e-spec.ts"
+  ],
+  "productionSourceDiffFromPriorCommit": "",
+  "newTest": "backend/test/final-smoke.e2e-spec.ts",
+  "newRealOpenAiCalls": 0,
+  "historicalDatabaseReopened": false,
+  "historicalPreservation": [
+    {
+      "file": "RELATORIO_VALIDACAO_TCC.md",
+      "sha256": "7f444c0a10d9f721bc3ed15de30703d524bf0df236d1110fdc6cbea5c1d67b23"
+    },
+    {
+      "file": "evidencias-tcc/amostra-final.csv",
+      "sha256": "61dfb261a4d75fc2b8f29a2b79f044e4943de58c2915954098eda107a77be017"
+    },
+    {
+      "file": "evidencias-tcc/arquivos-alterados.txt",
+      "sha256": "128f58aa0d4c4be8130a351560c8417fb16e892ba82a28375d86922a726a70bf"
+    },
+    {
+      "file": "evidencias-tcc/baseline-tests.json",
+      "sha256": "2751a5fddcc6e9a0729f1125f4531d75a113274ed757ead19f46a4c59cfc3d75"
+    },
+    {
+      "file": "evidencias-tcc/comparacao-before-after.json",
+      "sha256": "e7cd1f9e9e87c177ba72a6ce16ac2b62da0db38637ed4a8f8b303fc0957cd4b8"
+    },
+    {
+      "file": "evidencias-tcc/encerramento.json",
+      "sha256": "a965051d965489b48a1a57de789af72417019457881f1cc3b42cb6aaf56538d9"
+    },
+    {
+      "file": "evidencias-tcc/experimento-preliminar-resumo.json",
+      "sha256": "46ea8bc720dc32b08d011de15de9e41db08f2bbc51f65dabbc40267fdebe4040"
+    },
+    {
+      "file": "evidencias-tcc/experimento-resumo.json",
+      "sha256": "e33f4baed5948af45714590222a08a3332941e7157fbc7641e480f6f8872fce2"
+    },
+    {
+      "file": "evidencias-tcc/fontes-testadas-sha256.json",
+      "sha256": "6ec45f28a6f33ceb01b3054a91d15736c78af0297fd9a738460f4980db8c2c07"
+    },
+    {
+      "file": "evidencias-tcc/integracao-resultados.json",
+      "sha256": "f718d45d40f09b05be94d3401eb731bffa34c4bf52e25977295689db03b99cb5"
+    },
+    {
+      "file": "evidencias-tcc/integridade-embaralhamento.json",
+      "sha256": "8686d6811edd6d8a0d27ad42b6ce5a9ebd7748150fcb06db2bce0795b6d79e99"
+    },
+    {
+      "file": "evidencias-tcc/metricas-consolidadas.json",
+      "sha256": "e048c3e621ccb57e68793088846e2d6a76fd4ccbda7e4f4842b67037a25635dc"
+    },
+    {
+      "file": "evidencias-tcc/openai-calls.jsonl",
+      "sha256": "dd1aea36de11aa1c1edecb5e1c0d1c629a3398d8144ea5a6c34ca738b4f2069d"
+    },
+    {
+      "file": "evidencias-tcc/quizzes-preliminares-execucao.json",
+      "sha256": "cbc206887e84e45d98535c842598f7275885a9493b1361a55af2dbfd84391017"
+    },
+    {
+      "file": "evidencias-tcc/quizzes-preliminares.json",
+      "sha256": "8e3357e9ca75b9c3d0f4e77a44330cbda771a6bf51d513d0da220cdec1ca9918"
+    },
+    {
+      "file": "evidencias-tcc/quizzes-reais-execucao.json",
+      "sha256": "928a4f398f3d612f32759bf8b3fa9ce665eb1d7739052d0f121dcbf5cb706f69"
+    },
+    {
+      "file": "evidencias-tcc/quizzes-reais.json",
+      "sha256": "0496281a0f1acb77d89b1d57afcf0682c771a5f883c9701987488fd8f39cc4b5"
+    },
+    {
+      "file": "evidencias-tcc/revisao-tecnica-pos-geracao.json",
+      "sha256": "275512c8e1f007f0f2758cd7773e7dfe08bdee8662365d93ab6f76157dc78c1f"
+    },
+    {
+      "file": "evidencias-tcc/tcc-build-backend.txt",
+      "sha256": "90fdc6b82ce742979378e802c050462b2209fe6d96a52535f2bab5a818b31316"
+    },
+    {
+      "file": "evidencias-tcc/tcc-build-frontend-native.txt",
+      "sha256": "b0d19e5eefed038307d83638a3fc141812e14decfec0fe42c4427aa67f15ff57"
+    },
+    {
+      "file": "evidencias-tcc/tcc-build-runner.txt",
+      "sha256": "762b80231243182b235e93dbabdec1c92b8fa48120794f9af60106fa76ddc2ec"
+    },
+    {
+      "file": "evidencias-tcc/tcc-lint-backend.txt",
+      "sha256": "79c0a7cfc950d1efbeb11c4e9e52e8fb010ae33d587ed6c9244e6cca98f33bf0"
+    },
+    {
+      "file": "evidencias-tcc/tcc-lint-frontend.txt",
+      "sha256": "31298a090b4d326219614a2b109f11bc9be6ea420c4b2fa47c181368d3733a26"
+    },
+    {
+      "file": "evidencias-tcc/tcc-migration-final.txt",
+      "sha256": "6209d6c5ba54c63306c00896be3ce8eb081f5e89bfc5f6d118b7fbc50359707e"
+    },
+    {
+      "file": "evidencias-tcc/tcc-migration-fresh.txt",
+      "sha256": "52578bc4a10b0c1f23f036ba5631e2a2adde4384d46c90d620cd29a31f41a342"
+    },
+    {
+      "file": "evidencias-tcc/tcc-prisma-validate.txt",
+      "sha256": "483432523a78fa44681fee60e1cd497511aeddecdd4e4fb99157c8b9252431eb"
+    },
+    {
+      "file": "evidencias-tcc/testes-final.json",
+      "sha256": "fa679de5d3c985ab13bdfae2a4101e995ea85b39d7e3fac899cf5b0ff3acfd65"
+    },
+    {
+      "file": "evidencias-tcc/verificacao-final.json",
+      "sha256": "b34a3bb0d71d5633223539a7b2cec97d15f69691f2b2dd91f47e41dbacd23b54"
+    },
+    {
+      "file": "evidencias-tcc/versao-avaliada.json",
+      "sha256": "f078a9f9ac5a3f213c645b327a9c3362362ec3a33fa5471b97c44e13dc9bb3ec"
+    },
+    {
+      "file": "evidencias-tcc/versoes-executor.json",
+      "sha256": "039e1af94f67baa1743bcdb11ad4e3e0df97640f3e2c7627990867a3fe9ff0d3"
+    }
+  ],
+  "migrationBom": {
+    "originalGitBlobSha256": "6515c7e601d7f264b0f710499055bcd96104b2ac12b50bc07246d7b7aaccce59",
+    "correctedGitBlobSha256": "f83cb0db153badfc5bef3ae0306da5cc5757fb66710b4704f71d58ceefd187eb",
+    "differsOnlyByUtf8BomInGit": true,
+    "currentPhysicalFileSha256": "17ae39d4f1ef66f70d39326d425da05d34854150de75ff9e5aab24e49ce4a39e",
+    "existingInstallationChecksumMayDiffer": true,
+    "productionHistoryChanged": false
+  }
+}

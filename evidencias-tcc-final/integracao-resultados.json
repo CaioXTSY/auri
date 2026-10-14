@@ -1,0 +1,462 @@
+[
+  {
+    "scenario": "Enrolled student count",
+    "expected": 1,
+    "obtained": 1
+  },
+  {
+    "scenario": "Participants vs students",
+    "expected": {
+      "participants": 2,
+      "students": 1,
+      "owners": 1
+    },
+    "obtained": {
+      "participants": 2,
+      "students": 1,
+      "owners": 1
+    }
+  },
+  {
+    "scenario": "Initial XP/rankings",
+    "expected": {
+      "xp": 475,
+      "global": 475,
+      "classroom": 475
+    },
+    "obtained": {
+      "xp": 475,
+      "global": 475,
+      "classroom": 475
+    }
+  },
+  {
+    "scenario": "Concurrent mission completion statuses",
+    "expected": [
+      201,
+      400
+    ],
+    "obtained": [
+      201,
+      400
+    ]
+  },
+  {
+    "scenario": "Mission XP/rankings",
+    "expected": {
+      "xp": 480,
+      "global": 480,
+      "classroom": 480
+    },
+    "obtained": {
+      "xp": 480,
+      "global": 480,
+      "classroom": 480
+    }
+  },
+  {
+    "scenario": "No early answer leak",
+    "expected": {
+      "correctIndex": false,
+      "explanations": false
+    },
+    "obtained": {
+      "correctIndex": false,
+      "explanations": false
+    }
+  },
+  {
+    "scenario": "Wrong answer XP",
+    "expected": 480,
+    "obtained": 480
+  },
+  {
+    "scenario": "Concurrent quiz answer statuses",
+    "expected": [
+      201,
+      400
+    ],
+    "obtained": [
+      201,
+      400
+    ]
+  },
+  {
+    "scenario": "Quiz XP/rankings",
+    "expected": {
+      "xp": 485,
+      "global": 485,
+      "classroom": 485
+    },
+    "obtained": {
+      "xp": 485,
+      "global": 485,
+      "classroom": 485
+    }
+  },
+  {
+    "scenario": "Quiz bypass XP",
+    "expected": 485,
+    "obtained": 485
+  },
+  {
+    "scenario": "Manual synthetic publication audit",
+    "expected": {
+      "status": "APPROVED",
+      "author": true,
+      "difficulty": "FACIL",
+      "points": 40
+    },
+    "obtained": {
+      "status": "APPROVED",
+      "author": true,
+      "difficulty": "FACIL",
+      "points": 40
+    }
+  },
+  {
+    "scenario": "Synthetic approval audit",
+    "expected": {
+      "status": "APPROVED",
+      "reviewer": true,
+      "timestamp": true
+    },
+    "obtained": {
+      "status": "APPROVED",
+      "reviewer": true,
+      "timestamp": true
+    }
+  },
+  {
+    "scenario": "Achievement reward once",
+    "expected": {
+      "xp": 515,
+      "credits": 1,
+      "unlocks": 1
+    },
+    "obtained": {
+      "xp": 515,
+      "credits": 1,
+      "unlocks": 1
+    }
+  },
+  {
+    "scenario": "Rollback XP",
+    "expected": 515,
+    "obtained": 515
+  },
+  {
+    "scenario": "Achievement reflected in class ranking",
+    "expected": 515,
+    "obtained": 515
+  },
+  {
+    "scenario": "Concurrent grading XP",
+    "expected": {
+      "xp": 100,
+      "credits": 1,
+      "storedXp": 100
+    },
+    "obtained": {
+      "xp": 100,
+      "credits": 1,
+      "storedXp": 100
+    }
+  },
+  {
+    "scenario": "Daily concurrent persistence with simulated generation",
+    "expected": {
+      "missions": 1,
+      "pending": "PENDING"
+    },
+    "obtained": {
+      "missions": 1,
+      "pending": "PENDING"
+    }
+  },
+  {
+    "scenario": "Explicit automatic mode with simulated generation",
+    "expected": {
+      "published": true,
+      "status": "APPROVED",
+      "humanReviewer": null
+    },
+    "obtained": {
+      "published": true,
+      "status": "APPROVED",
+      "humanReviewer": null
+    }
+  },
+  {
+    "scenario": "Concurrent streak bonus",
+    "expected": {
+      "streak": 7,
+      "credits": 1,
+      "xp": 565
+    },
+    "obtained": {
+      "streak": 7,
+      "credits": 1,
+      "xp": 565
+    }
+  },
+  {
+    "scenario": "Programming concurrent rewards",
+    "expected": [
+      0,
+      70
+    ],
+    "obtained": [
+      0,
+      70
+    ]
+  },
+  {
+    "scenario": "Programming improvement delta",
+    "expected": 30,
+    "obtained": 30
+  },
+  {
+    "scenario": "Programming reprocessing delta",
+    "expected": 0,
+    "obtained": 0
+  },
+  {
+    "scenario": "Grading plus programming XP",
+    "expected": 200,
+    "obtained": 200
+  },
+  {
+    "scenario": "Unenrolled ranking removal",
+    "expected": [
+      "ddafd642-5766-497d-996c-0d1ac98cbe38"
+    ],
+    "obtained": [
+      "ddafd642-5766-497d-996c-0d1ac98cbe38"
+    ]
+  },
+  {
+    "scenario": "Global ranking >100 eligible users",
+    "expected": 103,
+    "obtained": 103
+  },
+  {
+    "scenario": "Global ranking contiguous student positions",
+    "expected": true,
+    "obtained": true
+  },
+  {
+    "scenario": "Deterministic ties",
+    "expected": [
+      "028234b0-68c5-4f0d-a4a3-e93f221884cf",
+      "0d0540a8-361d-419a-b7be-45d10736aca7",
+      "0f29c7d7-4eaa-4009-926b-7b03e8fc2139",
+      "103723e4-26d6-4a79-baa2-73211c92400b",
+      "11910a56-343f-4888-baf7-ca5c94136e44",
+      "13afa4de-2d2a-412e-9018-87f2aa39f319",
+      "14962978-edef-4a06-a5f8-d6bf259e0e5d",
+      "14b867e2-0a81-4dc4-9924-5dbfb5e4ca3c",
+      "1a7e57d3-6f4e-4f9e-a659-9b2fea1478e7",
+      "1c59f582-5b94-40fc-8dba-5053adb16bff",
+      "2163caf1-bc15-4107-b05b-57e13ca7824b",
+      "22d93437-6c34-4b46-a3fe-0e7964f2a8f0",
+      "243790ed-6851-47b2-b091-a0195b6a9c77",
+      "2ae39f4b-48cd-4806-850b-b1c30bcb9171",
+      "30bcbb5f-4027-4029-99b5-a3fffdfd0647",
+      "31c6d68f-6cf3-4eee-96c4-844ee2f990d3",
+      "36d1f664-650c-4292-9fb0-7114a8f4ed8d",
+      "37865751-b449-4957-ba03-1567d7d73269",
+      "382857bd-c194-4ce1-a860-420fd3652b6d",
+      "38868653-beb7-4499-ada7-e00e7b4ffea8",
+      "3c679c79-8a93-4749-a1d2-a8e75424a454",
+      "40018f49-3b19-481f-8dc4-6454af1badd7",
+      "40ea1dcc-a727-4123-848a-6a093089612b",
+      "44cfd5ce-fd8b-4dfc-b61e-98f0b5e158dd",
+      "4782e9a8-3428-4681-82bf-7fd3c071a3d3",
+      "47e19458-1621-4e73-a792-3aed9f163af4",
+      "4e0fe122-9795-4292-9893-a3cb968ba0ad",
+      "4e45c6d8-c1e9-42a7-83b9-5c2033180fc5",
+      "4fda2918-3ffd-457c-8f24-21a151cc7ed8",
+      "52e56cc1-fe04-49f1-8cf9-ad015fa40f0f",
+      "5df14b1e-b54e-47a1-8274-0d06b49ef892",
+      "624aaf4e-dd62-4707-a427-499d7c188aa3",
+      "63c05429-9e9f-44ea-a1d9-5d359930e1e6",
+      "63f5e68a-9b2e-4f4a-ae6e-728a4a5c326a",
+      "657bc4a6-4fdb-47d4-8ec9-a0ae3090fce5",
+      "667ca76a-a4d5-44d7-9f0c-30a63803420e",
+      "68e3a02e-c2c1-48b4-82cc-09f156a3a174",
+      "6e4c9e65-5259-4908-9894-7a5993660cf9",
+      "708a4b37-3eab-4b33-8194-b505517767a2",
+      "715cd331-fe20-4fba-81e7-0899b13bd2f4",
+      "71e6b75b-4f92-4917-9737-f718aaa1e509",
+      "72397a52-7502-45a3-bb3f-a1a4903ee363",
+      "724e6900-e19f-45b7-9943-fdf949d74955",
+      "727d62d7-0edd-4958-a3f9-533126fb8dee",
+      "7bb166a1-a366-4044-a3cc-aab9d974cff6",
+      "7f308c4f-136c-4e1e-bc62-d1fc2dd7bc8f",
+      "7ffc8960-096d-4585-89e1-32c25cd9858f",
+      "802d3cc4-6042-48a0-8beb-326dafd535d3",
+      "806eb267-d29e-4d65-b19d-85e303fe4c9a",
+      "8464ab51-e0e8-4ac0-b39a-c91c5abe24ba",
+      "879209c1-0146-42f1-8cf9-a9d0550dc424",
+      "893ac5e8-e850-4e24-8cb3-a0c42aa78faf",
+      "8a688d35-62da-41c9-8e3b-63fc7083093a",
+      "8b95061c-04f8-4c76-9b05-4cdfdc71fadc",
+      "8c46f530-7c43-465a-a260-36b0e6309433",
+      "90b69ca9-e38c-4a3d-b76f-bdee8528a2bb",
+      "911caf31-2c38-4c34-9ae1-4759f28201c6",
+      "95c29898-bee0-451c-a808-216f4c69bed0",
+      "96cc1e21-c750-4440-b12d-094cd2428e47",
+      "9d2f83da-94bf-44d4-9491-f3e028938fe2",
+      "9e0009a9-12b9-49ce-9b94-fd9b122f9dbb",
+      "9f805ea2-420d-4b47-a795-028d6f82ca59",
+      "a193a3d8-bf5f-4cc4-ba38-2e326f2d9ccc",
+      "a31b15f9-d01b-4062-a0cd-a7ce9b442c32",
+      "a445245c-9228-4808-8de1-bdd89f58c92c",
+      "a46d2b8e-f99a-4fdc-a471-62fef571aef9",
+      "a4a7e886-e9c4-4901-aff1-d027a48d78ef",
+      "a4b93d1d-8ccf-4e8f-a7f4-70b36d5db7c8",
+      "a5d126fa-428b-4c62-ab6f-a15b19c99923",
+      "ae9e843e-c026-4e1f-a3f8-2d1d2fc6e085",
+      "b08c46fe-c179-4370-810d-d240c01e173e",
+      "b0f6432b-a0c0-4719-b745-47b1d4047bc7",
+      "b4ebdd07-2217-47af-b361-dbe6478377ea",
+      "bbb7cedf-0b04-40e2-a7a3-e1bb8250ffee",
+      "bcb788ff-020f-43d1-b5dc-c2039b539bda",
+      "bfd0a40a-d68b-487b-bd23-f25b96e8056e",
+      "c3096dcc-5800-4dce-964f-e3a130b21cf9",
+      "c5d4b534-a176-4803-82b5-f23dafd623d4",
+      "c62e4af3-2c41-4c2f-ae93-c60d10408089",
+      "ca00aeb8-9e80-46f6-a8c2-ca13d89a9d49",
+      "ccdf62dc-f940-4d77-93d3-14335638ef21",
+      "ce83bee7-c5fe-4cfd-a9c9-7764f8b9768c",
+      "d1f9b12a-53fa-4a1d-9011-19d69fc962a2",
+      "d26d482d-f950-4327-a267-30213765dbf5",
+      "d3392245-d0af-456f-9276-9af4bdbbab15",
+      "d8b4339a-c4ef-4162-9f4c-5b8ae2cf38ef",
+      "da4a00d2-2a30-434b-9cd8-d6fc375cce92",
+      "dc26bdda-6962-414a-b921-3b0240b3cfc7",
+      "dd7f616a-7363-44e6-8b4c-39d4353cd176",
+      "ecd5bc3e-50c0-4774-8376-8d85f8ded68e",
+      "ee813923-5b3d-417f-94dc-31b174809eff",
+      "f05a90b5-a880-42db-973a-ac0bb1ea4c97",
+      "f0fd2abc-ba25-4d5d-a400-239bc80a1a3c",
+      "f1eec926-233e-49dc-8b55-06a294c4b4d1",
+      "f26eb61f-c91e-4e4c-aad1-1be65b3997e9",
+      "f376b88b-328b-4716-b1f1-89404ac5f69e",
+      "f7ce3bae-4b2a-4245-875a-4119350e9cc3",
+      "fae4ff85-319d-40df-8325-7bc169f53980",
+      "fbcadce1-8754-4f08-95ac-dd844ec10a9a",
+      "fd8246da-7cf7-4460-916b-f1b0583303d9",
+      "ff8d9370-a9e3-4cb7-8470-29e720eeb66c"
+    ],
+    "obtained": [
+      "028234b0-68c5-4f0d-a4a3-e93f221884cf",
+      "0d0540a8-361d-419a-b7be-45d10736aca7",
+      "0f29c7d7-4eaa-4009-926b-7b03e8fc2139",
+      "103723e4-26d6-4a79-baa2-73211c92400b",
+      "11910a56-343f-4888-baf7-ca5c94136e44",
+      "13afa4de-2d2a-412e-9018-87f2aa39f319",
+      "14962978-edef-4a06-a5f8-d6bf259e0e5d",
+      "14b867e2-0a81-4dc4-9924-5dbfb5e4ca3c",
+      "1a7e57d3-6f4e-4f9e-a659-9b2fea1478e7",
+      "1c59f582-5b94-40fc-8dba-5053adb16bff",
+      "2163caf1-bc15-4107-b05b-57e13ca7824b",
+      "22d93437-6c34-4b46-a3fe-0e7964f2a8f0",
+      "243790ed-6851-47b2-b091-a0195b6a9c77",
+      "2ae39f4b-48cd-4806-850b-b1c30bcb9171",
+      "30bcbb5f-4027-4029-99b5-a3fffdfd0647",
+      "31c6d68f-6cf3-4eee-96c4-844ee2f990d3",
+      "36d1f664-650c-4292-9fb0-7114a8f4ed8d",
+      "37865751-b449-4957-ba03-1567d7d73269",
+      "382857bd-c194-4ce1-a860-420fd3652b6d",
+      "38868653-beb7-4499-ada7-e00e7b4ffea8",
+      "3c679c79-8a93-4749-a1d2-a8e75424a454",
+      "40018f49-3b19-481f-8dc4-6454af1badd7",
+      "40ea1dcc-a727-4123-848a-6a093089612b",
+      "44cfd5ce-fd8b-4dfc-b61e-98f0b5e158dd",
+      "4782e9a8-3428-4681-82bf-7fd3c071a3d3",
+      "47e19458-1621-4e73-a792-3aed9f163af4",
+      "4e0fe122-9795-4292-9893-a3cb968ba0ad",
+      "4e45c6d8-c1e9-42a7-83b9-5c2033180fc5",
+      "4fda2918-3ffd-457c-8f24-21a151cc7ed8",
+      "52e56cc1-fe04-49f1-8cf9-ad015fa40f0f",
+      "5df14b1e-b54e-47a1-8274-0d06b49ef892",
+      "624aaf4e-dd62-4707-a427-499d7c188aa3",
+      "63c05429-9e9f-44ea-a1d9-5d359930e1e6",
+      "63f5e68a-9b2e-4f4a-ae6e-728a4a5c326a",
+      "657bc4a6-4fdb-47d4-8ec9-a0ae3090fce5",
+      "667ca76a-a4d5-44d7-9f0c-30a63803420e",
+      "68e3a02e-c2c1-48b4-82cc-09f156a3a174",
+      "6e4c9e65-5259-4908-9894-7a5993660cf9",
+      "708a4b37-3eab-4b33-8194-b505517767a2",
+      "715cd331-fe20-4fba-81e7-0899b13bd2f4",
+      "71e6b75b-4f92-4917-9737-f718aaa1e509",
+      "72397a52-7502-45a3-bb3f-a1a4903ee363",
+      "724e6900-e19f-45b7-9943-fdf949d74955",
+      "727d62d7-0edd-4958-a3f9-533126fb8dee",
+      "7bb166a1-a366-4044-a3cc-aab9d974cff6",
+      "7f308c4f-136c-4e1e-bc62-d1fc2dd7bc8f",
+      "7ffc8960-096d-4585-89e1-32c25cd9858f",
+      "802d3cc4-6042-48a0-8beb-326dafd535d3",
+      "806eb267-d29e-4d65-b19d-85e303fe4c9a",
+      "8464ab51-e0e8-4ac0-b39a-c91c5abe24ba",
+      "879209c1-0146-42f1-8cf9-a9d0550dc424",
+      "893ac5e8-e850-4e24-8cb3-a0c42aa78faf",
+      "8a688d35-62da-41c9-8e3b-63fc7083093a",
+      "8b95061c-04f8-4c76-9b05-4cdfdc71fadc",
+      "8c46f530-7c43-465a-a260-36b0e6309433",
+      "90b69ca9-e38c-4a3d-b76f-bdee8528a2bb",
+      "911caf31-2c38-4c34-9ae1-4759f28201c6",
+      "95c29898-bee0-451c-a808-216f4c69bed0",
+      "96cc1e21-c750-4440-b12d-094cd2428e47",
+      "9d2f83da-94bf-44d4-9491-f3e028938fe2",
+      "9e0009a9-12b9-49ce-9b94-fd9b122f9dbb",
+      "9f805ea2-420d-4b47-a795-028d6f82ca59",
+      "a193a3d8-bf5f-4cc4-ba38-2e326f2d9ccc",
+      "a31b15f9-d01b-4062-a0cd-a7ce9b442c32",
+      "a445245c-9228-4808-8de1-bdd89f58c92c",
+      "a46d2b8e-f99a-4fdc-a471-62fef571aef9",
+      "a4a7e886-e9c4-4901-aff1-d027a48d78ef",
+      "a4b93d1d-8ccf-4e8f-a7f4-70b36d5db7c8",
+      "a5d126fa-428b-4c62-ab6f-a15b19c99923",
+      "ae9e843e-c026-4e1f-a3f8-2d1d2fc6e085",
+      "b08c46fe-c179-4370-810d-d240c01e173e",
+      "b0f6432b-a0c0-4719-b745-47b1d4047bc7",
+      "b4ebdd07-2217-47af-b361-dbe6478377ea",
+      "bbb7cedf-0b04-40e2-a7a3-e1bb8250ffee",
+      "bcb788ff-020f-43d1-b5dc-c2039b539bda",
+      "bfd0a40a-d68b-487b-bd23-f25b96e8056e",
+      "c3096dcc-5800-4dce-964f-e3a130b21cf9",
+      "c5d4b534-a176-4803-82b5-f23dafd623d4",
+      "c62e4af3-2c41-4c2f-ae93-c60d10408089",
+      "ca00aeb8-9e80-46f6-a8c2-ca13d89a9d49",
+      "ccdf62dc-f940-4d77-93d3-14335638ef21",
+      "ce83bee7-c5fe-4cfd-a9c9-7764f8b9768c",
+      "d1f9b12a-53fa-4a1d-9011-19d69fc962a2",
+      "d26d482d-f950-4327-a267-30213765dbf5",
+      "d3392245-d0af-456f-9276-9af4bdbbab15",
+      "d8b4339a-c4ef-4162-9f4c-5b8ae2cf38ef",
+      "da4a00d2-2a30-434b-9cd8-d6fc375cce92",
+      "dc26bdda-6962-414a-b921-3b0240b3cfc7",
+      "dd7f616a-7363-44e6-8b4c-39d4353cd176",
+      "ecd5bc3e-50c0-4774-8376-8d85f8ded68e",
+      "ee813923-5b3d-417f-94dc-31b174809eff",
+      "f05a90b5-a880-42db-973a-ac0bb1ea4c97",
+      "f0fd2abc-ba25-4d5d-a400-239bc80a1a3c",
+      "f1eec926-233e-49dc-8b55-06a294c4b4d1",
+      "f26eb61f-c91e-4e4c-aad1-1be65b3997e9",
+      "f376b88b-328b-4716-b1f1-89404ac5f69e",
+      "f7ce3bae-4b2a-4245-875a-4119350e9cc3",
+      "fae4ff85-319d-40df-8325-7bc169f53980",
+      "fbcadce1-8754-4f08-95ac-dd844ec10a9a",
+      "fd8246da-7cf7-4460-916b-f1b0583303d9",
+      "ff8d9370-a9e3-4cb7-8470-29e720eeb66c"
+    ]
+  },
+  {
+    "scenario": "Staff excluded",
+    "expected": false,
+    "obtained": false
+  }
+]

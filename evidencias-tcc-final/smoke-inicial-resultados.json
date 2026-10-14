@@ -1,0 +1,27 @@
+[
+  {
+    "scenario": "Enrollment initially pending",
+    "expected": "PENDING_APPROVAL",
+    "obtained": "PENDING_APPROVAL"
+  },
+  {
+    "scenario": "Pending request is not an enrollment",
+    "expected": 0,
+    "obtained": 0
+  },
+  {
+    "scenario": "Approved enrollment persisted",
+    "expected": 1,
+    "obtained": 1
+  },
+  {
+    "scenario": "Activity starts as draft",
+    "expected": "DRAFT",
+    "obtained": "DRAFT"
+  },
+  {
+    "scenario": "Publication persisted",
+    "expected": "PUBLISHED",
+    "obtained": "PUBLISHED"
+  }
+]

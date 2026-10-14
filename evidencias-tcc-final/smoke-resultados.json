@@ -1,0 +1,76 @@
+[
+  {
+    "scenario": "Enrollment initially pending",
+    "expected": "PENDING_APPROVAL",
+    "obtained": "PENDING_APPROVAL"
+  },
+  {
+    "scenario": "Pending request is not an enrollment",
+    "expected": 0,
+    "obtained": 0
+  },
+  {
+    "scenario": "Approved enrollment persisted",
+    "expected": 1,
+    "obtained": 1
+  },
+  {
+    "scenario": "Activity starts as draft",
+    "expected": "DRAFT",
+    "obtained": "DRAFT"
+  },
+  {
+    "scenario": "Publication persisted",
+    "expected": "PUBLISHED",
+    "obtained": "PUBLISHED"
+  },
+  {
+    "scenario": "Submission persisted",
+    "expected": "SUBMITTED",
+    "obtained": "SUBMITTED"
+  },
+  {
+    "scenario": "Grade state and reward",
+    "expected": {
+      "status": "GRADED",
+      "score": 80,
+      "xpAwarded": 25
+    },
+    "obtained": {
+      "status": "GRADED",
+      "score": 80,
+      "xpAwarded": 25
+    }
+  },
+  {
+    "scenario": "Regrading awards XP once",
+    "expected": 25,
+    "obtained": 25
+  },
+  {
+    "scenario": "Enrolled student reads published post",
+    "expected": "a7143a34-5e84-4483-a397-fa49cc27aacd",
+    "obtained": "a7143a34-5e84-4483-a397-fa49cc27aacd"
+  },
+  {
+    "scenario": "Post notification persisted and listed",
+    "expected": true,
+    "obtained": true
+  },
+  {
+    "scenario": "Notification marked read",
+    "expected": true,
+    "obtained": true
+  },
+  {
+    "scenario": "Admin statistics match database",
+    "expected": {
+      "classes": 1,
+      "posts": 1
+    },
+    "obtained": {
+      "classes": 1,
+      "posts": 1
+    }
+  }
+]

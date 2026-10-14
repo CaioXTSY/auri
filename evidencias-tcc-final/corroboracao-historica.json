@@ -1,0 +1,147 @@
+{
+  "method": "Independent read-only recomputation from preserved files using current shape validator and raw call contents; no new generation, database round trip or teacher judgment.",
+  "final": {
+    "requests": 92,
+    "saved": 60,
+    "calls": 257,
+    "successfulCallsWithUsage": 257,
+    "operations": {
+      "generation": 183,
+      "semantic_review": 74
+    },
+    "requestedSavedDifficulty": {
+      "FACIL": 20,
+      "MEDIO": 20,
+      "DIFICIL": 20
+    },
+    "keysAfter": {
+      "B": 12,
+      "A": 17,
+      "D": 14,
+      "C": 17
+    },
+    "keysBefore": {
+      "B": 21,
+      "A": 30,
+      "C": 7,
+      "D": 2
+    },
+    "pairs": 60,
+    "keyPreserved": 60,
+    "mappingFailures": [],
+    "estimatedDifficulty": {
+      "FACIL/FACIL": 20,
+      "MEDIO/FACIL": 10,
+      "MEDIO/MEDIO": 10,
+      "DIFICIL/FACIL": 16,
+      "DIFICIL/MEDIO": 4
+    },
+    "labelDisagreements": 30,
+    "positionReferencesInSaved": 7,
+    "duplicates": [
+      "45a26a4b-becd-4ed5-a267-dc157c521696"
+    ],
+    "byModel": {
+      "generation/gpt-4o-mini-2024-07-18": {
+        "calls": 183,
+        "input": 250884,
+        "output": 52246,
+        "cached": 110464,
+        "estimatedUsd": 0.06069539999999999
+      },
+      "semantic_review/gpt-4.1-mini-2025-04-14": {
+        "calls": 74,
+        "input": 46055,
+        "output": 9173,
+        "cached": 0,
+        "estimatedUsd": 0.0330988
+      }
+    },
+    "estimatedUsd": 0.0937942
+  },
+  "preliminary": {
+    "requests": 72,
+    "saved": 60,
+    "calls": 214,
+    "successfulCallsWithUsage": 213,
+    "operations": {
+      "generation": 112,
+      "semantic_review": 102
+    },
+    "requestedSavedDifficulty": {
+      "FACIL": 20,
+      "MEDIO": 20,
+      "DIFICIL": 20
+    },
+    "keysAfter": {
+      "A": 16,
+      "D": 16,
+      "C": 17,
+      "B": 11
+    },
+    "keysBefore": {
+      "A": 25,
+      "B": 20,
+      "C": 14,
+      "D": 1
+    },
+    "pairs": 60,
+    "keyPreserved": 60,
+    "mappingFailures": [],
+    "estimatedDifficulty": {
+      "FACIL/FACIL": 20,
+      "MEDIO/MEDIO": 17,
+      "MEDIO/FACIL": 3,
+      "DIFICIL/MEDIO": 16,
+      "DIFICIL/DIFICIL": 2,
+      "DIFICIL/FACIL": 2
+    },
+    "labelDisagreements": 21,
+    "positionReferencesInSaved": 15,
+    "duplicates": [
+      "69695bd2-4217-42c5-a975-f6887c5d3738"
+    ],
+    "byModel": {
+      "generation/gpt-4o-mini-2024-07-18": {
+        "calls": 111,
+        "input": 137739,
+        "output": 31461,
+        "cached": 40192,
+        "estimatedUsd": 0.03652305
+      },
+      "semantic_review/gpt-4o-mini-2024-07-18": {
+        "calls": 102,
+        "input": 57429,
+        "output": 8482,
+        "cached": 0,
+        "estimatedUsd": 0.013703549999999997
+      }
+    },
+    "estimatedUsd": 0.050226599999999996
+  },
+  "archivedStates": {
+    "PENDING": 47,
+    "AUTO_REJECTED": 13
+  },
+  "humanReviews": 0,
+  "contentKeyErrors": 6,
+  "historicalExecutionResults": {
+    "OUTPUT_MATCHES_KEY": 26,
+    "INCONCLUSIVE": 34
+  },
+  "historicalDatabaseChecks": {
+    "finalQuizRecords": 60,
+    "pending": 47,
+    "automaticallyRejected": 13,
+    "completeRoundTrips": 60,
+    "matchingUsageAudits": 92,
+    "failures": []
+  },
+  "costRates": "Historical rates recorded in prior report; not a new price lookup or provider invoice.",
+  "costTotalKnownUsd": 0.1440208,
+  "accountingLimitations": [
+    "Provider billing statements were not available.",
+    "An initial interrupted pilot may have completed calls that were not durably recorded. The observed combined cost is a lower bound for the entire session, not a complete invoice. Final phase calls are durably recorded."
+  ],
+  "preservedFiles": 30
+}

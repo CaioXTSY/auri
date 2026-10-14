@@ -1,0 +1,78 @@
+node : PASS test/final-smoke.e2e-spec.ts (6.398 s)
+At line:2 char:273
++ ... sh-secret'; node node_modules/jest/bin/jest.js --config test/jest-e2e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS test/final...ec.ts (6.398 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  ● Console
+
+    console.log
+      ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+    console.log
+      ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+PASS test/users.e2e-spec.ts
+  ● Console
+
+    console.log
+      ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+    console.log
+      Skipping avatar upload test - no test image
+
+      at Object.<anonymous> (users.e2e-spec.ts:240:17)
+
+    console.log
+      ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+PASS test/tcc-validation.e2e-spec.ts
+  ● Console
+
+    console.log
+      ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+    console.log
+      ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+PASS test/auth.e2e-spec.ts
+  ● Console
+
+    console.log
+      ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+    console.log
+      ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+
+Test Suites: 4 passed, 4 total
+Tests:       46 passed, 46 total
+Snapshots:   0 total
+Time:        10.358 s, estimated 21 s
+Ran all test suites.
+Test results written to: ..\evidencias-tcc-final\api-final.json

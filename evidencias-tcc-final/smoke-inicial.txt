@@ -1,0 +1,52 @@
+node :   console.log
+At line:2 char:273
++ ... sh-secret'; node node_modules/jest/bin/jest.js --config test/jest-e2e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (  console.log:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+    ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+  console.log
+    ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+FAIL test/final-smoke.e2e-spec.ts (9.83 s)
+  Final synthetic cross-module API smoke
+    × logs in, approves enrollment, publishes/submits/grades, reads posts and notifications, checks admin access (688
+ms)
+
+  ● Final synthetic cross-module API smoke › logs in, approves enrollment, publishes/submits/grades, reads posts and
+notifications, checks admin access
+
+    expected 403 "Forbidden", got 404 "Not Found"
+
+       96 |     record('Publication persisted', 'PUBLISHED', published.body.status);
+       97 |     await request(app.getHttpServer())
+    >  98 |       .get(`/api/v1/activities/${activity.body.id}`).set(api(outsider)).expect(403);
+          |                                                                         ^
+       99 |     const before = await prisma.userPoint.aggregate({ where: { userId: users[1] }, _sum: { points: true }
+});
+      100 |     const submitted = await request(app.getHttpServer())
+      101 |       .post(`/api/v1/activities/${activity.body.id}/submissions/submit`).set(api(student))
+
+      at Object.<anonymous> (final-smoke.e2e-spec.ts:98:73)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        10.246 s
+Ran all test suites matching /final-smoke/i.
+Test results written to: ..\evidencias-tcc-final\smoke.json

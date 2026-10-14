@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-14T02:01:44.758Z",
+  "testedCodeCommit": "e7232418923d5f5bf61ba3615b27bdca2c950d71",
+  "testsPassed": {
+    "executed": 142,
+    "passed": 142,
+    "failed": 0,
+    "notExecuted": 0
+  },
+  "sourcesStillMatchTestedHashes": true,
+  "historicalFilesUnchanged": 30,
+  "configuredSensitiveValueMatches": 0,
+  "databaseStopped": true,
+  "previewStopped": true,
+  "newRealOpenAiCalls": 0,
+  "productionAccess": false,
+  "googleDocsModified": false,
+  "push": false,
+  "deploy": false,
+  "codeWorkingTree": "clean; new report/evidence files committed separately afterward",
+  "docker": {
+    "server": "29.9.0",
+    "distro": "AURI-TCC-Judge",
+    "nodeImageDigest": "sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293",
+    "pythonImageDigest": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+    "confirmation": "docker version and docker image inspect read-only commands; preexisting daemon left running"
+  }
+}

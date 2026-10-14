@@ -1,0 +1,63 @@
+node : PASS test/users.e2e-spec.ts (6.356 s)
+At line:2 char:273
++ ... sh-secret'; node node_modules/jest/bin/jest.js --config test/jest-e2e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS test/users.e2e-spec.ts (6.356 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  ● Console
+
+    console.log
+      ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+    console.log
+      Skipping avatar upload test - no test image
+
+      at Object.<anonymous> (users.e2e-spec.ts:240:17)
+
+    console.log
+      ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+PASS test/tcc-validation.e2e-spec.ts
+  ● Console
+
+    console.log
+      ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+    console.log
+      ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+PASS test/auth.e2e-spec.ts
+  ● Console
+
+    console.log
+      ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+    console.log
+      ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+
+Test Suites: 3 passed, 3 total
+Tests:       45 passed, 45 total
+Snapshots:   0 total
+Time:        11.379 s, estimated 12 s
+Ran all test suites.
+Test results written to: ..\evidencias-tcc-final\api.json
