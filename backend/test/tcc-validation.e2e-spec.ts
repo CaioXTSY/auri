@@ -444,7 +444,7 @@ describe('TCC real isolated database and API validation', () => {
     );
   });
 
-  it('keeps exactly one daily pending quiz across two generator instances and exposes no future quiz', async () => {
+  it('automatically publishes exactly one daily quiz across two instances, ignores legacy human mode and exposes no future quiz', async () => {
     const generated = await prisma.aIGeneration.create({
       data: { type: 'SYNTHETIC_TCC', prompt: 'Simulated only', response: 'Simulated only' },
     });
@@ -487,8 +487,8 @@ describe('TCC real isolated database and API validation', () => {
     missions.push(...saved.map((m) => m.id));
     record(
       'Daily concurrent persistence with simulated generation',
-      { missions: 1, pending: 'PENDING' },
-      { missions: saved.length, pending: saved[0]?.quiz?.reviewStatus },
+      { missions: 1, published: 'APPROVED' },
+      { missions: saved.length, published: saved[0]?.quiz?.reviewStatus },
     );
     await generators[0].generateDailyQuizMission();
     expect(generators[0].generateReviewedQuiz).toHaveBeenCalledTimes(1);

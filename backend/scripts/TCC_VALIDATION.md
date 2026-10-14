@@ -30,9 +30,9 @@ Cada questão salva fica `PENDING`. As chamadas são registradas individualmente
 
 ## Revisão e publicação
 
-`QUIZ_REVIEW_MODE=human` é o padrão para novas gerações. Na área administrativa de gerações de IA, a fila mostra enunciado, opções, gabarito e explicações, exige justificativa e registra aprovação ou rejeição. Apenas quizzes aprovados são apresentados aos alunos. Professores podem revisar por API somente missões de sua responsabilidade; administradores podem revisar questões globais. Questões preexistentes permanecem disponíveis por compatibilidade, com revisor humano desconhecido.
+Os quizzes diários são publicados automaticamente após validação estrutural, revisão assistida por IA e embaralhamento. Não exigem aprovação humana nem configuração de `QUIZ_REVIEW_MODE`; valores antigos dessa variável são ignorados pelo fluxo diário. Somente quizzes `APPROVED` são apresentados aos alunos. A aprovação automática não representa validação pedagógica.
 
-`QUIZ_REVIEW_MODE=automatic` preserva explicitamente a publicação sem intervenção humana, deixando essa condição registrada. A aprovação automática não representa validação pedagógica. O cron continua gerando diariamente, mas em modo humano o quiz aguarda aprovação. A interface do aluno informa que ele pode estar em revisão. A fila administrativa lista até 100 pendências por vez.
+O cron existente e a geração sob demanda usam o mesmo fluxo automático, limitado a três tentativas. Falhas ficam na auditoria sem criar quiz pendente. Conteúdos históricos pendentes/rejeitados permanecem bloqueados; se ocuparem a chave do dia, uma nova geração válida libera essa chave na mesma transação que publica a nova questão, preservando o conteúdo e seu estado antigo. Questões já publicadas continuam disponíveis. A tela administrativa mantém a auditoria e não exibe fila de aprovação. Os endpoints autorizados de revisão de registros históricos foram conservados por compatibilidade e não são utilizados na geração diária. O modo de avaliação isolada deste guia ainda salva `PENDING` para preservar o experimento sem publicar suas amostras.
 
 ## Execução de código e comparação
 

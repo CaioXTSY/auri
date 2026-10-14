@@ -253,7 +253,7 @@ export class MissionQuizService {
     const mission = await this.getOrCreateTodayDailyQuizMission();
 
     if (!mission || !mission.quiz) {
-      throw new NotFoundException('Quiz diário não encontrado');
+      throw new NotFoundException('Não foi possível disponibilizar um quiz diário válido. Tente novamente mais tarde.');
     }
 
     return {
@@ -272,7 +272,7 @@ export class MissionQuizService {
     const mission = await this.getOrCreateTodayDailyQuizMission();
 
     if (!mission || !mission.quiz) {
-      throw new NotFoundException('Quiz diário não encontrado');
+      throw new NotFoundException('Não foi possível disponibilizar um quiz diário válido. Tente novamente mais tarde.');
     }
 
     const attempt = await this.prisma.missionQuizAttempt.findUnique({
@@ -417,10 +417,6 @@ export class MissionQuizService {
       return mission;
     }
 
-    if (this.configService.get<string>('QUIZ_REVIEW_MODE') !== 'automatic') {
-      await this.quizGeneratorService.generateDailyQuizMission();
-      return this.getTodayDailyQuizMission();
-    }
     const generated = await this.quizGeneratorService.generateDailyQuizMission();
     if (generated) {
       mission = await this.getTodayDailyQuizMission();

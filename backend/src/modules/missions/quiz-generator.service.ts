@@ -88,7 +88,7 @@ export class QuizGeneratorService {
         type: 'DIARIA',
         classId: null,
         startDate: { gte: startOfDay, lte: endOfDay },
-        quiz: { isNot: null },
+        quiz: { is: { reviewStatus: 'APPROVED' } },
       },
       include: { quiz: true },
     });
@@ -98,11 +98,32 @@ export class QuizGeneratorService {
       if (!result.quiz) return null;
       const quiz = result.quiz;
       const mission = await this.prisma.$transaction(async (tx) => {
+        const published = await tx.mission.findFirst({
+          where: {
+            type: 'DIARIA',
+            classId: null,
+            startDate: { gte: startOfDay, lte: endOfDay },
+            quiz: { is: { reviewStatus: 'APPROVED' } },
+          },
+          include: { quiz: true },
+        });
+        if (published) return published;
         const found = await tx.mission.findFirst({
           where: { dailyKey: dayKey },
           include: { quiz: true },
         });
-        if (found) return found;
+        if (found?.quiz?.reviewStatus === 'APPROVED') return found;
+        if (found) {
+          // Preserve unpublished historical content; only free the publication slot.
+          await tx.mission.updateMany({
+            where: {
+              id: found.id,
+              dailyKey: dayKey,
+              OR: [{ quiz: { is: null } }, { quiz: { is: { reviewStatus: { not: 'APPROVED' } } } }],
+            },
+            data: { dailyKey: null },
+          });
+        }
         return tx.mission.create({
           data: {
             title: quiz.title,
@@ -118,7 +139,6 @@ export class QuizGeneratorService {
         });
       });
       if (mission.quiz?.reviewStatus !== 'APPROVED') {
-        this.logger.log(`Quiz diário ${mission.id} aguardando revisão autorizada`);
         return null;
       }
       return {
@@ -287,16 +307,14 @@ export class QuizGeneratorService {
   }
 
   private quizData(quiz: GeneratedQuiz, generationId: string, evaluation: boolean) {
-    const humanReview = this.configService.get<string>('QUIZ_REVIEW_MODE') !== 'automatic';
     return {
       ...quiz,
       aiGenerationId: generationId,
-      reviewStatus: evaluation || humanReview ? 'PENDING' : 'APPROVED',
+      reviewStatus: evaluation ? 'PENDING' : 'APPROVED',
       qualityWarnings: quizWarnings(quiz),
-      reviewReason:
-        evaluation || humanReview
-          ? null
-          : 'Publicação automática configurada; sem validação pedagógica humana',
+      reviewReason: evaluation
+        ? null
+        : 'Publicação após validação automatizada; sem validação pedagógica humana',
     };
   }
 
