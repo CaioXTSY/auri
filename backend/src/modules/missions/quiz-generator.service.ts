@@ -11,7 +11,13 @@ import {
   DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT,
 } from './prompts/daily-quiz.prompt';
 import { getDailyQuizDateWindow } from './daily-quiz-date';
-import { GeneratedQuiz, normalizeGeneratedQuiz, quizWarnings, shuffleQuiz } from './quiz-quality';
+import {
+  GeneratedQuiz,
+  normalizeGeneratedQuiz,
+  quizWarnings,
+  shuffleQuiz,
+  quizContentKey,
+} from './quiz-quality';
 import { appendFileSync } from 'fs';
 
 const END_DATE = new Date('2099-12-31T23:59:59.999Z');
@@ -161,7 +167,7 @@ export class QuizGeneratorService {
         languageHint,
         suggestedTopic:
           options.topic ?? DAILY_QUIZ_TOPICS[Math.floor(Math.random() * DAILY_QUIZ_TOPICS.length)],
-        recentQuizzes,
+        recentQuizzes: recentQuizzes.slice(0, 14),
       });
       if (reason)
         promptUsed += `\nA tentativa anterior foi rejeitada por: ${reason}. Gere uma nova questão corrigida.`;
@@ -180,6 +186,14 @@ export class QuizGeneratorService {
           returnedDifficulty = null;
         }
         const parsed = normalizeGeneratedQuiz(responseUsed, difficulty);
+        if (
+          recentQuizzes.some(
+            (recent) => quizContentKey(recent.question) === quizContentKey(parsed.question),
+          )
+        )
+          throw new BadRequestException(
+            'Enunciado repetido no histórico recente; gere um exemplo diferente',
+          );
         const warnings = quizWarnings(parsed);
         if (warnings.length)
           throw new BadRequestException(
@@ -356,12 +370,17 @@ export class QuizGeneratorService {
 
   private async getRecentQuizSummaries(days: number) {
     const quizzes = await this.prisma.missionQuiz.findMany({
+      where: {
+        aiGenerationId: { not: null },
+        createdAt: { gte: new Date(Date.now() - days * 86400000) },
+      },
       select: { title: true, question: true },
       orderBy: { createdAt: 'desc' },
-      take: days,
+      take: 200,
     });
     return quizzes.map((q) => ({
       title: q.title,
+      question: q.question,
       topic: q.title,
       language: q.question.match(/\b(Python|JavaScript|Java|C\+\+)\b/i)?.[1] ?? null,
     }));

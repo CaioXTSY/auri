@@ -197,17 +197,18 @@ async function main() {
   const checks = {
     finalQuizRecords: 0,
     pending: 0,
+    automaticallyRejected: 0,
     completeRoundTrips: 0,
     matchingUsageAudits: 0,
     failures: [] as string[],
   };
+  const reviewStatuses = new Map<string, string>();
   try {
     for (const record of final) {
       const generation = await prisma.aIGeneration.findUniqueOrThrow({
         where: { id: record.generationId },
       });
-      if (isDeepStrictEqual(generation.callAudit, record.calls))
-        checks.matchingUsageAudits++;
+      if (isDeepStrictEqual(generation.callAudit, record.calls)) checks.matchingUsageAudits++;
       else checks.failures.push(`Audit mismatch ${record.generationId}`);
       if (!record.persisted) continue;
       const mission = await prisma.mission.findUniqueOrThrow({
@@ -215,7 +216,9 @@ async function main() {
         include: { quiz: true },
       });
       checks.finalQuizRecords++;
+      reviewStatuses.set(record.missionId!, mission.quiz!.reviewStatus);
       if (mission.quiz?.reviewStatus === 'PENDING') checks.pending++;
+      if (mission.quiz?.reviewStatus === 'AUTO_REJECTED') checks.automaticallyRejected++;
       const quiz = mission.quiz!;
       const fields = [
         'title',
@@ -263,7 +266,7 @@ async function main() {
             r.returnedDifficulty,
             r.persistedDifficulty,
             'ABCD'[r.quiz!.correctIndex],
-            'PENDING',
+            reviewStatuses.get(r.missionId!) ?? 'UNKNOWN',
           ].join(','),
         )
         .join('\n'),
@@ -271,6 +274,8 @@ async function main() {
   const sourceFiles = execFileSync(
     'git',
     [
+      '-C',
+      resolve(__dirname, '../../'),
       'ls-files',
       'backend/src',
       'backend/prisma',
@@ -306,7 +311,7 @@ async function main() {
     summary.final.persisted !== 60 ||
     summary.final.requested.some((d) => d.persisted !== 20) ||
     checks.failures.length ||
-    checks.pending !== 60
+    checks.pending + checks.automaticallyRejected !== 60
   )
     throw new Error('Final evidence completeness check failed');
 }

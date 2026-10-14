@@ -11,6 +11,10 @@ export type GeneratedQuiz = {
   explanations: string[];
 };
 
+export function quizContentKey(question: string) {
+  return question.normalize('NFKC').trim().replace(/\s+/g, ' ');
+}
+
 export function validateQuizShape(quiz: GeneratedQuiz) {
   const nonempty = (value: unknown): value is string => typeof value === 'string' && !!value.trim();
   if (
@@ -72,7 +76,9 @@ export function quizWarnings(quiz: GeneratedQuiz): string[] {
     warnings.push('COMENTARIO_PODE_REVELAR_RESPOSTA');
   if (
     quiz.explanations.some((s) =>
-      /alternativa\s+[A-D1-4]\b|(?:primeira|segunda|terceira|quarta)\s+alternativa/i.test(s),
+      /(?:alternativa|opção)\s+[A-D1-4]\b|(?:primeira|segunda|terceira|quarta)\s+(?:alternativa|opção)/i.test(
+        s,
+      ),
     )
   )
     warnings.push('EXPLICACAO_REFERENCIA_POSICAO');

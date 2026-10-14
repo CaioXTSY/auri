@@ -82,6 +82,7 @@ describe('Quiz structural validation and unbiased shuffle', () => {
         explanations: ['A primeira alternativa é correta', 'x', 'y', 'z'],
       }),
     ).toContain('EXPLICACAO_REFERENCIA_POSICAO');
+    expect(quizWarnings({ ...valid(), explanations: ['A segunda opção é correta', 'x', 'y', 'z'] })).toContain('EXPLICACAO_REFERENCIA_POSICAO');
     expect(
       quizWarnings({ ...valid(), explanations: ['x', 'Esta alternativa está correta', 'y', 'z'] }),
     ).toContain('POSSIVEL_EXPLICACAO_CONTRADITORIA');

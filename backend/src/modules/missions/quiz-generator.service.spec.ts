@@ -160,4 +160,13 @@ describe('QuizGeneratorService usage metrics', () => {
     await expect(service.generateEvaluationQuiz({ difficulty: 'FACIL', topic: 'variáveis', language: 'Python' })).rejects.toThrow();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('rejects a repeated question before semantic review and records all generation costs', async () => {
+    const { service, prisma, aIGenerationCreate } = createService();
+    prisma.missionQuiz.findMany.mockResolvedValue([{ title: 'Previous', question: 'Em JavaScript, qual valor esta correto?' }]);
+    for (let i = 0; i < 3; i++) fetchMock.mockResolvedValueOnce(response(quizContent('Repeated'), { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }));
+    await expect(service.generateReviewedQuiz({ difficulty: 'MEDIO' })).resolves.toMatchObject({ quiz: null });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(aIGenerationCreate).toHaveBeenCalledWith({ data: expect.objectContaining({ status: 'REJECTED', totalTokens: 6, validationCalls: 0 }) });
+  });
 });
