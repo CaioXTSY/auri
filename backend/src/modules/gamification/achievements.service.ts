@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { awardOnce, lockRewardUser } from './reward-store';
 import { PointsService } from './points.service';
 import { LevelsService } from './levels.service';
 import { MissionStatus, NotificationType } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RankingService } from './ranking.service';
 
 @Injectable()
 export class AchievementsService {
@@ -14,6 +16,7 @@ export class AchievementsService {
     private readonly pointsService: PointsService,
     private readonly levelsService: LevelsService,
     private readonly notificationsService: NotificationsService,
+    private readonly rankingService: RankingService,
   ) {}
 
   private async refreshProgressionAfterAchievementPoints(userId: string) {
@@ -24,6 +27,9 @@ export class AchievementsService {
     }
 
     await this.checkPointsAchievements(userId);
+    await this.rankingService.updateGlobalRanking();
+    const enrollments = await this.prisma.classStudent.findMany({ where: { userId }, select: { classId: true } });
+    for (const enrollment of enrollments) await this.rankingService.updateClassRanking(enrollment.classId);
   }
 
   async getAllAchievements() {
@@ -33,30 +39,15 @@ export class AchievementsService {
   }
 
   async unlockAchievement(userId: string, achievementId: string) {
-    const existing = await this.prisma.userAchievement.findUnique({
-      where: { userId_achievementId: { userId, achievementId } },
+    const { userAchievement, created } = await this.prisma.$transaction(async (tx) => {
+      await lockRewardUser(tx, userId);
+      const existing = await tx.userAchievement.findUnique({ where: { userId_achievementId: { userId, achievementId } }, include: { achievement: true } });
+      if (existing) return { userAchievement: existing, created: false };
+      const userAchievement = await tx.userAchievement.create({ data: { userId, achievementId }, include: { achievement: true } });
+      await awardOnce(tx, { userId, points: userAchievement.achievement.points, source: 'CONQUISTA', description: `Desbloqueou: ${userAchievement.achievement.name}`, referenceId: achievementId });
+      return { userAchievement, created: true };
     });
-
-    if (existing) {
-      return existing;
-    }
-
-    const userAchievement = await this.prisma.userAchievement.create({
-      data: {
-        userId,
-        achievementId,
-        unlockedAt: new Date(),
-      },
-      include: { achievement: true },
-    });
-
-    await this.pointsService.addPoints(
-      userId,
-      userAchievement.achievement.points,
-      'CONQUISTA',
-      `Desbloqueou: ${userAchievement.achievement.name}`,
-      achievementId,
-    );
+    if (!created) return userAchievement;
 
     await this.refreshProgressionAfterAchievementPoints(userId);
 

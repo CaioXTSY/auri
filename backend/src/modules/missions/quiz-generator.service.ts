@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { Difficulty } from '@prisma/client';
+import { Difficulty, Prisma } from '@prisma/client';
 import {
   buildDailyQuizValidationPrompt,
   buildDailyQuizUserPrompt,
@@ -11,545 +11,382 @@ import {
   DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT,
 } from './prompts/daily-quiz.prompt';
 import { getDailyQuizDateWindow } from './daily-quiz-date';
+import { GeneratedQuiz, normalizeGeneratedQuiz, quizWarnings, shuffleQuiz } from './quiz-quality';
+import { appendFileSync } from 'fs';
 
-const PERMANENT_MISSION_END_DATE = new Date('2099-12-31T23:59:59.999Z');
-const DAILY_QUIZ_GENERATION_MAX_ATTEMPTS = 3;
-
-type GeneratedQuiz = {
-  title: string;
-  question: string;
-  difficulty: Difficulty;
-  options: string[];
-  correctIndex: number;
-  explanations: string[];
+const END_DATE = new Date('2099-12-31T23:59:59.999Z');
+const GENERATION_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title', 'question', 'difficulty', 'options', 'correctIndex', 'explanations'],
+  properties: {
+    title: { type: 'string' },
+    question: { type: 'string' },
+    difficulty: { type: 'string', enum: ['FACIL', 'MEDIO', 'DIFICIL'] },
+    options: { type: 'array', items: { type: 'string' } },
+    correctIndex: { type: 'integer' },
+    explanations: { type: 'array', items: { type: 'string' } },
+  },
 };
-
-type GeneratedDailyQuizMission = {
-  missionId: string;
-  title: string;
-  question: string;
-  difficulty: Difficulty;
-  points: number;
-  options: string[];
-  answered: false;
-  attempt: null;
-};
-
-type OpenAIUsage = {
+type Usage = {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  cachedInputTokens: number;
 };
-
-type OpenAICompletion = {
-  content: string;
-  usage: OpenAIUsage | null;
+export type QuizCallAudit = {
+  operation: string;
+  model: string;
+  prompt: string;
+  response: string;
+  usage: Usage | null;
+  status: number;
+  requestId: string | null;
 };
-
-type QuizValidation = {
-  isValid: boolean;
-  correctIndex: number | null;
-  reason: string;
-  usage: OpenAIUsage | null;
+export type QuizGenerationOptions = {
+  difficulty?: Difficulty;
+  topic?: string;
+  language?: string;
+  evaluation?: boolean;
 };
 
 @Injectable()
 export class QuizGeneratorService {
   private readonly logger = new Logger(QuizGeneratorService.name);
-  private generationPromise: Promise<GeneratedDailyQuizMission | null> | null = null;
-
+  private generationPromise: ReturnType<QuizGeneratorService['doGenerateDaily']> | null = null;
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {}
 
   async generateDailyQuizMission() {
-    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
-    if (!apiKey) {
-      this.logger.warn('OPENAI_API_KEY nao configurada; geracao de quiz diario ignorada');
-      return null;
-    }
-
-    if (this.generationPromise) {
-      this.logger.log('Geracao de quiz diario ja em andamento, aguardando requisicao existente');
-      return this.generationPromise;
-    }
-
-    const generationPromise = this.doGenerateDaily(apiKey);
-    this.generationPromise = generationPromise;
-
+    if (this.configService.get<string>('QUIZ_GENERATION_ENABLED') === 'false') return null;
+    if (!this.configService.get<string>('OPENAI_API_KEY')) return null;
+    if (this.generationPromise) return this.generationPromise;
+    const promise = this.doGenerateDaily();
+    this.generationPromise = promise;
     try {
-      return await generationPromise;
+      return await promise;
     } finally {
-      if (this.generationPromise === generationPromise) {
-        this.generationPromise = null;
-      }
+      this.generationPromise = null;
     }
   }
 
-  private async doGenerateDaily(apiKey: string): Promise<GeneratedDailyQuizMission | null> {
-    const { startOfDay } = getDailyQuizDateWindow(
+  private async doGenerateDaily() {
+    const { startOfDay, endOfDay, dayKey } = getDailyQuizDateWindow(
       new Date(),
       this.configService.get<string>('APP_TIME_ZONE'),
     );
-
     const existing = await this.prisma.mission.findFirst({
       where: {
         type: 'DIARIA',
         classId: null,
-        startDate: { gte: startOfDay },
+        startDate: { gte: startOfDay, lte: endOfDay },
         quiz: { isNot: null },
       },
       include: { quiz: true },
     });
-
-    if (existing) {
-      return null;
-    }
-
-    const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
-    const [targetDifficulty, recentQuizzes] = await Promise.all([
-      this.getTargetDailyDifficulty(),
-      this.getRecentQuizSummaries(14),
-    ]);
-
-    const usedLanguages = recentQuizzes.map((q) => q.language).filter(Boolean);
-    const preferredLanguages = DAILY_QUIZ_LANGUAGES.filter(
-      (l) => !usedLanguages.slice(0, 3).includes(l),
-    );
-    const languageHint =
-      preferredLanguages.length > 0
-        ? preferredLanguages.slice(0, 3).join(', ')
-        : DAILY_QUIZ_LANGUAGES.join(', ');
-    let promptUsed = '';
-    let content = '';
-    let quiz: GeneratedQuiz | null = null;
-    let lastValidationReason = '';
-    let generationAttempts = 0;
-    let validationCalls = 0;
-    let usageComplete = true;
-    const usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
-
-    const includeUsage = (callUsage: OpenAIUsage | null) => {
-      if (!callUsage) {
-        usageComplete = false;
-        return;
-      }
-      usage.inputTokens += callUsage.inputTokens;
-      usage.outputTokens += callUsage.outputTokens;
-      usage.totalTokens += callUsage.totalTokens;
-    };
-
+    if (existing) return null;
     try {
-      for (let attempt = 1; attempt <= DAILY_QUIZ_GENERATION_MAX_ATTEMPTS; attempt += 1) {
-        const randomTopic = DAILY_QUIZ_TOPICS[Math.floor(Math.random() * DAILY_QUIZ_TOPICS.length)];
-        const basePrompt = buildDailyQuizUserPrompt({
-          difficulty: targetDifficulty,
-          languageHint,
-          suggestedTopic: randomTopic,
-          recentQuizzes,
-        });
-
-        promptUsed =
-          attempt === 1
-            ? basePrompt
-            : [
-                basePrompt,
-                '',
-                'CORRECAO OBRIGATORIA PARA ESTA NOVA TENTATIVA:',
-                `- A tentativa anterior foi rejeitada por: ${lastValidationReason || 'falha tecnica na validacao'}.`,
-                '- Gere uma NOVA questao completa.',
-                '- Garanta que a alternativa correta e as explicacoes estejam tecnicamente consistentes entre si.',
-                '- Se houver codigo, explicite escopo, ordem de execucao, valor final ou erro sem ambiguidades.',
-              ].join('\n');
-
-        generationAttempts += 1;
-        const generation = await this.requestQuizGeneration(apiKey, model, promptUsed);
-        content = generation.content;
-        includeUsage(generation.usage);
-        quiz = this.normalizeGeneratedQuiz(content, targetDifficulty);
-        validationCalls += 1;
-        const validation = await this.validateGeneratedQuiz(apiKey, model, quiz);
-        includeUsage(validation.usage);
-
-        if (validation.isValid && validation.correctIndex === quiz.correctIndex) {
-          break;
-        }
-
-        lastValidationReason = validation.reason;
-        this.logger.warn(
-          `Quiz diario rejeitado na tentativa ${attempt}/${DAILY_QUIZ_GENERATION_MAX_ATTEMPTS}: ` +
-            `isValid=${validation.isValid}, correctIndex=${validation.correctIndex}, expected=${quiz.correctIndex}, reason="${validation.reason}"`,
-        );
-
-        quiz = null;
-      }
-
-      if (!quiz) {
-        this.logger.error('Falha ao gerar quiz diario valido apos multiplas tentativas');
-        return null;
-      }
-
-      const points = this.getPointsForDifficulty(quiz.difficulty);
+      const result = await this.generateReviewedQuiz();
+      if (!result.quiz) return null;
+      const quiz = result.quiz;
       const mission = await this.prisma.$transaction(async (tx) => {
-        const existingMission = await tx.mission.findFirst({
-          where: {
-            type: 'DIARIA',
-            classId: null,
-            startDate: { gte: startOfDay },
-            quiz: { isNot: null },
-          },
+        const found = await tx.mission.findFirst({
+          where: { dailyKey: dayKey },
           include: { quiz: true },
         });
-
-        if (existingMission?.quiz) {
-          return existingMission;
-        }
-
-        const aiGeneration = await tx.aIGeneration.create({
-          data: {
-            type: 'QUIZ',
-            prompt: promptUsed,
-            response: content,
-            model,
-            inputTokens: usageComplete ? usage.inputTokens : null,
-            outputTokens: usageComplete ? usage.outputTokens : null,
-            totalTokens: usageComplete ? usage.totalTokens : null,
-            generationAttempts,
-            validationCalls,
-          },
-        });
-
-        const created = await tx.mission.create({
+        if (found) return found;
+        return tx.mission.create({
           data: {
             title: quiz.title,
             description: quiz.question,
             type: 'DIARIA',
-            points,
+            dailyKey: dayKey,
+            points: this.getPointsForDifficulty(quiz.difficulty),
             startDate: startOfDay,
-            endDate: PERMANENT_MISSION_END_DATE,
+            endDate: END_DATE,
+            quiz: { create: this.quizData(quiz, result.generationId, false) },
           },
-        });
-
-        await tx.missionQuiz.create({
-          data: {
-            missionId: created.id,
-            title: quiz.title,
-            question: quiz.question,
-            difficulty: quiz.difficulty,
-            options: quiz.options,
-            explanations: quiz.explanations,
-            correctIndex: quiz.correctIndex,
-            aiGenerationId: aiGeneration.id,
-          },
-        });
-
-        return tx.mission.findUniqueOrThrow({
-          where: { id: created.id },
           include: { quiz: true },
         });
       });
-
+      if (mission.quiz?.reviewStatus !== 'APPROVED') {
+        this.logger.log(`Quiz diário ${mission.id} aguardando revisão autorizada`);
+        return null;
+      }
       return {
         missionId: mission.id,
-        title: mission.quiz?.title ?? quiz.title,
-        question: mission.quiz?.question ?? quiz.question,
-        difficulty: mission.quiz?.difficulty ?? quiz.difficulty,
+        title: mission.quiz.title,
+        question: mission.quiz.question,
+        difficulty: mission.quiz.difficulty,
         points: mission.points,
-        options: Array.isArray(mission.quiz?.options)
-          ? (mission.quiz.options as string[])
-          : quiz.options,
-        answered: false,
-        attempt: null,
+        options: mission.quiz.options,
+        answered: false as const,
+        attempt: null as null,
       };
     } catch (error) {
-      this.logger.error(`Falha ao gerar quiz diario: ${error}`);
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'))
+        this.logger.error('Falha ao persistir quiz diário');
       return null;
     }
   }
 
-  private async requestQuizGeneration(
+  // Production pipeline reused by the isolated experiment, including real persistence.
+  async generateReviewedQuiz(options: QuizGenerationOptions = {}) {
+    if (this.configService.get<string>('QUIZ_GENERATION_ENABLED') === 'false')
+      throw new BadRequestException('Geração desabilitada neste ambiente');
+    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
+    if (!apiKey) throw new BadRequestException('OPENAI_API_KEY não configurada');
+    const model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
+    const reviewModel = this.configService.get<string>('OPENAI_REVIEW_MODEL') || 'gpt-4.1-mini';
+    const difficulty = options.difficulty ?? (await this.getTargetDailyDifficulty());
+    const recentQuizzes = await this.getRecentQuizSummaries(14);
+    const languageHint =
+      options.language ??
+      DAILY_QUIZ_LANGUAGES.filter(
+        (l) => !recentQuizzes.slice(0, 3).some((q) => q.language === l),
+      ).join(', ');
+    const audit: QuizCallAudit[] = [];
+    let quiz: GeneratedQuiz | null = null;
+    let reason = '',
+      promptUsed = '',
+      responseUsed = '';
+    let returnedDifficulty: string | null = null;
+    let generationAttempts = 0;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      generationAttempts++;
+      promptUsed = buildDailyQuizUserPrompt({
+        difficulty,
+        languageHint,
+        suggestedTopic:
+          options.topic ?? DAILY_QUIZ_TOPICS[Math.floor(Math.random() * DAILY_QUIZ_TOPICS.length)],
+        recentQuizzes,
+      });
+      if (reason)
+        promptUsed += `\nA tentativa anterior foi rejeitada por: ${reason}. Gere uma nova questão corrigida.`;
+      try {
+        responseUsed = await this.completion(
+          apiKey,
+          model,
+          'generation',
+          DAILY_QUIZ_SYSTEM_PROMPT,
+          promptUsed,
+          audit,
+        );
+        try {
+          returnedDifficulty = JSON.parse(responseUsed)?.difficulty ?? null;
+        } catch {
+          returnedDifficulty = null;
+        }
+        const parsed = normalizeGeneratedQuiz(responseUsed, difficulty);
+        const warnings = quizWarnings(parsed);
+        if (warnings.length)
+          throw new BadRequestException(
+            warnings.join(', ') +
+              ': não use primeira/segunda/terceira/quarta alternativa ou letras/ordens nas explicações; uma opção incorreta não pode ser descrita como correta',
+          );
+        const review = JSON.parse(
+          await this.completion(
+            apiKey,
+            reviewModel,
+            'semantic_review',
+            DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT,
+            buildDailyQuizValidationPrompt(parsed),
+            audit,
+          ),
+        );
+        if (
+          review.isValid !== true ||
+          typeof review.correctIndex !== 'number' ||
+          review.correctIndex !== parsed.correctIndex
+        )
+          throw new BadRequestException(String(review.reason || 'Revisor discordou do gabarito'));
+        quiz = shuffleQuiz(parsed);
+        break;
+      } catch (error) {
+        reason = error instanceof Error ? error.message : 'Falha de validação';
+        this.logger.warn(`Quiz rejeitado na tentativa ${attempt}/3: ${reason}`);
+        if (audit.some((call) => [401, 403, 429].includes(call.status))) break;
+      }
+    }
+    const complete = audit.every((call) => call.usage !== null);
+    const usage = audit.reduce(
+      (total, call) => ({
+        inputTokens: total.inputTokens + (call.usage?.inputTokens ?? 0),
+        outputTokens: total.outputTokens + (call.usage?.outputTokens ?? 0),
+        totalTokens: total.totalTokens + (call.usage?.totalTokens ?? 0),
+      }),
+      { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+    );
+    const generation = await this.prisma.aIGeneration.create({
+      data: {
+        type: options.evaluation ? 'QUIZ_EVALUATION' : 'QUIZ',
+        model,
+        prompt: promptUsed,
+        response: responseUsed,
+        inputTokens: complete ? usage.inputTokens : null,
+        outputTokens: complete ? usage.outputTokens : null,
+        totalTokens: complete ? usage.totalTokens : null,
+        generationAttempts,
+        validationCalls: audit.filter((call) => call.operation === 'semantic_review').length,
+        requestedDifficulty: difficulty,
+        returnedDifficulty,
+        status: quiz ? 'VALIDATED' : 'REJECTED',
+        callAudit: audit as unknown as Prisma.InputJsonValue,
+      },
+    });
+    return {
+      quiz,
+      generationId: generation.id,
+      audit,
+      reason: quiz ? null : reason,
+      requestedDifficulty: difficulty,
+      returnedDifficulty,
+    };
+  }
+
+  async generateEvaluationQuiz(
+    options: Required<Pick<QuizGenerationOptions, 'difficulty' | 'topic' | 'language'>>,
+  ) {
+    if (this.configService.get<string>('AURI_EVALUATION_MODE') !== 'true')
+      throw new BadRequestException('Modo de avaliação isolada obrigatório');
+    const db = new URL(this.configService.get<string>('DATABASE_URL') || 'mysql://invalid/invalid');
+    if (!['localhost', '127.0.0.1'].includes(db.hostname) || !db.pathname.startsWith('/auri_tcc_'))
+      throw new BadRequestException('Banco local de avaliação obrigatório');
+    const result = await this.generateReviewedQuiz({ ...options, evaluation: true });
+    if (!result.quiz) return { ...result, mission: null };
+    const quiz = result.quiz;
+    const mission = await this.prisma.mission.create({
+      data: {
+        title: quiz.title,
+        description: quiz.question,
+        type: 'PERSONALIZADA',
+        points: this.getPointsForDifficulty(quiz.difficulty),
+        startDate: new Date(),
+        endDate: END_DATE,
+        quiz: { create: this.quizData(quiz, result.generationId, true) },
+      },
+      include: { quiz: true },
+    });
+    return { ...result, mission };
+  }
+
+  private quizData(quiz: GeneratedQuiz, generationId: string, evaluation: boolean) {
+    const humanReview = this.configService.get<string>('QUIZ_REVIEW_MODE') !== 'automatic';
+    return {
+      ...quiz,
+      aiGenerationId: generationId,
+      reviewStatus: evaluation || humanReview ? 'PENDING' : 'APPROVED',
+      qualityWarnings: quizWarnings(quiz),
+      reviewReason:
+        evaluation || humanReview
+          ? null
+          : 'Publicação automática configurada; sem validação pedagógica humana',
+    };
+  }
+
+  private async completion(
     apiKey: string,
     model: string,
+    operation: string,
+    system: string,
     prompt: string,
-  ): Promise<OpenAICompletion> {
+    audit: QuizCallAudit[],
+  ) {
+    const entry: QuizCallAudit = {
+      operation,
+      model,
+      prompt,
+      response: '',
+      usage: null,
+      status: 0,
+      requestId: null,
+    };
+    audit.push(entry);
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
+      signal: AbortSignal.timeout(90000),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
         messages: [
-          {
-            role: 'system',
-            content: DAILY_QUIZ_SYSTEM_PROMPT,
-          },
+          { role: 'system', content: system },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
+        temperature: operation === 'generation' ? 0.2 : 0,
+        max_completion_tokens: 3000,
+        response_format:
+          operation === 'generation'
+            ? {
+                type: 'json_schema',
+                json_schema: { name: 'auri_quiz', strict: true, schema: GENERATION_SCHEMA },
+              }
+            : { type: 'json_object' },
+        store: false,
       }),
     });
-
-    if (!response.ok) {
-      const text = await response.text();
-      this.logger.error(`Falha na API OpenAI (${response.status}): ${text}`);
-      throw new BadRequestException('Falha ao gerar questao com OpenAI');
-    }
-
+    entry.status = response.status ?? (response.ok ? 200 : 500);
+    entry.requestId = response.headers?.get('x-request-id') ?? null;
+    if (!response.ok) throw new BadRequestException(`OpenAI HTTP ${entry.status}`);
     const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) {
-      this.logger.error(`Resposta da IA sem conteudo: ${JSON.stringify(data)}`);
-      throw new BadRequestException('Resposta vazia da OpenAI');
-    }
-
-    return { content, usage: this.extractUsage(data?.usage) };
-  }
-
-  private normalizeGeneratedQuiz(content: string, fallbackDifficulty: Difficulty): GeneratedQuiz {
-    const parsed = this.parseJsonFromText(content);
-    const title = String(parsed?.title || '').trim();
-    const question = String(parsed?.question || '').trim();
-    const options = Array.isArray(parsed?.options)
-      ? parsed.options
-          .map((option: unknown) => String(option).trim())
-          .filter((option: string) => option.length > 0)
-      : [];
-    const explanations = Array.isArray(parsed?.explanations)
-      ? parsed.explanations
-          .map((exp: unknown) => String(exp).trim())
-          .filter((exp: string) => exp.length > 0)
-      : [];
-    const correctIndex = Number(parsed?.correctIndex);
-    const difficultyRaw = String(parsed?.difficulty || '')
-      .trim()
-      .toUpperCase();
-    const difficulty =
-      difficultyRaw === 'FACIL' || difficultyRaw === 'MEDIO' || difficultyRaw === 'DIFICIL'
-        ? difficultyRaw
-        : fallbackDifficulty;
-
-    const quiz = {
-      title,
-      question,
-      difficulty,
-      options,
-      correctIndex,
-      explanations,
-    };
-
-    this.validateQuizShape(quiz);
-    return quiz;
-  }
-
-  private validateQuizShape(quiz: GeneratedQuiz) {
+    entry.model = data.model ?? model;
+    entry.response = data?.choices?.[0]?.message?.content ?? '';
     if (
-      !quiz.title ||
-      !quiz.question ||
-      quiz.options.length !== 4 ||
-      quiz.explanations.length !== 4
-    ) {
-      throw new BadRequestException(
-        `Estrutura invalida no quiz: title="${quiz.title}", optionsLen=${quiz.options.length}, explanationsLen=${quiz.explanations.length}`,
-      );
-    }
-
-    if (quiz.title.length > 200) {
-      throw new BadRequestException(`title do quiz excede 200 caracteres (${quiz.title.length})`);
-    }
-
-    if (quiz.question.length > 2000) {
-      throw new BadRequestException(
-        `question do quiz excede 2000 caracteres (${quiz.question.length})`,
-      );
-    }
-
-    if (!Number.isInteger(quiz.correctIndex) || quiz.correctIndex < 0 || quiz.correctIndex > 3) {
-      throw new BadRequestException(`correctIndex invalido no quiz: ${quiz.correctIndex}`);
-    }
-  }
-
-  private async validateGeneratedQuiz(
-    apiKey: string,
-    model: string,
-    quiz: GeneratedQuiz,
-  ): Promise<QuizValidation> {
-    const validationPrompt = buildDailyQuizValidationPrompt(quiz);
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: 'system',
-            content: DAILY_QUIZ_VALIDATION_SYSTEM_PROMPT,
-          },
-          { role: 'user', content: validationPrompt },
-        ],
-        temperature: 0,
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      this.logger.error(`Falha na validacao OpenAI (${response.status}): ${text}`);
-      return {
-        isValid: false,
-        correctIndex: null,
-        reason: 'Falha na chamada de validacao',
-        usage: null,
+      data.usage &&
+      [data.usage.prompt_tokens, data.usage.completion_tokens, data.usage.total_tokens].every(
+        Number.isInteger,
+      )
+    )
+      entry.usage = {
+        inputTokens: data.usage.prompt_tokens,
+        outputTokens: data.usage.completion_tokens,
+        totalTokens: data.usage.total_tokens,
+        cachedInputTokens: data.usage.prompt_tokens_details?.cached_tokens ?? 0,
       };
-    }
-
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) {
-      this.logger.error(`Validacao da IA sem conteudo: ${JSON.stringify(data)}`);
-      return {
-        isValid: false,
-        correctIndex: null,
-        reason: 'Resposta de validacao vazia',
-        usage: this.extractUsage(data?.usage),
-      };
-    }
-
-    try {
-      const parsed = this.parseJsonFromText(content);
-      const isValid = parsed?.isValid === true;
-      const validationCorrectIndex = Number(parsed?.correctIndex);
-      const correctIndex = Number.isInteger(validationCorrectIndex) ? validationCorrectIndex : null;
-      const reason = String(parsed?.reason || '').trim();
-
-      return { isValid, correctIndex, reason, usage: this.extractUsage(data?.usage) };
-    } catch {
-      this.logger.error(`Falha ao fazer parse do JSON de validacao da IA: ${content}`);
-      return {
-        isValid: false,
-        correctIndex: null,
-        reason: 'JSON de validacao invalido',
-        usage: this.extractUsage(data?.usage),
-      };
-    }
-  }
-
-  private extractUsage(rawUsage: unknown): OpenAIUsage | null {
-    if (!rawUsage || typeof rawUsage !== 'object') {
-      return null;
-    }
-
-    const usage = rawUsage as Record<string, unknown>;
-    const inputTokens = Number(usage.prompt_tokens ?? usage.input_tokens);
-    const outputTokens = Number(usage.completion_tokens ?? usage.output_tokens);
-    const totalTokens = Number(usage.total_tokens);
-
+    const auditFile = this.configService.get<string>('OPENAI_AUDIT_FILE');
+    if (auditFile) appendFileSync(auditFile, JSON.stringify(entry) + '\n');
     if (
-      !Number.isFinite(inputTokens) ||
-      !Number.isFinite(outputTokens) ||
-      !Number.isFinite(totalTokens)
-    ) {
-      return null;
-    }
-
-    return { inputTokens, outputTokens, totalTokens };
+      !entry.response ||
+      (data.choices[0].finish_reason && data.choices[0].finish_reason !== 'stop')
+    )
+      throw new BadRequestException('Resposta vazia ou incompleta');
+    return entry.response;
   }
 
-  private parseJsonFromText(text: string) {
-    const trimmed = text.trim();
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-      return JSON.parse(trimmed);
-    }
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    if (!match) {
-      throw new BadRequestException('Resposta invalida da IA');
-    }
-    return JSON.parse(match[0]);
-  }
-
-  private async getRecentQuizSummaries(
-    days: number,
-  ): Promise<{ title: string; topic: string; language: string | null }[]> {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
-
+  private async getRecentQuizSummaries(days: number) {
     const quizzes = await this.prisma.missionQuiz.findMany({
-      where: {
-        mission: {
-          type: 'DIARIA',
-          startDate: { gte: cutoff },
-        },
-      },
       select: { title: true, question: true },
-      orderBy: { id: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: days,
     });
-
-    return quizzes.map((q) => {
-      const { language, topic } = this.summarizeQuizQuestion(q.title, q.question);
-      return { title: q.title, topic, language };
-    });
-  }
-
-  private summarizeQuizQuestion(title: string, question: string) {
-    const languageMatch = question.match(
-      /\b(Python|JavaScript|TypeScript|Java|C\+\+|C#|C(?!#|\+))\b/i,
-    );
-    const language = languageMatch ? languageMatch[1] : null;
-    const topicMatch = question.match(
-      /(?:def |function |class |public |void |int |str |let |const )?(\w[\w\s]{3,40}?)(?:\(|:|\n|\.)/,
-    );
-    const topic = topicMatch ? topicMatch[1].trim() : title;
-    return { language, topic };
+    return quizzes.map((q) => ({
+      title: q.title,
+      topic: q.title,
+      language: q.question.match(/\b(Python|JavaScript|Java|C\+\+)\b/i)?.[1] ?? null,
+    }));
   }
 
   private async getTargetDailyDifficulty(): Promise<Difficulty> {
-    const now = new Date();
-    const cutoff = new Date(now);
-    cutoff.setDate(cutoff.getDate() - 14);
-
     const attempts = await this.prisma.missionQuizAttempt.findMany({
       where: {
-        answeredAt: { gte: cutoff },
-        mission: {
-          type: 'DIARIA',
-          classId: null,
-        },
+        answeredAt: { gte: new Date(Date.now() - 14 * 86400000) },
+        mission: { type: 'DIARIA', classId: null },
       },
       select: { isCorrect: true },
     });
-
-    if (attempts.length < 20) {
-      return now.getDay() === 0 || now.getDay() === 3 || now.getDay() === 6 ? 'DIFICIL' : 'MEDIO';
+    if (attempts.length >= 20) {
+      const accuracy = attempts.filter((a) => a.isCorrect).length / attempts.length;
+      return accuracy <= 0.35 ? 'FACIL' : accuracy >= 0.75 ? 'DIFICIL' : 'MEDIO';
     }
-
-    const correctAnswers = attempts.filter((attempt) => attempt.isCorrect).length;
-    const accuracy = correctAnswers / attempts.length;
-
-    if (accuracy >= 0.75) {
-      return 'DIFICIL';
-    }
-
-    if (accuracy <= 0.35) {
-      return 'MEDIO';
-    }
-
-    return now.getDay() === 0 || now.getDay() === 6 ? 'DIFICIL' : 'MEDIO';
+    const { dayKey } = getDailyQuizDateWindow(
+      new Date(),
+      this.configService.get<string>('APP_TIME_ZONE'),
+    );
+    return (['FACIL', 'MEDIO', 'DIFICIL'] as const)[Math.floor(Date.parse(dayKey) / 86400000) % 3];
   }
 
   private getPointsForDifficulty(difficulty: Difficulty) {
-    const pointsByDifficulty = {
-      FACIL: 40,
-      MEDIO: 85,
-      DIFICIL: 140,
-    };
-    return pointsByDifficulty[difficulty];
+    return { FACIL: 40, MEDIO: 85, DIFICIL: 140 }[difficulty];
   }
 }

@@ -31,7 +31,7 @@ export class ClassesService {
         settings: true,
         _count: {
           select: {
-            students: true,
+            students: { where: { user: { role: Role.ALUNO } } },
           },
         },
       },
@@ -98,7 +98,7 @@ export class ClassesService {
               },
               _count: {
                 select: {
-                  students: true,
+                  students: { where: { user: { role: Role.ALUNO } } },
                 },
               },
             },
@@ -123,7 +123,7 @@ export class ClassesService {
           include: {
             _count: {
               select: {
-                students: true,
+                students: { where: { user: { role: Role.ALUNO } } },
               },
             },
           },
@@ -151,7 +151,7 @@ export class ClassesService {
         settings: true,
         _count: {
           select: {
-            students: true,
+            students: { where: { user: { role: Role.ALUNO } } },
           },
         },
       },
@@ -215,7 +215,7 @@ export class ClassesService {
           settings: true,
           _count: {
             select: {
-              students: true,
+              students: { where: { user: { role: Role.ALUNO } } },
             },
           },
         },
@@ -232,6 +232,7 @@ export class ClassesService {
       include: {
         settings: true,
         students: {
+          where: { user: { role: Role.ALUNO } },
           select: {
             enrolledAt: true,
             user: {
@@ -420,7 +421,7 @@ export class ClassesService {
     }
 
     const students = await this.prisma.classStudent.findMany({
-      where: { classId },
+      where: { classId, user: { role: Role.ALUNO } },
       include: {
         user: {
           select: {
@@ -483,7 +484,7 @@ export class ClassesService {
         settings: true,
         _count: {
           select: {
-            students: true,
+            students: { where: { user: { role: Role.ALUNO } } },
           },
         },
       },
@@ -627,7 +628,7 @@ export class ClassesService {
           include: {
             _count: {
               select: {
-                students: true,
+                students: { where: { user: { role: Role.ALUNO } } },
               },
             },
           },
@@ -665,7 +666,7 @@ export class ClassesService {
       where: { createdById: userId },
       include: {
         _count: {
-          select: { students: true },
+          select: { students: { where: { user: { role: Role.ALUNO } } } },
         },
       },
       orderBy: { createdAt: 'desc' },

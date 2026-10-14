@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { awardOnce, lockRewardUser } from './reward-store';
 
 @Injectable()
 export class PointsService {
@@ -18,8 +19,12 @@ export class PointsService {
       `Adicionando ${points} pontos para usuário ${userId} - ${source}`,
     );
 
-    return this.prisma.userPoint.create({
-      data: { userId, points, source, description, referenceId },
+    return this.prisma.$transaction(async (tx) => {
+      await lockRewardUser(tx, userId);
+      if (referenceId && ['MISSAO', 'CONQUISTA', 'STREAK_BONUS'].includes(source)) {
+        return awardOnce(tx, { userId, points, source, description, referenceId });
+      }
+      return tx.userPoint.create({ data: { userId, points, source, description, referenceId } });
     });
   }
 

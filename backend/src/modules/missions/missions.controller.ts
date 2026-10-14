@@ -29,11 +29,27 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { AuthenticatedRequest } from '../../common/types/authenticated-request';
+import { QuizReviewService } from './quiz-review.service';
+import { ReviewQuizDto } from './dto/review-quiz.dto';
 
 @ApiTags('missions')
 @Controller('missions')
 export class MissionsController {
-  constructor(private readonly missionsService: MissionsService) {}
+  constructor(private readonly missionsService: MissionsService, private readonly quizReview: QuizReviewService) {}
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'PROFESSOR')
+  @Get('quiz-review/pending')
+  listPendingQuizzes(@Request() req: AuthenticatedRequest) {
+    return this.quizReview.list(req.user.id, req.user.role);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'PROFESSOR')
+  @Post(':id/quiz/review')
+  reviewQuiz(@Param('id') id: string, @Request() req: AuthenticatedRequest, @Body() dto: ReviewQuizDto) {
+    return this.quizReview.decide(id, req.user.id, req.user.role, dto.decision, dto.reason);
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()

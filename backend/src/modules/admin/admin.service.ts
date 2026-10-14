@@ -140,7 +140,7 @@ export class AdminService {
           id: true,
           name: true,
           year: true,
-          _count: { select: { students: true } },
+          _count: { select: { students: { where: { user: { role: 'ALUNO' } } } } },
         },
       }),
       this.prisma.achievement.findMany({

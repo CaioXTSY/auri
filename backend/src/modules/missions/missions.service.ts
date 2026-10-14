@@ -13,6 +13,7 @@ import { MissionType } from '@prisma/client';
 import { MissionQuizService } from './mission-quiz.service';
 import { QuizGeneratorService } from './quiz-generator.service';
 import { CreateManualMissionQuizDto } from './dto/create-manual-mission-quiz.dto';
+import { validateQuizShape } from './quiz-quality';
 
 const PERMANENT_MISSION_END_DATE = new Date('2099-12-31T23:59:59.999Z');
 
@@ -132,6 +133,8 @@ export class MissionsService {
       throw new BadRequestException('Título, enunciado e alternativas são obrigatórios');
     }
 
+    validateQuizShape({ title, question, options, explanations, difficulty: createManualQuizDto.difficulty, correctIndex: createManualQuizDto.correctIndex });
+
     const points =
       createManualQuizDto.points ?? this.getPointsForDifficulty(createManualQuizDto.difficulty);
     const startDate = createManualQuizDto.startDate
@@ -160,6 +163,10 @@ export class MissionsService {
           options,
           explanations,
           correctIndex: createManualQuizDto.correctIndex,
+          reviewStatus: 'APPROVED',
+          reviewedById: createdById,
+          reviewedAt: new Date(),
+          reviewReason: 'Questão cadastrada manualmente por responsável autorizado; publicação solicitada',
         },
       });
 
@@ -243,10 +250,12 @@ export class MissionsService {
 
   async getAvailableMissions(userId?: string, classId?: string) {
     const now = new Date();
+    const publication = { OR: [{ quiz: { is: null } }, { quiz: { is: { reviewStatus: 'APPROVED' } } }] };
 
     if (!userId) {
       const missions = await this.prisma.mission.findMany({
         where: {
+          AND: [publication],
           classId: null,
           startDate: { lte: now },
           ...(classId ? { classId } : {}),
@@ -278,11 +287,13 @@ export class MissionsService {
 
     const userClassIds = user.classEnrollments.map((e) => e.classId);
 
+    if (classId && !userClassIds.includes(classId)) throw new ForbiddenException('Matrícula obrigatória');
     const visibilityScope = classId
       ? [{ classId: null }, { classId }]
       : [{ classId: null }, { classId: { in: userClassIds } }];
 
     const where: any = {
+      AND: [publication],
       OR: [
         {
           AND: [{ OR: visibilityScope }, { startDate: { lte: now } }],

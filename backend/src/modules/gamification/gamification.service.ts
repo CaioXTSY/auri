@@ -29,6 +29,9 @@ export class GamificationService {
     }
 
     await this.achievementsService.checkPointsAchievements(userId);
+    await this.rankingService.updateGlobalRanking();
+    const enrollments = await this.prisma.classStudent.findMany({ where: { userId }, select: { classId: true } });
+    for (const enrollment of enrollments) await this.rankingService.updateClassRanking(enrollment.classId);
   }
 
   addPoints(userId: string, points: number, source: string, description: string, referenceId?: string) {
@@ -157,6 +160,7 @@ export class GamificationService {
         bonus,
         'STREAK_BONUS',
         `Bônus de sequência: ${newStreak} dias consecutivos!`,
+        `${today.toISOString().slice(0, 10)}:${newStreak}`,
       );
     }
 

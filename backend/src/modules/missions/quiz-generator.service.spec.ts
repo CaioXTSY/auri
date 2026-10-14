@@ -42,6 +42,7 @@ const createService = () => {
     missionQuiz: { create: jest.fn().mockResolvedValue({ id: 'quiz-1' }) },
   };
   const prisma = {
+    aIGeneration: { create: aIGenerationCreate },
     mission: { findFirst: jest.fn().mockResolvedValue(null) },
     missionQuiz: { findMany: jest.fn().mockResolvedValue([]) },
     missionQuizAttempt: { findMany: jest.fn().mockResolvedValue([]) },
@@ -78,7 +79,7 @@ describe('QuizGeneratorService usage metrics', () => {
       .mockResolvedValueOnce(response(quizContent('Quiz aprovado'), { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 }))
       .mockResolvedValueOnce(response(validationContent(true), { prompt_tokens: 7, completion_tokens: 3, total_tokens: 10 }));
 
-    await expect(service.generateDailyQuizMission()).resolves.toMatchObject({ missionId: 'mission-1' });
+    await expect(service.generateReviewedQuiz({ difficulty: 'MEDIO' })).resolves.toMatchObject({ quiz: { title: 'Quiz aprovado' } });
 
     expect(aIGenerationCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -103,7 +104,7 @@ describe('QuizGeneratorService usage metrics', () => {
       .mockResolvedValueOnce(response(approved, { prompt_tokens: 12, completion_tokens: 3, total_tokens: 15 }))
       .mockResolvedValueOnce(response(validationContent(true), { prompt_tokens: 5, completion_tokens: 2, total_tokens: 7 }));
 
-    await service.generateDailyQuizMission();
+    await service.generateReviewedQuiz({ difficulty: 'MEDIO' });
 
     const persisted = aIGenerationCreate.mock.calls[0][0].data;
     expect(persisted).toMatchObject({
@@ -124,14 +125,14 @@ describe('QuizGeneratorService usage metrics', () => {
       .mockResolvedValueOnce(response(quizContent('Quiz aprovado')))
       .mockResolvedValueOnce(response(validationContent(true)));
 
-    await service.generateDailyQuizMission();
+    await service.generateReviewedQuiz({ difficulty: 'MEDIO' });
 
     expect(aIGenerationCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({ inputTokens: null, outputTokens: null, totalTokens: null }),
     });
   });
 
-  it('stops after the maximum of three rejected attempts and persists no rejected generation', async () => {
+  it('stops after three rejections, audits failed costs and creates no usable quiz', async () => {
     const { service, aIGenerationCreate } = createService();
     for (let attempt = 0; attempt < 3; attempt += 1) {
       fetchMock
@@ -139,9 +140,24 @@ describe('QuizGeneratorService usage metrics', () => {
         .mockResolvedValueOnce(response(validationContent(false), { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }));
     }
 
-    await expect(service.generateDailyQuizMission()).resolves.toBeNull();
+    await expect(service.generateReviewedQuiz({ difficulty: 'MEDIO' })).resolves.toMatchObject({ quiz: null });
 
     expect(fetchMock).toHaveBeenCalledTimes(6);
-    expect(aIGenerationCreate).not.toHaveBeenCalled();
+    expect(aIGenerationCreate).toHaveBeenCalledWith({ data: expect.objectContaining({ status: 'REJECTED', totalTokens: 12, generationAttempts: 3, validationCalls: 3 }) });
+  });
+
+  it.each([
+    [0, 'FACIL'], [10, 'MEDIO'], [20, 'DIFICIL'],
+  ])('selects actual daily difficulty for %i correct answers out of 20', async (correct, expected) => {
+    const { service, prisma } = createService();
+    prisma.missionQuizAttempt.findMany.mockResolvedValue(Array.from({ length: 20 }, (_, i) => ({ isCorrect: i < Number(correct) })));
+    const target = service as unknown as { getTargetDailyDifficulty(): Promise<string> };
+    expect(await target.getTargetDailyDifficulty()).toBe(expected);
+  });
+
+  it('blocks evaluation against a nonlocal or non-evaluation database before calling OpenAI', async () => {
+    const { service } = createService();
+    await expect(service.generateEvaluationQuiz({ difficulty: 'FACIL', topic: 'variáveis', language: 'Python' })).rejects.toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

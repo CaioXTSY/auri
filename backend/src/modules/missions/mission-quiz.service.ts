@@ -12,6 +12,7 @@ import { GamificationService } from '../gamification/gamification.service';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { getDailyQuizDateWindow } from './daily-quiz-date';
 import { QuizGeneratorService } from './quiz-generator.service';
+import { lockRewardUser, awardOnce } from '../gamification/reward-store';
 
 @Injectable()
 export class MissionQuizService {
@@ -45,6 +46,8 @@ export class MissionQuizService {
       throw new NotFoundException(`Missão com ID ${missionId} não encontrada`);
     }
 
+    const quiz = await this.prisma.missionQuiz.findUnique({ where: { missionId } });
+    if (quiz && quiz.reviewStatus !== 'APPROVED') throw new NotFoundException('Quiz ainda não publicado');
     const now = new Date();
     if (now < mission.startDate) {
       throw new BadRequestException('Esta missão ainda não está disponível');
@@ -86,12 +89,12 @@ export class MissionQuizService {
       include: { quiz: true },
     });
 
-    if (!mission || !mission.quiz) {
+    if (!mission || !mission.quiz || mission.quiz.reviewStatus !== 'APPROVED') {
       throw new NotFoundException('Quiz da missão não encontrado');
     }
 
     const now = new Date();
-    if (mission.type !== MissionType.DIARIA && now < mission.startDate) {
+    if (now < mission.startDate) {
       throw new BadRequestException('Esta missão ainda não está disponível');
     }
 
@@ -141,7 +144,7 @@ export class MissionQuizService {
       include: { quiz: true },
     });
 
-    if (!mission || !mission.quiz) {
+    if (!mission || !mission.quiz || mission.quiz.reviewStatus !== 'APPROVED') {
       throw new NotFoundException('Quiz da missão não encontrado');
     }
 
@@ -155,12 +158,12 @@ export class MissionQuizService {
     }
 
     const now = new Date();
-    if (mission.type !== MissionType.DIARIA && now < mission.startDate) {
+    if (now < mission.startDate) {
       throw new BadRequestException('Esta missão ainda não está disponível');
     }
 
     const options = Array.isArray(mission.quiz.options) ? mission.quiz.options : [];
-    if (answerQuizDto.selectedIndex < 0 || answerQuizDto.selectedIndex >= options.length) {
+    if (!Number.isInteger(answerQuizDto.selectedIndex) || answerQuizDto.selectedIndex < 0 || answerQuizDto.selectedIndex >= options.length) {
       throw new BadRequestException('Alternativa inválida');
     }
 
@@ -174,6 +177,9 @@ export class MissionQuizService {
     }
 
     await this.prisma.$transaction(async (tx) => {
+      await lockRewardUser(tx, userId);
+      const currentAttempt = await tx.missionQuizAttempt.findUnique({ where: { userId_missionId: { userId, missionId } } });
+      if (currentAttempt?.isCorrect) throw new BadRequestException('Você já respondeu corretamente este quiz');
       const userMission = await tx.userMission.findUnique({
         where: { userId_missionId: { userId, missionId } },
       });
@@ -206,6 +212,7 @@ export class MissionQuizService {
       });
 
       if (isCorrect) {
+        await awardOnce(tx, { userId, points: mission.points, source: 'MISSAO', description: `Quiz concluído: ${mission.title}`, referenceId: missionId });
         await tx.userMission.update({
           where: { userId_missionId: { userId, missionId } },
           data: {
@@ -218,13 +225,7 @@ export class MissionQuizService {
     });
 
     if (isCorrect) {
-      await this.gamificationService.addPoints(
-        userId,
-        mission.points,
-        'MISSAO',
-        `Quiz concluído: ${mission.title}`,
-        missionId,
-      );
+      await this.gamificationService.refreshProgressionAfterPointsChange(userId);
     }
 
     await this.gamificationService.checkMissionAchievements(userId);
@@ -328,7 +329,7 @@ export class MissionQuizService {
     const candidates = await this.prisma.mission.findMany({
       where: {
         startDate: { lte: now },
-        quiz: { isNot: null },
+        quiz: { is: { reviewStatus: 'APPROVED' } },
         quizAttempts: {
           none: {
             userId,
@@ -373,23 +374,18 @@ export class MissionQuizService {
       throw new BadRequestException('Esta missão já foi concluída');
     }
 
-    const completedMission = await this.prisma.userMission.update({
-      where: { userId_missionId: { userId, missionId } },
-      data: {
-        status: MissionStatus.CONCLUIDA,
-        progress: 100,
-        completedAt: new Date(),
-      },
-      include: { mission: true },
+    const mission = await this.prisma.mission.findUnique({ where: { id: missionId }, include: { quiz: true } });
+    if (mission?.quiz) throw new BadRequestException('Conclua o quiz respondendo à questão');
+    if (new Date() < userMission.mission.startDate) throw new BadRequestException('Missão ainda não disponível');
+    if (userMission.mission.classId && !await this.prisma.classStudent.findUnique({ where: { classId_userId: { classId: userMission.mission.classId, userId } } })) throw new ForbiddenException('Matrícula obrigatória');
+    const completedMission = await this.prisma.$transaction(async (tx) => {
+      await lockRewardUser(tx, userId);
+      const changed = await tx.userMission.updateMany({ where: { userId, missionId, status: { not: MissionStatus.CONCLUIDA } }, data: { status: MissionStatus.CONCLUIDA, progress: 100, completedAt: new Date() } });
+      if (changed.count !== 1) throw new BadRequestException('Esta missão já foi concluída');
+      await awardOnce(tx, { userId, points: userMission.mission.points, source: 'MISSAO', description: `Missão concluída: ${userMission.mission.title}`, referenceId: missionId });
+      return tx.userMission.findUniqueOrThrow({ where: { userId_missionId: { userId, missionId } }, include: { mission: true } });
     });
-
-    await this.gamificationService.addPoints(
-      userId,
-      userMission.mission.points,
-      'MISSAO',
-      `Missão concluída: ${userMission.mission.title}`,
-      missionId,
-    );
+    await this.gamificationService.refreshProgressionAfterPointsChange(userId);
 
     await this.gamificationService.checkMissionAchievements(userId);
 
@@ -397,7 +393,7 @@ export class MissionQuizService {
   }
 
   private async getTodayDailyQuizMission() {
-    const { startOfDay } = getDailyQuizDateWindow(
+    const { startOfDay, endOfDay } = getDailyQuizDateWindow(
       new Date(),
       this.configService.get<string>('APP_TIME_ZONE'),
     );
@@ -406,8 +402,8 @@ export class MissionQuizService {
       where: {
         type: MissionType.DIARIA,
         classId: null,
-        startDate: { gte: startOfDay },
-        quiz: { isNot: null },
+        startDate: { gte: startOfDay, lte: endOfDay },
+        quiz: { is: { reviewStatus: 'APPROVED' } },
       },
       include: { quiz: true },
       orderBy: { createdAt: 'desc' },
@@ -421,6 +417,10 @@ export class MissionQuizService {
       return mission;
     }
 
+    if (this.configService.get<string>('QUIZ_REVIEW_MODE') !== 'automatic') {
+      await this.quizGeneratorService.generateDailyQuizMission();
+      return this.getTodayDailyQuizMission();
+    }
     const generated = await this.quizGeneratorService.generateDailyQuizMission();
     if (generated) {
       mission = await this.getTodayDailyQuizMission();

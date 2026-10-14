@@ -62,7 +62,7 @@ describeWithDocker('Docker code runner integration', () => {
       command: [
         'node',
         '-e',
-        'require("https").get("https://example.com").on("error", () => { process.stdout.write("network-blocked"); process.exit(0); }); setTimeout(() => process.exit(1), 1500)',
+        'const socket = require("net").connect({host: "1.1.1.1", port: 80}); socket.on("connect", () => process.exit(1)); socket.on("error", (error) => { if (!["ENETUNREACH", "EHOSTUNREACH"].includes(error.code)) throw error; process.stdout.write("network-blocked"); process.exit(0); }); setTimeout(() => process.exit(1), 1500)',
       ],
     });
 

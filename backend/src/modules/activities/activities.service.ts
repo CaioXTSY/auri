@@ -1,3 +1,4 @@
+import { awardOnce, lockRewardUser } from '../gamification/reward-store';
 import {
   BadRequestException,
   ForbiddenException,
@@ -399,19 +400,18 @@ export class ActivitiesService {
       throw new BadRequestException('Nota não pode ultrapassar a nota máxima');
     }
 
-    const xpToAward = dto.score > 0 && submission.xpAwarded === 0
-      ? submission.activity.xpReward
-      : 0;
+    let xpToAward = 0;
     const updated = await this.prisma.$transaction(async (tx) => {
+      await lockRewardUser(tx, submission.userId);
+      const current = await tx.activitySubmission.findUniqueOrThrow({ where: { id: submission.id } });
+      xpToAward = dto.score > 0 && current.xpAwarded === 0 ? submission.activity.xpReward : 0;
       if (xpToAward > 0) {
-        await tx.userPoint.create({
-          data: {
+        await awardOnce(tx, {
             userId: submission.userId,
             points: xpToAward,
             source: 'ACTIVITY_GRADE',
             description: `Atividade: ${submission.activity.title}`,
             referenceId: submission.id,
-          },
         });
       }
       return tx.activitySubmission.update({
@@ -422,7 +422,7 @@ export class ActivitiesService {
           status: SubmissionStatus.GRADED,
           gradedAt: new Date(),
           gradedById: actor.id,
-          xpAwarded: submission.xpAwarded + xpToAward,
+          xpAwarded: current.xpAwarded + xpToAward,
         },
       });
     });

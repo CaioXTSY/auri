@@ -220,6 +220,7 @@ model UserPoint {
   source      String
   description String   @db.Text
   referenceId String?  @map("reference_id")
+  idempotencyKey String? @unique @map("idempotency_key") @db.VarChar(64)
   createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -282,6 +283,7 @@ model Mission {
   startDate   DateTime    @map("start_date")
   endDate     DateTime    @map("end_date")
   createdById String?     @map("created_by_id")
+  dailyKey    String?     @unique @map("daily_key") @db.VarChar(10)
   createdAt   DateTime    @default(now()) @map("created_at")
 
   class        Class?               @relation(fields: [classId], references: [id], onDelete: Cascade)
@@ -302,6 +304,11 @@ model MissionQuiz {
   explanations   Json
   correctIndex   Int        @map("correct_index")
   aiGenerationId String?    @map("ai_generation_id")
+  reviewStatus   String     @default("APPROVED") @map("review_status") @db.VarChar(20)
+  reviewedById   String?    @map("reviewed_by_id")
+  reviewedAt     DateTime?  @map("reviewed_at")
+  reviewReason   String?    @map("review_reason") @db.Text
+  qualityWarnings Json?    @map("quality_warnings")
   createdAt      DateTime   @default(now()) @map("created_at")
 
   mission      Mission              @relation(fields: [missionId], references: [id], onDelete: Cascade)
@@ -355,6 +362,10 @@ model AIGeneration {
   totalTokens        Int?     @map("total_tokens")
   generationAttempts Int?     @map("generation_attempts")
   validationCalls    Int?     @map("validation_calls")
+  requestedDifficulty String? @map("requested_difficulty")
+  returnedDifficulty String?  @map("returned_difficulty")
+  status             String?  @db.VarChar(20)
+  callAudit          Json?    @map("call_audit")
   createdAt          DateTime @default(now()) @map("created_at")
 
   missionQuizzes MissionQuiz[]

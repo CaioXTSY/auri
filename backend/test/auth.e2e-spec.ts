@@ -5,6 +5,7 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import * as cookieParser from 'cookie-parser';
 import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
+import { MailService } from '../src/modules/mail/mail.service';
 
 type TestAuthUser = {
   id: string;
@@ -30,7 +31,7 @@ describe('AuthController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    }).overrideProvider(MailService).useValue({ sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined) }).compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');

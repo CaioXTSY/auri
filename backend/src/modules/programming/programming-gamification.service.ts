@@ -1,3 +1,6 @@
+import { awardOnce, awardScoreDelta, lockRewardUser } from '../gamification/reward-store';
+import { RankingService } from '../gamification/ranking.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import {
   CodeSubmissionMode,
   CodeSubmissionStatus,
@@ -24,9 +27,8 @@ export class ProgrammingGamificationService {
     if (submission) {
       await this.refreshProgressionAfterPointsChange(submission.userId);
 
-      if (submission.assignment?.classId) {
-        await this.updateClassRanking(submission.assignment.classId);
-      }
+      const enrollments = await this.prisma.classStudent.findMany({ where: { userId: submission.userId }, select: { classId: true } });
+      for (const enrollment of enrollments) await this.updateClassRanking(enrollment.classId);
 
       await this.updateGlobalRanking();
     }
@@ -41,6 +43,7 @@ export class ProgrammingGamificationService {
         id: true,
         userId: true,
         assignmentId: true,
+        mode: true,
         score: true,
         assignment: {
           select: {
@@ -51,40 +54,14 @@ export class ProgrammingGamificationService {
       },
     });
 
-    if (!submission?.assignmentId || submission.score <= 0) {
+    if (!submission?.assignmentId || submission.score <= 0 || submission.mode !== CodeSubmissionMode.SUBMIT) {
       return 0;
     }
 
-    const bestPrevious = await this.prisma.codeSubmission.findFirst({
-      where: {
-        id: { not: submission.id },
-        userId: submission.userId,
-        assignmentId: submission.assignmentId,
-        mode: CodeSubmissionMode.SUBMIT,
-        status: {
-          in: [CodeSubmissionStatus.ACCEPTED, CodeSubmissionStatus.WRONG_ANSWER],
-        },
-      },
-      orderBy: { score: 'desc' },
-      select: { score: true },
+    return this.prisma.$transaction(async (tx) => {
+      await lockRewardUser(tx, submission.userId);
+      return awardScoreDelta(tx, { userId: submission.userId, points: submission.score, source: 'programming_assignment', description: `Atividade de programação: ${submission.assignment?.title ?? submission.assignmentId}`, referenceId: submission.assignmentId! });
     });
-
-    const delta = Math.max(0, submission.score - (bestPrevious?.score ?? 0));
-    if (delta <= 0) {
-      return 0;
-    }
-
-    await this.prisma.userPoint.create({
-      data: {
-        userId: submission.userId,
-        points: delta,
-        source: 'programming_assignment',
-        description: `Atividade de programacao: ${submission.assignment?.title ?? submission.assignmentId}`,
-        referenceId: submission.assignmentId,
-      },
-    });
-
-    return delta;
   }
 
   private async checkProgrammingAchievements(
@@ -184,48 +161,15 @@ export class ProgrammingGamificationService {
       return false;
     }
 
-    const existing = await this.prisma.userAchievement.findUnique({
-      where: {
-        userId_achievementId: {
-          userId,
-          achievementId: achievement.id,
-        },
-      },
+    return this.prisma.$transaction(async (tx) => {
+      await lockRewardUser(tx, userId);
+      const existing = await tx.userAchievement.findUnique({ where: { userId_achievementId: { userId, achievementId: achievement.id } } });
+      if (existing) return false;
+      await tx.userAchievement.create({ data: { userId, achievementId: achievement.id } });
+      await awardOnce(tx, { userId, points: achievement.points, source: 'CONQUISTA', description: `Desbloqueou: ${achievement.name}`, referenceId: achievement.id });
+      await tx.notification.create({ data: { userId, type: NotificationType.CONQUISTA, title: `Conquista desbloqueada: ${achievement.name}`, message: `${achievement.description} +${achievement.points} XP.` } });
+      return true;
     });
-
-    if (existing) {
-      return false;
-    }
-
-    await this.prisma.userAchievement.create({
-      data: {
-        userId,
-        achievementId: achievement.id,
-      },
-    });
-
-    if (achievement.points > 0) {
-      await this.prisma.userPoint.create({
-        data: {
-          userId,
-          points: achievement.points,
-          source: 'CONQUISTA',
-          description: `Desbloqueou: ${achievement.name}`,
-          referenceId: achievement.id,
-        },
-      });
-    }
-
-    await this.prisma.notification.create({
-      data: {
-        userId,
-        type: NotificationType.CONQUISTA,
-        title: `Conquista desbloqueada: ${achievement.name}`,
-        message: `${achievement.description} +${achievement.points} XP.`,
-      },
-    });
-
-    return true;
   }
 
   private async getUserTotalPoints(userId: string) {
@@ -237,79 +181,11 @@ export class ProgrammingGamificationService {
     return result._sum.points || 0;
   }
 
-  private async updateGlobalRanking() {
-    const topUsers = await this.prisma.$queryRaw<Array<{ userId: string; totalPoints: bigint }>>`
-      SELECT
-        user_id as userId,
-        SUM(points) as totalPoints
-      FROM user_points
-      GROUP BY user_id
-      ORDER BY totalPoints DESC
-      LIMIT 100
-    `;
-
-    for (let i = 0; i < topUsers.length; i++) {
-      const user = topUsers[i];
-      await this.prisma.ranking.upsert({
-        where: {
-          userId_type_referenceId: {
-            userId: user.userId,
-            type: 'GLOBAL',
-            referenceId: 'GLOBAL',
-          },
-        },
-        update: {
-          position: i + 1,
-          points: Number(user.totalPoints),
-          updatedAt: new Date(),
-        },
-        create: {
-          userId: user.userId,
-          type: 'GLOBAL',
-          referenceId: 'GLOBAL',
-          position: i + 1,
-          points: Number(user.totalPoints),
-        },
-      });
-    }
+  private updateGlobalRanking() {
+    return new RankingService(this.prisma as PrismaService).updateGlobalRanking();
   }
-
-  private async updateClassRanking(classId: string) {
-    const topUsers = await this.prisma.$queryRaw<Array<{ userId: string; totalPoints: bigint }>>`
-      SELECT
-        cs.user_id as userId,
-        SUM(up.points) as totalPoints
-      FROM class_students cs
-      LEFT JOIN user_points up ON up.user_id = cs.user_id
-      WHERE cs.class_id = ${classId}
-      GROUP BY cs.user_id
-      ORDER BY totalPoints DESC
-    `;
-
-    for (let i = 0; i < topUsers.length; i++) {
-      const user = topUsers[i];
-      await this.prisma.ranking.upsert({
-        where: {
-          userId_type_referenceId: {
-            userId: user.userId,
-            type: 'TURMA',
-            referenceId: classId,
-          },
-        },
-        update: {
-          position: i + 1,
-          points: Number(user.totalPoints) || 0,
-          updatedAt: new Date(),
-        },
-        create: {
-          userId: user.userId,
-          type: 'TURMA',
-          referenceId: classId,
-          position: i + 1,
-          points: Number(user.totalPoints) || 0,
-        },
-      });
-    }
+  private updateClassRanking(classId: string) {
+    return new RankingService(this.prisma as PrismaService).updateClassRanking(classId);
   }
 
   private getSaoPauloDateParts(date: Date) {

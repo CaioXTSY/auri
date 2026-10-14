@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RankingService {
@@ -8,95 +9,52 @@ export class RankingService {
   constructor(private readonly prisma: PrismaService) {}
 
   async updateGlobalRanking() {
-    this.logger.log('Atualizando ranking global...');
+    return this.rebuild('GLOBAL', 'GLOBAL');
+  }
 
-    const topUsers = await this.prisma.$queryRaw<
-      Array<{ userId: string; totalPoints: bigint }>
-    >`
-      SELECT
-        user_id as userId,
-        SUM(points) as totalPoints
-      FROM user_points
-      GROUP BY user_id
-      ORDER BY totalPoints DESC
-      LIMIT 100
-    `;
-
-    for (let i = 0; i < topUsers.length; i++) {
-      const user = topUsers[i];
-      const position = i + 1;
-      const points = Number(user.totalPoints);
-
-      await this.prisma.ranking.upsert({
-        where: {
-          userId_type_referenceId: {
-            userId: user.userId,
-            type: 'GLOBAL',
-            referenceId: 'GLOBAL',
+  private async rebuild(type: 'GLOBAL' | 'TURMA', referenceId: string) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await this.prisma.$transaction(
+          async (tx) => {
+            // A common lock prevents concurrent snapshot writers from interleaving.
+            await tx.$queryRaw`SELECT id FROM users ORDER BY id FOR UPDATE`;
+            const rows = await tx.$queryRaw<
+              Array<{ userId: string; totalPoints: bigint }>
+            >(Prisma.sql`
+            SELECT u.id AS userId, COALESCE(SUM(up.points), 0) AS totalPoints
+            FROM users u LEFT JOIN user_points up ON up.user_id = u.id
+            WHERE u.role = 'ALUNO' ${type === 'TURMA' ? Prisma.sql`AND EXISTS (SELECT 1 FROM class_students cs WHERE cs.user_id = u.id AND cs.class_id = ${referenceId})` : Prisma.empty}
+            GROUP BY u.id ORDER BY totalPoints DESC, u.id ASC
+          `);
+            await tx.ranking.deleteMany({ where: { type, referenceId, userId: { notIn: rows.map((row) => row.userId) } } });
+            for (const [index, row] of rows.entries()) {
+              // Keep IDs stable for eligible participants; remove only stale entries.
+              const data = { position: index + 1, points: Number(row.totalPoints) };
+              await tx.ranking.upsert({ where: { userId_type_referenceId: { userId: row.userId, type, referenceId } },
+                update: data, create: { userId: row.userId, type, referenceId, ...data } });
+            }
           },
-        },
-        update: { position, points, updatedAt: new Date() },
-        create: {
-          userId: user.userId,
-          type: 'GLOBAL',
-          referenceId: 'GLOBAL',
-          position,
-          points,
-        },
-      });
+          { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 15000 },
+        );
+      } catch (error) {
+        if (
+          !(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') ||
+          attempt === 2
+        )
+          throw error;
+      }
     }
-
-    this.logger.log(`Ranking global atualizado (${topUsers.length} usuários)`);
   }
 
   async updateClassRanking(classId: string) {
-    this.logger.log(`Atualizando ranking da turma ${classId}...`);
-
-    const topUsers = await this.prisma.$queryRaw<
-      Array<{ userId: string; totalPoints: bigint }>
-    >`
-      SELECT
-        cs.user_id as userId,
-        SUM(up.points) as totalPoints
-      FROM class_students cs
-      LEFT JOIN user_points up ON up.user_id = cs.user_id
-      WHERE cs.class_id = ${classId}
-      GROUP BY cs.user_id
-      ORDER BY totalPoints DESC
-    `;
-
-    for (let i = 0; i < topUsers.length; i++) {
-      const user = topUsers[i];
-      const position = i + 1;
-      const points = Number(user.totalPoints) || 0;
-
-      await this.prisma.ranking.upsert({
-        where: {
-          userId_type_referenceId: {
-            userId: user.userId,
-            type: 'TURMA',
-            referenceId: classId,
-          },
-        },
-        update: { position, points, updatedAt: new Date() },
-        create: {
-          userId: user.userId,
-          type: 'TURMA',
-          referenceId: classId,
-          position,
-          points,
-        },
-      });
-    }
-
-    this.logger.log(`Ranking da turma atualizado (${topUsers.length} alunos)`);
+    return this.rebuild('TURMA', classId);
   }
 
-  async getRanking(
-    type: 'GLOBAL' | 'TURMA',
-    referenceId?: string,
-    limit = 50,
-  ) {
+  async getRanking(type: 'GLOBAL' | 'TURMA', referenceId?: string, limit = 50) {
+    if (type === 'TURMA' && !referenceId)
+      throw new Error('referenceId obrigatório para ranking de turma');
+    await this.rebuild(type, type === 'GLOBAL' ? 'GLOBAL' : referenceId!);
     const where: any =
       type === 'GLOBAL'
         ? { type, referenceId: 'GLOBAL' }
@@ -114,11 +72,10 @@ export class RankingService {
     });
   }
 
-  async getUserRankingPosition(
-    userId: string,
-    type: 'GLOBAL' | 'TURMA',
-    referenceId?: string,
-  ) {
+  async getUserRankingPosition(userId: string, type: 'GLOBAL' | 'TURMA', referenceId?: string) {
+    if (type === 'TURMA' && !referenceId)
+      throw new Error('referenceId obrigatório para ranking de turma');
+    await this.rebuild(type, type === 'GLOBAL' ? 'GLOBAL' : referenceId!);
     return this.prisma.ranking.findUnique({
       where:
         type === 'GLOBAL'

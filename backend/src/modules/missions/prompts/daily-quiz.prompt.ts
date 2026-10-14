@@ -10,7 +10,7 @@ const JSON_SCHEMA = `{
   "question": "Enunciado claro com bloco de código se necessário",
   "difficulty": "FACIL" | "MEDIO" | "DIFICIL",
   "options": ["Texto completo da alternativa 1", "Texto completo da alternativa 2", "Texto completo da alternativa 3", "Texto completo da alternativa 4"],
-  "correctIndex": 0,
+  "correctIndex": 2,
   "explanations": ["Por que a alternativa 1 está correta ou errada", "Por que a alternativa 2 está correta ou errada", "Por que a alternativa 3 está correta ou errada", "Por que a alternativa 4 está correta ou errada"]
 }`;
 
@@ -40,6 +40,7 @@ export function buildDailyQuizUserPrompt(params: DailyQuizPromptParams): string 
   return [
     'Gere um quiz diário de programação em português para alunos de graduação em computação.',
     `Nível alvo: ${difficulty}.`,
+    'Retorne exatamente a dificuldade solicitada. FACIL: aplicação direta de um conceito; MEDIO: combinação de conceitos e rastreamento de fluxo; DIFICIL: raciocínio em múltiplas etapas, invariantes ou análise de complexidade.',
     `LINGUAGEM PREFERIDA para esta questão (escolha uma): ${languageHint}.`,
     `TÓPICO SUGERIDO (use este ou algo igualmente distinto dos recentes): ${suggestedTopic}.`,
     '',
@@ -56,7 +57,10 @@ export function buildDailyQuizUserPrompt(params: DailyQuizPromptParams): string 
     JSON_SCHEMA,
     'REGRAS DE FORMATAÇÃO:',
     '- Exatamente 4 alternativas, cada uma com o texto completo da resposta (nunca apenas "A", "B", "C" ou "D").',
+    '- correctIndex é um inteiro de 0 a 3, calculado após resolver a questão. O número no exemplo de formato é apenas ilustrativo.',
     '- Explicações devem ser educativas e detalhadas (mínimo 15 palavras cada).',
+    '- Não mencione letras, números ou ordinais das alternativas nas explicações (primeira, segunda, terceira, quarta); explique o conteúdo de cada opção.',
+    '- Não revele a resposta em comentários de código ou no enunciado.',
     '- Não use markdown fora do JSON.',
     '- Se usar código na pergunta, use blocos formatados com \\n.',
   ].join('\n');
@@ -72,23 +76,27 @@ export function buildDailyQuizValidationPrompt(quiz: {
 }): string {
   return [
     'Valide tecnicamente o quiz abaixo.',
+    'Resolva a questão de forma independente e determine correctIndex. O gabarito proposto foi omitido. Depois examine TODAS as explicações: uma opção incorreta não pode ser descrita como correta.',
     '',
     'Critérios para aprovar:',
     '- O enunciado precisa ser claro e sem ambiguidade.',
     '- Deve haver exatamente uma alternativa correta.',
-    '- O correctIndex informado deve apontar para a alternativa realmente correta.',
+    '- Retorne o índice da alternativa que você determinou como realmente correta, sem assumir que as explicações fornecidas são verdadeiras.',
     '- As explicações precisam ser coerentes com a resposta correta.',
+    '- Reprove pistas de resposta em comentários e alternativas semanticamente equivalentes.',
+    '- Avalie a dificuldade preliminarmente: FACIL, MEDIO ou DIFICIL; indique divergências em reason. Isso não substitui revisão pedagógica humana.',
     '- Reprove se houver comportamento indefinido, dependente de implementação, dependente de versão não declarada, ou se a saída/erro do código estiver incorreta.',
     '',
     'Retorne apenas JSON válido neste formato:',
     '{',
     '  "isValid": true,',
     '  "correctIndex": 0,',
+    '  "estimatedDifficulty": "FACIL ou MEDIO ou DIFICIL",',
     '  "reason": "Resumo curto da verificação técnica"',
     '}',
     '',
     'Quiz:',
-    JSON.stringify(quiz, null, 2),
+    JSON.stringify({ title: quiz.title, question: quiz.question, difficulty: quiz.difficulty, options: quiz.options, explanations: quiz.explanations }, null, 2),
   ].join('\n');
 }
 

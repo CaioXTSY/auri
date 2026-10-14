@@ -48,9 +48,10 @@ export const DailyQuizModal = ({ open, onClose, onAnswered }: DailyQuizModalProp
             pointsAwarded: response.pointsAwarded ?? 0,
           });
         }
-      } catch {
+        } catch (loadError) {
         if (!isMounted) return;
-        setError('Não foi possível carregar o quiz diário.');
+          const status = (loadError as { response?: { status?: number } }).response?.status;
+          setError(status === 404 ? 'O quiz diário ainda não está disponível. Questões geradas podem estar aguardando revisão de um responsável.' : 'Não foi possível carregar o quiz diário.');
         setQuiz(null);
       } finally {
         if (isMounted) setIsLoading(false);

@@ -177,7 +177,7 @@ export const ClassWorkspace = ({
             </span>
             <span className="inline-flex items-center gap-1.5">
               <GraduationCap className="h-4 w-4" />
-              {classroom._count?.students ?? members.students.length} alunos
+              {classroom._count?.students ?? members.students.filter((member) => member.membershipType !== 'OWNER' && member.user.role === 'ALUNO').length} alunos
             </span>
           </div>
         </div>

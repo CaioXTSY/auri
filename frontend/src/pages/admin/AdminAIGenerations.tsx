@@ -15,6 +15,7 @@ import {
 import { adminService, type AIGenerationListItem, type AIGenerationDetail } from '@/services/admin-service';
 import { X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { QuizReviewQueue } from '@/components/quiz/QuizReviewQueue';
 
 const AIGenerationsTableSkeleton = () => (
   <TableContainer>
@@ -97,6 +98,7 @@ export const AdminAIGenerations = () => {
           title="Gerações de IA"
           description="Auditoria de prompts e respostas usados em missões geradas."
         />
+        <QuizReviewQueue />
 
         {isLoading ? (
           <AIGenerationsTableSkeleton />
