@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { execFileSync } from 'child_process';
 import { createHash } from 'crypto';
+import { isDeepStrictEqual } from 'util';
 import { PrismaService } from '../src/prisma/prisma.service';
 import {
   normalizeGeneratedQuiz,
@@ -205,7 +206,7 @@ async function main() {
       const generation = await prisma.aIGeneration.findUniqueOrThrow({
         where: { id: record.generationId },
       });
-      if (JSON.stringify(generation.callAudit) === JSON.stringify(record.calls))
+      if (isDeepStrictEqual(generation.callAudit, record.calls))
         checks.matchingUsageAudits++;
       else checks.failures.push(`Audit mismatch ${record.generationId}`);
       if (!record.persisted) continue;
