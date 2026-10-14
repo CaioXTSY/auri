@@ -1,0 +1,3 @@
+
+> auri-backend@0.0.1 build:runner
+> tsc -p tsconfig.runner.json

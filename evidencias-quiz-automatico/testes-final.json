@@ -1,0 +1,843 @@
+{
+  "testedCodeCommit": "938db7b76d8920bbd74f7cfc38b93d9366871819",
+  "groups": [
+    {
+      "name": "unit",
+      "evidence": "unit.json",
+      "executed": 91,
+      "passed": 91,
+      "failed": 0,
+      "notExecuted": 0,
+      "startedAt": "2026-10-14T02:21:15.387Z",
+      "cases": [
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics persists the approved first attempt and the aggregate generation and validation usage",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics aggregates rejected and approved calls but persists only the approved prompt and response",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics keeps token metrics unavailable when an OpenAI response omits usage",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics stops after three rejections, audits failed costs and creates no usable quiz",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics selects actual daily difficulty for 0 correct answers out of 20",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics selects actual daily difficulty for 10 correct answers out of 20",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics selects actual daily difficulty for 20 correct answers out of 20",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics blocks evaluation against a nonlocal or non-evaluation database before calling OpenAI",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics rejects a repeated question before semantic review and records all generation costs",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics publishes a validated daily quiz without human approval (legacy setting undefined)",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics publishes a validated daily quiz without human approval (legacy setting automatic)",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics publishes a validated daily quiz without human approval (legacy setting human)",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics retries invalid JSON, then publishes only the validated candidate",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics creates no daily mission or human pending record when all three candidates are invalid",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics the existing scheduler publishes through the same automated pipeline",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-generator.service.spec.ts",
+          "name": "QuizGeneratorService usage metrics shares one generation promise for simultaneous requests to the same instance",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService should be defined",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService validateUser should return user without password if credentials are valid",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService validateUser should return null if user not found",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService validateUser should return null if password is incorrect",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService login should return tokens and user on successful login",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService login should throw UnauthorizedException if credentials are invalid",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService register should create user and return tokens",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService refreshToken should return new tokens if refresh token is valid",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService refreshToken should throw UnauthorizedException if refresh token is invalid",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService forgotPassword should return success message",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService forgotPassword should return success message even if email does not exist",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService resetPassword should reset password successfully",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService resetPassword should throw BadRequestException if token is invalid",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/auth/auth.service.spec.ts",
+          "name": "AuthService logout should clear refresh token",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/classes/classes.service.spec.ts",
+          "name": "ClassesService.remove impede que professor remova qualquer turma",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/classes/classes.service.spec.ts",
+          "name": "ClassesService.remove permite que administrador remova uma turma existente",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/classes/classes.service.spec.ts",
+          "name": "ClassesService.remove retorna not found quando a turma nao existe",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/health/health.controller.spec.ts",
+          "name": "HealthController reports API and database availability without exposing internals",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/health/health.controller.spec.ts",
+          "name": "HealthController returns a sanitized 503 response when the database is unavailable",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService should be defined",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService create should create a new user with hashed password",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService findAll should return paginated users",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService findAll should filter by role",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService findAll should filter by name",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService findAll should sort results",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService findOne should return a user by id",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService findOne should throw NotFoundException if user not found",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService findByEmail should return a user by email",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService update should update a user",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService update should hash password when updating",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService updateAvatar should update user avatar",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService remove should delete a user",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService updateRefreshToken should update refresh token",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService clearRefreshToken should clear refresh token",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/users/users.service.spec.ts",
+          "name": "UsersService updatePassword should update user password",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "name": "CodeSubmissionsService should reject official submission after due date when late submissions are disabled",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "name": "CodeSubmissionsService should allow official submission after due date when class allows late submissions",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "name": "CodeSubmissionsService should require enabled activities and student enrollment before creating run submission",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "name": "CodeSubmissionsService should hide input, expected, actual and error from hidden tests for students",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/code-submissions.service.spec.ts",
+          "name": "CodeSubmissionsService should block professor from viewing submissions from another teacher class",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/programming-assignments.service.spec.ts",
+          "name": "ProgrammingAssignmentsService should list only published student assignments from classes with activities enabled",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/programming-assignments.service.spec.ts",
+          "name": "ProgrammingAssignmentsService should not open solve view when assignment is unpublished, inaccessible or disabled",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/programming/programming-assignments.service.spec.ts",
+          "name": "ProgrammingAssignmentsService should restrict professor assignment list to classes they created",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "name": "ActivitiesService authorization blocks a professor from creating an activity in another teacher class",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "name": "ActivitiesService authorization hides an activity from a student who is not enrolled",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "name": "ActivitiesService authorization blocks a professor from viewing another teacher submission",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/activities/activities.service.spec.ts",
+          "name": "ActivitiesService authorization rejects a grade above the activity maximum",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle preserves requested difficulty FACIL",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle preserves requested difficulty MEDIO",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle preserves requested difficulty DIFICIL",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects missing title",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects missing question",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects empty option",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects duplicate option",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects case duplicate",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects three options",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects invalid option type",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects missing index",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects null index",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects string index",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects negative index",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects outside index",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects fraction index",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects empty explanation",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects missing explanations",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects invalid difficulty",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle rejects malformed JSON and difficulty disagreement rather than silently replacing it",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle preserves every option/explanation and correct answer across all 24 permutations",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/modules/missions/quiz-quality.spec.ts",
+          "name": "Quiz structural validation and unbiased shuffle identifies warnings as suspicions for review",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "name": "code-runner.worker getFinalStatus should accept when all tests passed",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "name": "code-runner.worker getFinalStatus should return wrong answer when execution is valid but at least one test failed",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "name": "code-runner.worker getFinalStatus should prioritize timeout over wrong answer",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "name": "code-runner.worker getFinalStatus should prioritize runtime error over wrong answer",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/worker/code-runner.worker.spec.ts",
+          "name": "code-runner.worker normalizeOutput should trim trailing spaces per line and trailing blank lines",
+          "status": "passed"
+        },
+        {
+          "file": "backend/src/common/http/cors.spec.ts",
+          "name": "CORS origins uses configured origins and never treats wildcard as an allowed origin",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "api",
+      "evidence": "api.json",
+      "executed": 55,
+      "passed": 55,
+      "failed": 0,
+      "notExecuted": 0,
+      "startedAt": "2026-10-14T02:21:15.102Z",
+      "cases": [
+        {
+          "file": "backend/test/final-smoke.e2e-spec.ts",
+          "name": "Final synthetic cross-module API smoke logs in, approves enrollment, publishes/submits/grades, reads posts and notifications, checks admin access",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked publishes through the actual pipeline, hides the key, preserves pairs and awards XP once concurrently",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked retries invalid JSON and publishes only the later validated candidate with complete audit",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked retries an AI reviewer rejection without sending the decision to a human queue",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked returns an appropriate unavailability message after three invalid attempts and creates no pending quiz",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked archives the occupied daily slot without publishing historical PENDING content under concurrent generation",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked archives the occupied daily slot without publishing historical AUTO_REJECTED content under concurrent generation",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked archives the occupied daily slot without publishing historical REJECTED content under concurrent generation",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked serves an already published legacy daily quiz without regeneration or human action",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/quiz-automatic.e2e-spec.ts",
+          "name": "Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked the existing scheduler publishes a quiz immediately available to the student",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation counts one enrolled student, includes owner only in participants, excludes pending enrollment",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation keeps XP and both persisted rankings at 475, 480, 485, with no repeated mission or quiz credit",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation rejects fractional answer and blocks completing a quiz without answering",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation applies shared structural validation and author audit to manually published quizzes",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation gates pending content, enforces reviewer permissions and publishes only after recorded approval",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation grants one achievement reward under concurrency and rolls back state together with XP",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation credits grading once under concurrency",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation automatically publishes exactly one daily quiz across two instances, ignores legacy human mode and exposes no future quiz",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation awards a seven-day streak bonus once despite simultaneous updates",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation credits programming from the ledger, including reprocessing and score improvement",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/tcc-validation.e2e-spec.ts",
+          "name": "TCC real isolated database and API validation excludes staff before positioning, breaks ties deterministically, removes unenrolled stale entries and supports >100 students",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /health (GET) should report API and database availability",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/register (POST) should register a new user",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/register (POST) should fail with invalid email",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/register (POST) should fail with short password",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/login (POST) should login successfully",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/login (POST) should fail with wrong password",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/login (POST) should fail with non-existent email",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/login (POST) should block repeated login attempts with HTTP 429",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/refresh (POST) should refresh token successfully",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/refresh (POST) should fail with invalid refresh token",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/forgot-password (POST) should send reset password email",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/forgot-password (POST) should return success even for non-existent email",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/logout (POST) should logout successfully",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/auth.e2e-spec.ts",
+          "name": "AuthController (e2e) /auth/logout (POST) should fail without token",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (GET) should return paginated users for admin",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (GET) should return paginated users for professor",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (GET) should filter users by role",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (GET) should paginate results",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (GET) should fail without authentication",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (GET) should fail for aluno role",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/me (GET) should return current user profile",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/me (GET) should fail without authentication",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/:id (GET) should return user by id",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/:id (GET) should return 404 for non-existent user",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/me (PATCH) should update own profile",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/me (PATCH) should reject role changes on own profile",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/:id (PATCH) should update user as admin",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/:id (PATCH) should fail as non-admin",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/me/avatar (POST) should upload avatar for current user",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/me/avatar (POST) should fail without file",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (POST) should create user as admin",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users (POST) should fail as non-admin",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/:id (DELETE) should delete user as admin",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/users.e2e-spec.ts",
+          "name": "UsersController (e2e) /users/:id (DELETE) should fail as non-admin",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "docker",
+      "evidence": "docker.json",
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "notExecuted": 0,
+      "startedAt": "2026-10-14T02:22:50.358Z",
+      "cases": [
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "name": "Docker code runner integration executes JavaScript and returns stdout",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "name": "Docker code runner integration executes Python and returns stdout",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "name": "Docker code runner integration enforces the configured execution timeout",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "name": "Docker code runner integration does not allow outbound network access",
+          "status": "passed"
+        },
+        {
+          "file": "backend/test/runner.integration-spec.ts",
+          "name": "Docker code runner integration runs with a read-only root filesystem",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "browser",
+      "evidence": "browser.json",
+      "executed": 9,
+      "passed": 9,
+      "failed": 0,
+      "notExecuted": 0,
+      "startedAt": "2026-10-14T02:22:03.593Z"
+    }
+  ],
+  "total": {
+    "executed": 160,
+    "passed": 160,
+    "failed": 0,
+    "notExecuted": 0
+  },
+  "changesFromPrevious142": {
+    "unitAdded": 7,
+    "apiAdded": 9,
+    "browserNetAdded": 2,
+    "previousApprovalUiCaseReplacedWithAuditCase": true
+  },
+  "intermediates": {
+    "before": "automatic-before.json: 1 selected case passed, 10 unselected",
+    "compilation": "api-target-types-inicial.json: fixture difficulty initially declared string; fixed to Prisma enum; no test case ran in that failed compilation",
+    "docker": [
+      "docker-inicial-skipped.json",
+      "docker-segundo-skipped.json"
+    ],
+    "typesCommand": "backend-types-caminho-inicial.txt: nonexistent config path; corrected tsconfig.json passed"
+  },
+  "commandChecks": {
+    "backendBuild": 0,
+    "workerBuild": 0,
+    "backendTypes": 0,
+    "frontendTypes": 0,
+    "frontendNativeBuild": 0,
+    "backendLint": {
+      "errors": 0,
+      "warnings": 21,
+      "exitCode": 0
+    },
+    "frontendLint": 0,
+    "prismaValidate": 0,
+    "migrationsDeploy": 0,
+    "migrationsStatus": 0,
+    "frontendDefaultBuild": "not rerun; known limitation from prior report"
+  },
+  "mockBoundaries": "OpenAI fetch mocked, SMTP mocked, browser API mocked; API business services and MariaDB real, Docker real.",
+  "newRealOpenAiCalls": 0,
+  "newOpenAiCostUsd": 0
+}

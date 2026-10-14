@@ -1,0 +1,171 @@
+[
+  {
+    "scenario": "Automatic publication despite legacy human setting",
+    "expected": {
+      "status": "APPROVED",
+      "reviewer": null
+    },
+    "obtained": {
+      "status": "APPROVED",
+      "reviewer": null
+    }
+  },
+  {
+    "scenario": "Hidden key before answering",
+    "expected": {
+      "key": false,
+      "explanations": false
+    },
+    "obtained": {
+      "key": false,
+      "explanations": false
+    }
+  },
+  {
+    "scenario": "Stored option-explanation pairs and key preserved",
+    "expected": true,
+    "obtained": true
+  },
+  {
+    "scenario": "Concurrent correct answers",
+    "expected": [
+      201,
+      400
+    ],
+    "obtained": [
+      201,
+      400
+    ]
+  },
+  {
+    "scenario": "Daily XP credited once",
+    "expected": 40,
+    "obtained": 40
+  },
+  {
+    "scenario": "Daily reward ledger entries",
+    "expected": 1,
+    "obtained": 1
+  },
+  {
+    "scenario": "Invalid candidate followed by valid publication",
+    "expected": {
+      "attempts": 2,
+      "reviews": 1,
+      "calls": 3,
+      "status": "VALIDATED"
+    },
+    "obtained": {
+      "attempts": 2,
+      "reviews": 1,
+      "calls": 3,
+      "status": "VALIDATED"
+    }
+  },
+  {
+    "scenario": "AI rejection followed by automatic approval",
+    "expected": {
+      "attempts": 2,
+      "reviews": 2,
+      "status": "APPROVED"
+    },
+    "obtained": {
+      "attempts": 2,
+      "reviews": 2,
+      "status": "APPROVED"
+    }
+  },
+  {
+    "scenario": "Exhausted retries publish nothing",
+    "expected": {
+      "attempts": 3,
+      "calls": 3,
+      "tokens": 45,
+      "quizzes": 0,
+      "status": "REJECTED"
+    },
+    "obtained": {
+      "attempts": 3,
+      "calls": 3,
+      "tokens": 45,
+      "quizzes": 0,
+      "status": "REJECTED"
+    }
+  },
+  {
+    "scenario": "Replacement of historical PENDING: one automatic publication",
+    "expected": {
+      "count": 1,
+      "status": "APPROVED"
+    },
+    "obtained": {
+      "count": 1,
+      "status": "APPROVED"
+    }
+  },
+  {
+    "scenario": "Historical PENDING remains unchanged and releases only its daily slot",
+    "expected": {
+      "status": "PENDING",
+      "dailyKey": null
+    },
+    "obtained": {
+      "status": "PENDING",
+      "dailyKey": null
+    }
+  },
+  {
+    "scenario": "Replacement of historical AUTO_REJECTED: one automatic publication",
+    "expected": {
+      "count": 1,
+      "status": "APPROVED"
+    },
+    "obtained": {
+      "count": 1,
+      "status": "APPROVED"
+    }
+  },
+  {
+    "scenario": "Historical AUTO_REJECTED remains unchanged and releases only its daily slot",
+    "expected": {
+      "status": "AUTO_REJECTED",
+      "dailyKey": null
+    },
+    "obtained": {
+      "status": "AUTO_REJECTED",
+      "dailyKey": null
+    }
+  },
+  {
+    "scenario": "Replacement of historical REJECTED: one automatic publication",
+    "expected": {
+      "count": 1,
+      "status": "APPROVED"
+    },
+    "obtained": {
+      "count": 1,
+      "status": "APPROVED"
+    }
+  },
+  {
+    "scenario": "Historical REJECTED remains unchanged and releases only its daily slot",
+    "expected": {
+      "status": "REJECTED",
+      "dailyKey": null
+    },
+    "obtained": {
+      "status": "REJECTED",
+      "dailyKey": null
+    }
+  },
+  {
+    "scenario": "Legacy published quiz served without regeneration",
+    "expected": "303a21a8-3b2a-447c-8278-a12da1a1bfb0",
+    "obtained": "303a21a8-3b2a-447c-8278-a12da1a1bfb0"
+  },
+  {
+    "scenario": "Scheduled quiz available without human review",
+    "expected": "APPROVED",
+    "obtained": "APPROVED"
+  }
+]

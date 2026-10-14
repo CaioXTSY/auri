@@ -1,0 +1,20 @@
+node : PASS test/runner.integration-spec.ts (12.43 s)
+At line:2 char:44
++ ... TCC-Judge'; node node_modules/jest/bin/jest.js --config test/jest-run ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS test/runne...ec.ts (12.43 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  Docker code runner integration
+    √ executes JavaScript and returns stdout (425 ms)
+    √ executes Python and returns stdout (342 ms)
+    √ enforces the configured execution timeout (8703 ms)
+    √ does not allow outbound network access (344 ms)
+    √ runs with a read-only root filesystem (324 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        12.639 s, estimated 18 s
+Ran all test suites.
+Test results written to: ..\evidencias-quiz-automatico\docker.json

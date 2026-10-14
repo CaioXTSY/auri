@@ -1,0 +1,39 @@
+node :   console.log
+At line:2 char:574
++ ... EXITCODE }; node node_modules/jest/bin/jest.js --config test/jest-e2e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (  console.log:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+    ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+  console.log
+    ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+PASS test/tcc-validation.e2e-spec.ts
+  TCC real isolated database and API validation
+    √ keeps exactly one daily pending quiz across two generator instances and exposes no future quiz (84 ms)
+    ○ skipped counts one enrolled student, includes owner only in participants, excludes pending enrollment
+    ○ skipped keeps XP and both persisted rankings at 475, 480, 485, with no repeated mission or quiz credit
+    ○ skipped rejects fractional answer and blocks completing a quiz without answering
+    ○ skipped applies shared structural validation and author audit to manually published quizzes
+    ○ skipped gates pending content, enforces reviewer permissions and publishes only after recorded approval
+    ○ skipped grants one achievement reward under concurrency and rolls back state together with XP
+    ○ skipped credits grading once under concurrency
+    ○ skipped awards a seven-day streak bonus once despite simultaneous updates
+    ○ skipped credits programming from the ledger, including reprocessing and score improvement
+    ○ skipped excludes staff before positioning, breaks ties deterministically, removes unenrolled stale entries and
+supports >100 students
+
+Test Suites: 1 passed, 1 total
+Tests:       10 skipped, 1 passed, 11 total
+Snapshots:   0 total
+Time:        4.268 s
+Ran all test suites matching /tcc-validation/i with tests matching "keeps exactly one daily".
+Test results written to: ..\evidencias-quiz-automatico\automatic-before.json

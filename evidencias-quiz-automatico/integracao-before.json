@@ -1,0 +1,26 @@
+[
+  {
+    "scenario": "Daily concurrent persistence with simulated generation",
+    "expected": {
+      "missions": 1,
+      "pending": "PENDING"
+    },
+    "obtained": {
+      "missions": 1,
+      "pending": "PENDING"
+    }
+  },
+  {
+    "scenario": "Explicit automatic mode with simulated generation",
+    "expected": {
+      "published": true,
+      "status": "APPROVED",
+      "humanReviewer": null
+    },
+    "obtained": {
+      "published": true,
+      "status": "APPROVED",
+      "humanReviewer": null
+    }
+  }
+]

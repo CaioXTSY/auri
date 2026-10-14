@@ -1,0 +1,39 @@
+node :   console.log
+At line:2 char:287
++ ... sh-secret'; node node_modules/jest/bin/jest.js --config test/jest-e2e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (  console.log:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+    ✅ Database connected
+
+      at Proxy.onModuleInit (../src/prisma/prisma.service.ts:11:13)
+          at async Promise.all (index 0)
+
+  console.log
+    ❌ Database disconnected
+
+      at Proxy.onModuleDestroy (../src/prisma/prisma.service.ts:16:13)
+          at async Promise.all (index 0)
+
+PASS test/quiz-automatic.e2e-spec.ts (5.651 s)
+  Automatic daily quiz: real API, pipeline and isolated database; OpenAI mocked
+    √ publishes through the actual pipeline, hides the key, preserves pairs and awards XP once concurrently (109 ms)
+    √ retries invalid JSON and publishes only the later validated candidate with complete audit (24 ms)
+    √ retries an AI reviewer rejection without sending the decision to a human queue (20 ms)
+    √ returns an appropriate unavailability message after three invalid attempts and creates no pending quiz (26 ms)
+    √ archives the occupied daily slot without publishing historical PENDING content under concurrent generation (44
+ms)
+    √ archives the occupied daily slot without publishing historical AUTO_REJECTED content under concurrent generation
+(41 ms)
+    √ archives the occupied daily slot without publishing historical REJECTED content under concurrent generation (35
+ms)
+    √ serves an already published legacy daily quiz without regeneration or human action (12 ms)
+    √ the existing scheduler publishes a quiz immediately available to the student (25 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        5.854 s
+Ran all test suites matching /quiz-automatic/i.
+Test results written to: ..\evidencias-quiz-automatico\api-target.json

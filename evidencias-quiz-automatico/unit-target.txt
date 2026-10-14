@@ -1,0 +1,42 @@
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 1/3: Alternativa inconsistente
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 1/3: Alternativa inconsistente
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 2/3: Alternativa inconsistente
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 3/3: Alternativa inconsistente
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 1/3: Enunciado repetido no histórico recente; gere um exemplo diferente
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 2/3: Enunciado repetido no histórico recente; gere um exemplo diferente
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 3/3: Enunciado repetido no histórico recente; gere um exemplo diferente
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 1/3: JSON malformado
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 1/3: JSON malformado
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 2/3: JSON malformado
+[Nest] 14684  - 13/10/2026, 23:19:08    WARN [QuizGeneratorService] Quiz rejeitado na tentativa 3/3: JSON malformado
+node : PASS src/modules/missions/quiz-generator.service.spec.ts
+At line:2 char:231
++ ... ormat.txt'; node node_modules/jest/bin/jest.js --runInBand --testPath ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS src/module...service.spec.ts:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  QuizGeneratorService usage metrics
+    √ persists the approved first attempt and the aggregate generation and validation usage (5 ms)
+    √ aggregates rejected and approved calls but persists only the approved prompt and response (2 ms)
+    √ keeps token metrics unavailable when an OpenAI response omits usage (1 ms)
+    √ stops after three rejections, audits failed costs and creates no usable quiz (1 ms)
+    √ selects actual daily difficulty for 0 correct answers out of 20 (1 ms)
+    √ selects actual daily difficulty for 10 correct answers out of 20
+    √ selects actual daily difficulty for 20 correct answers out of 20
+    √ blocks evaluation against a nonlocal or non-evaluation database before calling OpenAI (11 ms)
+    √ rejects a repeated question before semantic review and records all generation costs (1 ms)
+    √ publishes a validated daily quiz without human approval (legacy setting undefined) (2 ms)
+    √ publishes a validated daily quiz without human approval (legacy setting automatic)
+    √ publishes a validated daily quiz without human approval (legacy setting human) (1 ms)
+    √ retries invalid JSON, then publishes only the validated candidate (1 ms)
+    √ creates no daily mission or human pending record when all three candidates are invalid (2 ms)
+    √ the existing scheduler publishes through the same automated pipeline (1 ms)
+    √ shares one generation promise for simultaneous requests to the same instance (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       16 passed, 16 total
+Snapshots:   0 total
+Time:        3.901 s, estimated 4 s
+Ran all test suites matching /quiz-generator/i.
+Test results written to: ..\evidencias-quiz-automatico\unit-target.json

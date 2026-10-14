@@ -1,0 +1,7 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": MySQL database "auri_tcc_quiz_automatico_20261013" at "127.0.0.1:33309"
+
+3 migrations found in prisma/migrations
+
+Database schema is up to date!

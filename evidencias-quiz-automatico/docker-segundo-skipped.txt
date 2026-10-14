@@ -1,0 +1,12 @@
+node : Test Suites: 1 skipped, 0 of 1 total
+At line:2 char:44
++ ... TCC-Judge'; node node_modules/jest/bin/jest.js --config test/jest-run ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Test Suites: 1 skipped, 0 of 1 total:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+Tests:       5 skipped, 5 total
+Snapshots:   0 total
+Time:        11.431 s, estimated 18 s
+Ran all test suites.
+Test results written to: ..\evidencias-quiz-automatico\docker.json

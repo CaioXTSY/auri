@@ -1,0 +1,68 @@
+node : FAIL test/quiz-automatic.e2e-spec.ts
+At line:2 char:287
++ ... sh-secret'; node node_modules/jest/bin/jest.js --config test/jest-e2e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL test/quiz-automatic.e2e-spec.ts:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  ● Test suite failed to run
+
+    [96mtest/quiz-automatic.e2e-spec.ts[0m:[93m281[0m:[93m13[0m - [91merror[0m[90m TS2322: [0mType '{
+question: string; reviewStatus: string; title: string; difficulty: string; options: string[]; correctIndex: number;
+explanations: string[]; }' is not assignable to type '(Without<MissionQuizCreateWithoutMissionInput,
+MissionQuizUncheckedCreateWithoutMissionInput> & MissionQuizUncheckedCreateWithoutMissionInput) | (Without<...> &
+MissionQuizCreateWithoutMissionInput)'.
+      Type '{ question: string; reviewStatus: string; title: string; difficulty: string; options: string[];
+correctIndex: number; explanations: string[]; }' is not assignable to type
+'Without<MissionQuizUncheckedCreateWithoutMissionInput, MissionQuizCreateWithoutMissionInput> &
+MissionQuizCreateWithoutMissionInput'.
+        Type '{ question: string; reviewStatus: string; title: string; difficulty: string; options: string[];
+correctIndex: number; explanations: string[]; }' is not assignable to type 'MissionQuizCreateWithoutMissionInput'.
+          Types of property 'difficulty' are incompatible.
+            Type 'string' is not assignable to type 'Difficulty'.
+
+    [7m281[0m             create: {
+    [7m   [0m [91m            ~~~~~~[0m
+
+      [96mnode_modules/.prisma/client/index.d.ts[0m:[93m42224[0m:[93m5[0m
+        [7m42224[0m     create?: XOR<MissionQuizCreateWithoutMissionInput,
+MissionQuizUncheckedCreateWithoutMissionInput>
+        [7m     [0m [96m    ~~~~~~[0m
+        The expected type comes from property 'create' which is declared here on type
+'MissionQuizUncheckedCreateNestedOneWithoutMissionInput | MissionQuizCreateNestedOneWithoutMissionInput'
+    [96mtest/quiz-automatic.e2e-spec.ts[0m:[93m309[0m:[93m48[0m - [91merror[0m[90m TS2339: [0mProperty
+'quiz' does not exist on type '{ id: string; createdAt: Date; points: number; classId: string; title: string;
+description: string; type: MissionType; startDate: Date; endDate: Date; createdById: string; dailyKey: string; }'.
+
+    [7m309[0m       expect(archived.quiz).toEqual(historical.quiz);
+    [7m   [0m [91m                                               ~~~~[0m
+    [96mtest/quiz-automatic.e2e-spec.ts[0m:[93m334[0m:[93m17[0m - [91merror[0m[90m TS2322: [0mType '{
+reviewStatus: string; title: string; question: string; difficulty: string; options: string[]; correctIndex: number;
+explanations: string[]; }' is not assignable to type '(Without<MissionQuizCreateWithoutMissionInput,
+MissionQuizUncheckedCreateWithoutMissionInput> & MissionQuizUncheckedCreateWithoutMissionInput) | (Without<...> &
+MissionQuizCreateWithoutMissionInput)'.
+      Type '{ reviewStatus: string; title: string; question: string; difficulty: string; options: string[];
+correctIndex: number; explanations: string[]; }' is not assignable to type
+'Without<MissionQuizUncheckedCreateWithoutMissionInput, MissionQuizCreateWithoutMissionInput> &
+MissionQuizCreateWithoutMissionInput'.
+        Type '{ reviewStatus: string; title: string; question: string; difficulty: string; options: string[];
+correctIndex: number; explanations: string[]; }' is not assignable to type 'MissionQuizCreateWithoutMissionInput'.
+          Types of property 'difficulty' are incompatible.
+            Type 'string' is not assignable to type 'Difficulty'.
+
+    [7m334[0m         quiz: { create: { ...rawQuiz('FACIL'), reviewStatus: 'APPROVED' } },
+    [7m   [0m [91m                ~~~~~~[0m
+
+      [96mnode_modules/.prisma/client/index.d.ts[0m:[93m42224[0m:[93m5[0m
+        [7m42224[0m     create?: XOR<MissionQuizCreateWithoutMissionInput,
+MissionQuizUncheckedCreateWithoutMissionInput>
+        [7m     [0m [96m    ~~~~~~[0m
+        The expected type comes from property 'create' which is declared here on type
+'MissionQuizUncheckedCreateNestedOneWithoutMissionInput | MissionQuizCreateNestedOneWithoutMissionInput'
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        5.022 s
+Ran all test suites matching /quiz-automatic/i.
+Test results written to: ..\evidencias-quiz-automatico\api-target.json
