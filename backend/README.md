@@ -1,102 +1,64 @@
-# AURI Backend
+# AURI — Backend
 
-Backend da plataforma gamificada de ensino de programação AURI.
+API da AURI construída com NestJS 11, TypeScript, Prisma 5 e MySQL 8. A preparação completa está no [guia de instalação](../docs/instalacao.md).
 
-## 🚀 Tecnologias
+## Execução local
 
-- **NestJS 10+** - Framework Node.js
-- **Prisma** - ORM
-- **MySQL 8** - Banco de dados
-- **JWT** - Autenticação
-- **Swagger** - Documentação da API
-
-## 📦 Instalação
+Depois de configurar `.env` e o MySQL:
 
 ```bash
-# Instalar dependências
-npm install
-
-# Copiar arquivo de ambiente
-cp .env.example .env
-
-# Editar .env com suas configurações
-```
-
-## 🗄️ Database
-
-```bash
-# Gerar Prisma Client
+npm ci
 npm run prisma:generate
-
-# Executar migrations
-npm run prisma:migrate
-
-# Abrir Prisma Studio
-npm run prisma:studio
-```
-
-## 🏃 Executar
-
-```bash
-# Desenvolvimento
+npm run prisma:migrate:deploy
+npm run prisma:seed:achievements
 npm run start:dev
-
-# Produção
-npm run start:prod
 ```
 
-## 📚 API Documentation
+O serviço SMTP precisa estar configurado para a API inicializar. A chave OpenAI é opcional. Consulte [.env.example](.env.example) e o guia de instalação.
 
-Após iniciar o servidor, acesse:
+Swagger: <http://localhost:3001/api/v1/docs>. Healthcheck: <http://localhost:3001/api/v1/health>.
 
-- Swagger: http://localhost:3001/api/v1/docs
+## Organização
 
-## 🧪 Testes
-
-```bash
-# Testes unitários
-npm run test
-
-# Testes e2e
-npm run test:e2e
-
-# Coverage
-npm run test:cov
+```text
+prisma/                 Schema, migrations e dados iniciais
+src/common/             Configuração HTTP e tipos compartilhados
+src/health/             Verificação da API e conexão com o banco
+src/modules/
+  activities/           Atividades, questões, entregas e correções
+  admin/                Operações administrativas e métricas de IA
+  auth/                 Login, renovação de sessão e permissões
+  classes/              Turmas, matrículas e participantes
+  dashboard/            Visões consolidadas por perfil
+  gamification/         Pontos, níveis, conquistas e rankings
+  mail/                 Recuperação de senha por e-mail
+  missions/             Missões e geração de quizzes
+  notifications/        Notificações e Socket.IO
+  posts/                Mural, respostas e moderação
+  programming/          Problemas, casos de teste e submissões
+  users/                Usuários e perfis
+src/prisma/             Serviço de acesso ao banco
+src/worker/             Executor Docker de JavaScript e Python
+test/                   Testes HTTP com banco e integração do executor
+scripts/                Utilitários de manutenção
 ```
 
-## 🐳 Docker
+## Comandos
 
-```bash
-# Build
-docker build -t auri-backend .
+| Comando | Finalidade |
+| --- | --- |
+| `npm run build` | Compilar a API |
+| `npm run build:runner` | Compilar o executor |
+| `npm run start:prod` | Iniciar a API compilada |
+| `npm run start:runner` | Iniciar o executor compilado |
+| `npm run lint` | Verificar o código |
+| `npm test -- --runInBand` | Executar testes unitários |
+| `npm run test:e2e -- --runInBand` | Executar testes HTTP; use banco exclusivo de testes |
+| `npm run test:runner:integration` | Verificar o executor com Docker real |
+| `npm run prisma:migrate` | Criar migrations durante desenvolvimento do schema |
+| `npm run prisma:migrate:deploy` | Aplicar migrations já versionadas |
+| `npm run prisma:studio` | Inspecionar o banco pela interface do Prisma |
 
-# Run
-docker run -p 3001:3001 --env-file .env auri-backend
-```
+Mais detalhes: [testes](../docs/testes.md) e [implantação](../docs/implantacao.md). Para Docker, o contexto de build é a **raiz do repositório**, não este diretório.
 
-## 📁 Estrutura
-
-```
-src/
-├── modules/
-│   ├── auth/          # Autenticação e Guards (JWT, roles)
-│   ├── users/         # Gerenciamento de Usuários e avatars
-│   ├── classes/       # Turmas e Matrículas
-│   ├── gamification/  # Pontos, Níveis, Conquistas e Ranking
-│   ├── missions/      # Missões, Quiz Diário (CRON + OpenAI)
-│   ├── notifications/ # Notificações + WebSocket Gateway
-│   ├── posts/         # Posts e Respostas por Turma
-│   ├── dashboard/     # Agregação de dados do Aluno
-│   ├── submissions/   # ⚠️ Não implementado
-│   └── prisma/        # PrismaService
-├── app.module.ts
-└── main.ts
-```
-
-## 🔐 Variáveis de Ambiente
-
-Ver arquivo `.env.example` para referência.
-
-## 📄 License
-
-MIT
+`scripts/delete_posts.py` é uma ferramenta destrutiva de manutenção: remove todas as postagens e respostas do banco configurado. Não é uma etapa de instalação nem de testes.

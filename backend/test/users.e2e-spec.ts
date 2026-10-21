@@ -9,6 +9,7 @@ import * as path from 'path';
 import * as cookieParser from 'cookie-parser';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { MailService } from '../src/modules/mail/mail.service';
 
 type E2EUser = {
   id: string;
@@ -30,7 +31,10 @@ describe('UsersController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(MailService)
+      .useValue({ sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined) })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');

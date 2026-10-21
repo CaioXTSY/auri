@@ -2,148 +2,64 @@
 
 # AURI
 
-Plataforma gamificada para ensino de programação. O monorepo reúne um frontend React/Vite, API NestJS/Prisma/MySQL e um executor de código Docker separado.
+Plataforma web gamificada de apoio ao ensino e à aprendizagem de programação, desenvolvida como projeto de TCC. Reúne turmas, atividades, avaliação de código, missões e acompanhamento do progresso em um mesmo ambiente.
+
+## Funcionalidades
+
+| Perfil | Recursos |
+| --- | --- |
+| Aluno | Ingresso em turmas por aprovação, materiais, entregas, atividades de programação, missões, quiz diário, conquistas e rankings |
+| Professor | Gestão de turmas e participantes, criação de atividades textuais, arquivos, questionários e programação, correção de entregas e mural |
+| Administrador | Gestão de usuários, turmas, missões e conquistas, notificações e consulta das gerações de IA |
+
+A gamificação utiliza pontos de experiência (XP), níveis, conquistas, missões, rankings e sequência de acertos no quiz diário. As notificações são entregues por Socket.IO. A geração do quiz diário integra a API da OpenAI quando configurada.
 
 ## Arquitetura
 
-| Componente | Tecnologia | Responsabilidade |
+| Diretório | Tecnologias | Responsabilidade |
 | --- | --- | --- |
-| `frontend/` | React, Vite, TypeScript | Interface para alunos, professores e administração |
-| `backend/` | NestJS, Prisma, MySQL | API REST, autenticação, regras da plataforma e Swagger |
-| runner | Node + Docker | Avalia submissões JavaScript/Python em contêineres isolados |
+| [frontend/](frontend/README.md) | React 19, TypeScript, Vite, Tailwind CSS | Interface e navegação por perfil |
+| [backend/](backend/README.md) | NestJS 11, Prisma 5, MySQL 8 | API REST, autenticação JWT, permissões e regras de negócio |
+| [backend/src/worker/](backend/src/worker/) | Node.js e Docker | Execução e avaliação de submissões JavaScript e Python |
+| [docs/](docs/) | Documentação | Instalação, testes, implantação e publicação |
 
-O frontend chama a API em `/api/v1`, a autenticação usa JWT de curta duração e cookie HttpOnly de refresh, e notificações usam Socket.IO. O quiz diário usa OpenAI somente quando `OPENAI_API_KEY` está configurada. O Swagger fica em `http://localhost:3001/api/v1/docs`.
+O frontend acessa a API em `/api/v1`. O token de acesso fica em memória e a renovação utiliza um cookie HttpOnly. O executor de código é um processo separado; em produção, deve operar em um host dedicado.
 
-## Requisitos
+## Começar
 
-- Node.js 20+ e npm
-- MySQL 8+ para desenvolvimento sem Docker
-- Docker Compose para a instalação containerizada
-- Docker Engine no host exclusivo do runner
-
-## Configuração
-
-Crie os arquivos locais a partir dos exemplos e substitua todos os valores de exemplo antes de produção:
+Pré-requisitos: **Node.js 22.12+** (linha 22 definida em [.nvmrc](.nvmrc)), npm e MySQL 8. Docker é necessário para executar submissões de programação. A API também exige configuração SMTP na inicialização; a chave da OpenAI é opcional.
 
 ```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+git clone https://github.com/CaioXTSY/auri.git
+cd auri
 ```
 
-O exemplo já está pronto para Docker Compose, no qual `DATABASE_URL` usa o host `db`:
+Siga o [guia de instalação](docs/instalacao.md) para configurar os arquivos de ambiente, preparar o banco e iniciar os serviços. Há instruções para desenvolvimento local e Docker Compose.
 
-```dotenv
-DATABASE_URL="mysql://auri:change-this-password@db:3306/auri"
-```
+| Serviço | Endereço padrão |
+| --- | --- |
+| Frontend em desenvolvimento | <http://localhost:5173> |
+| Frontend via Compose | <http://localhost:3010> |
+| API | <http://localhost:3001/api/v1> |
+| Swagger | <http://localhost:3001/api/v1/docs> |
+| Disponibilidade da API e do banco | <http://localhost:3001/api/v1/health> |
 
-`backend/.env.example` documenta configuração da aplicação, MySQL, JWT, URLs/CORS, SMTP, OpenAI, uploads e runner. `frontend/.env.example` contém apenas `VITE_API_URL`, pois variáveis `VITE_*` são públicas e incorporadas durante o build — nunca coloque segredos nelas.
+## Documentação
 
-## Desenvolvimento local
+- [Instalação, configuração e primeiro administrador](docs/instalacao.md)
+- [Testes e limites da validação](docs/testes.md)
+- [Implantação, migrations e executor de código](docs/implantacao.md)
+- [Preparação para publicação do repositório](docs/publicacao.md)
+- [Resultado da revisão para publicação](docs/revisao-publicacao.md)
+- [Como contribuir](CONTRIBUTING.md)
 
-### Banco e backend
+## Escopo e limites
 
-1. Crie um banco MySQL compatível com `DATABASE_URL` e, para MySQL rodando fora do Compose, troque o host `db` por `localhost`.
-2. Instale dependências e prepare o Prisma:
-
-```bash
-cd backend
-npm install
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:seed:achievements
-npm run prisma:seed:activities # opcional: dados de exemplo para atividades
-npm run start:dev
-```
-
-`prisma:migrate` usa `prisma migrate dev` e é destinado somente ao desenvolvimento. As migrations versionadas devem ser usadas para qualquer ambiente compartilhado ou de produção.
-
-Esta revisão inclui a migration inicial versionada e uma migration aditiva para métricas de IA. Em uma instalação limpa, use `npm run prisma:migrate:deploy`. Para um banco AURI já existente que foi criado antes de haver migrations no repositório, faça backup e registre **somente** a baseline antes de aplicar a migration nova:
-
-```bash
-cd backend
-npx prisma migrate resolve --applied 20260921000000_initial_schema
-npm run prisma:migrate:deploy
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Abra `http://localhost:5173`. A API padrão é `http://localhost:3001`.
-
-## Primeiro administrador
-
-O cadastro público aceita somente `ALUNO` e `PROFESSOR`; essa regra é intencional. Para bootstrap da primeira instalação:
-
-1. cadastre uma conta normalmente;
-2. abra o Prisma Studio (`cd backend && npm run prisma:studio`) e altere `users.role` para `ADMIN`; ou execute no MySQL:
-
-```sql
-UPDATE users SET role = 'ADMIN' WHERE email = 'admin@example.com';
-```
-
-O schema Prisma confirma que a tabela é `users` e a coluna é `role`. Após isso, um ADMIN autenticado pode gerir perfis pelo painel/API administrativa. Não exponha um endpoint público para promoção a ADMIN.
-
-## Docker Compose e produção
-
-O arquivo [docker-compose.example.yml](docker-compose.example.yml) sobe MySQL, API e frontend para uma instalação local ou de pequena escala. Ele usa volumes persistentes para dados MySQL, uploads públicos e uploads privados; aguarda o healthcheck do MySQL antes da API; e a API aplica migrations com `prisma migrate deploy` antes de iniciar.
-
-```bash
-cp docker-compose.example.yml docker-compose.yml
-# configure backend/.env com senhas fortes, DATABASE_URL usando host db e URLs de produção
-docker compose up --build -d
-```
-
-Faça backup regular do volume `auri_mysql` (por exemplo, via `mysqldump` executado contra o serviço `db`) e preserve `auri_uploads` e `auri_private_uploads`; estes volumes armazenam dados que não podem ser reconstruídos pelo código. Em produção, use senhas/JWT aleatórios, TLS e URLs/CORS explícitas.
-
-O [docker-compose.runner.example.yml](docker-compose.runner.example.yml) **não** faz parte da arquitetura recomendada no mesmo host. Execute-o apenas em VM/host dedicado, com acesso ao mesmo banco, pois ele recebe o socket Docker e executa código não confiável. O runner mantém rede desligada, filesystem raiz somente leitura, limites de CPU/memória/PIDs e capabilities removidas.
-
-```bash
-# somente no host isolado do runner
-cp docker-compose.runner.example.yml docker-compose.runner.yml
-docker compose -f docker-compose.runner.yml up -d --build
-```
-
-## OpenAI e auditoria
-
-Cada quiz diário aprovado grava o prompt e a resposta aprovados. Além disso, registra modelo, tokens de entrada/saída/total, tentativas e validações agregados de todas as chamadas que produziram aquele quiz. Tentativas rejeitadas não têm prompt/resposta persistidos. Se alguma resposta da API não informar `usage`, os campos de tokens ficam indisponíveis (`NULL`) para não apresentar um total incompleto. As métricas aparecem em **Administração → Gerações de IA** e não armazenam preços.
-
-## Verificação e testes
-
-```bash
-# backend
-cd backend
-npm run lint
-npm run build
-npm run test
-npm run test:e2e              # requer MySQL configurado em DATABASE_URL
-npm run test:runner
-npm run test:runner:integration # opcional; requer Docker Engine ativo e imagens baixáveis
-npm run verify
-
-# frontend
-cd frontend
-npm run lint
-npm run build
-npm run test:e2e
-npm run test:a11y
-```
-
-Os testes de integração do runner não fazem parte do conjunto normal/CI porque dependem do daemon Docker e de imagens `node:20-alpine` e `python:3.12-alpine`. Eles verificam execução JavaScript/Python, timeout, rede desligada e root filesystem somente leitura.
-
-O workflow [CI](.github/workflows/ci.yml) valida lint, build, testes backend (com MySQL de serviço), frontend e acessibilidade em push/PR. O workflow de deploy existente permanece separado e inalterado.
-
-## Rotas principais
-
-- API: `http://localhost:3001/api/v1`
-- Healthcheck: `GET /api/v1/health` (status da API, banco e timestamp)
-- Swagger: `http://localhost:3001/api/v1/docs`
-- Frontend: `http://localhost:5173`
+- A avaliação automática de código compara a execução com os casos de teste cadastrados. A qualidade desses testes influencia o resultado; isso não substitui toda a avaliação do professor.
+- Os questionários gerados por IA passam por verificações automáticas, mas ainda podem conter erros. A versão atual não exige aprovação humana antes de publicar o quiz diário.
+- Os testes disponíveis e suas dependências estão descritos no [guia de testes](docs/testes.md). Eles não comprovam eficácia pedagógica nem cobertura integral dos requisitos.
+- Dados de usuários, uploads, arquivos `.env`, relatórios locais e evidências do TCC não fazem parte do código publicado.
 
 ## Licença
 
-MIT. Consulte [LICENSE](LICENSE).
+Distribuído sob a licença [MIT](LICENSE).

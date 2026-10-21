@@ -1,12 +1,35 @@
-docs/
-.claude/settings.local.json
-.env
-.env.*
-backend/.env
-backend/.env.*
-frontend/.env
-frontend/.env.*
-!frontend/.env.example
+# Local configuration and credentials (only sanitized examples are published)
+**/.env
+**/.env.*
+!**/.env.example
+.claude/
+.codex/
+**/node_modules/
+
+# Local deployment files, evidence and user data
+/deploy/
+/tcc-evidencias/
+/docker-compose.yml
+/docker-compose.runner.yml
+**/uploads/
+**/private-uploads/
+*.sql.gz
+/*.sql
+/backend/*.sql
+**/backups/
+*.dump
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+*.p12
+*.pfx
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tsbuildinfo
 
 # Build and coverage artifacts
 **/dist/
@@ -26,4 +49,3 @@ frontend/.env.*
 **/temp/
 **/*.log
 backend/tmp-backend.log
-backend/private-uploads/
