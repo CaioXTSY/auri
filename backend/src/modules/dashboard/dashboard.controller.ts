@@ -14,6 +14,13 @@ import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
+  @Get('teacher')
+  @Roles(Role.PROFESSOR)
+  @ApiOperation({ summary: 'Resumo das turmas e entregas recentes do professor' })
+  getTeacherDashboard(@Request() req: AuthenticatedRequest) {
+    return this.dashboardService.getTeacherDashboard(req.user.id);
+  }
+
   @Get('student')
   @Roles(Role.ALUNO)
   @ApiOperation({ summary: 'Resumo agregado do aluno' })

@@ -1,75 +1,54 @@
-# AURI Frontend
+# AURI — Frontend
 
-Frontend da plataforma gamificada de ensino de programação AURI.
+Interface da AURI para alunos, professores e administradores. Utiliza React 19, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, Zustand, React Hook Form, Zod e Monaco Editor.
 
-## 🚀 Tecnologias
+## Executar
 
-- **React 19** - Framework UI
-- **TypeScript** - Tipagem estática
-- **Vite** - Build tool e dev server
-- **Tailwind CSS** - Estilização
-- **shadcn/ui** - Componentes de interface
-- **React Router v7** - Roteamento
-- **Zustand** - Gerenciamento de estado
-- **TanStack Query** - Gerenciamento de estado assíncrono (server state)
-- **React Hook Form + Zod** - Formulários e validação
-- **Monaco Editor** - Editor de código (instalado, pendente de uso)
-
-## 📦 Instalação
+A partir deste diretório:
 
 ```bash
-# Instalar dependências
-npm install
-
-# Copiar arquivo de ambiente (se houver)
-# cp .env.example .env
-```
-
-## 🏃 Executar
-
-```bash
-# Desenvolvimento (http://localhost:5173)
+cp .env.example .env
+npm ci
 npm run dev
+```
 
-# Build para produção
+No PowerShell, use `Copy-Item .env.example .env` para copiar o arquivo. Configure `VITE_API_URL` com a origem da API, **sem** `/api/v1`. O frontend acrescenta esse prefixo.
+
+Abra <http://localhost:5173>. A API padrão é <http://localhost:3001>. Variáveis `VITE_*` são incorporadas ao build e ficam visíveis no navegador; nunca use esse prefixo para segredos.
+
+## Recursos implementados
+
+- Autenticação, recuperação de senha e navegação por perfil.
+- Painéis de aluno, professor e administração.
+- Turmas, solicitações de ingresso e participantes.
+- Atividades textuais, arquivos, questionários, entregas e correção.
+- Atividades de programação, editor Monaco e acompanhamento das submissões.
+- Missões, quizzes, pontos, níveis, conquistas e rankings.
+- Mural, moderação, notificações e configurações do perfil.
+
+## Organização
+
+```text
+src/components/         Componentes de interface e dos módulos
+src/hooks/              Comportamentos compartilhados e consulta de dados
+src/pages/              Telas públicas e áreas de aluno, professor e administração
+src/services/           Integração com a API
+src/stores/             Estado da autenticação
+src/schemas/            Validação de formulários
+src/types/              Contratos TypeScript
+src/lib/                Cliente HTTP, navegação e utilitários
+tests/e2e/              Navegação, painel do professor e acessibilidade
+```
+
+## Verificação
+
+```bash
+npm run lint
 npm run build
-
-# Preview do build
-npm run preview
+npx playwright install chromium
+npm run test:e2e
 ```
 
-## 📁 Estrutura
+`npm run test:a11y` executa somente o arquivo de testes de acessibilidade das páginas públicas. O conjunto completo também verifica acessibilidade no painel do professor com respostas simuladas da API. Esses testes não comprovam, sozinhos, todos os fluxos com o backend real.
 
-```
-src/
-├── components/
-│   ├── layouts/     # Layouts de página (Dashboard, Auth, ProtectedRoute)
-│   ├── gamification/# Componentes de pontos, conquistas, ranking
-│   ├── quiz/        # Componentes de quiz/missão
-│   └── ui/          # Componentes base (shadcn/ui)
-├── lib/             # Configuração do Axios (com interceptors JWT)
-├── pages/
-│   ├── auth/        # Login, Register
-│   ├── dashboard/   # Área do Aluno (Home, Turmas, Missões, Conquistas, Posts)
-│   └── teacher/     # Área do Professor (Turmas, Criar Turma)
-├── schemas/         # Schemas Zod de validação
-├── services/        # Integração com API Backend
-├── stores/          # Zustand (auth store)
-└── types/           # Definições de tipos TypeScript
-```
-
-## 🔑 Funcionalidades Principais
-
-### Aluno
-- **Dashboard**: Visão geral de pontos, nível, conquistas e ranking.
-- **Turmas**: Visualização e ingresso em turmas por código.
-- **Missões**: Histórico e quiz diário gerado por IA.
-- **Conquistas**: Badges desbloqueados por critério.
-- **Posts**: Fórum de discussão por turma.
-
-### Professor
-- **Turmas**: Criação e gestão de turmas, visualização de alunos.
-
-### Não implementado
-- Atividades de programação e editor de código
-- Submissões e correção automatizada
+Consulte os guias de [instalação](../docs/instalacao.md), [testes](../docs/testes.md) e [implantação](../docs/implantacao.md). O build Docker usa a raiz do repositório como contexto.

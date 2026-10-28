@@ -79,7 +79,33 @@ export interface StudentDashboard {
   };
 }
 
+export interface TeacherDashboard {
+  totals: { classes: number; activeClasses: number; students: number };
+  classes: Array<{
+    id: string;
+    name: string;
+    year: number;
+    status: string;
+    studentCount: number;
+    activityCount: number;
+  }>;
+  recentSubmissions: Array<{
+    id: string;
+    activityId: string;
+    activityTitle: string;
+    className: string;
+    studentName: string;
+    kind: 'ACTIVITY' | 'CODE';
+    submittedAt: string;
+    status: 'PENDING_REVIEW' | 'GRADED' | 'AUTOMATIC' | 'PROCESSING' | 'RETURNED' | 'ERROR';
+  }>;
+}
+
 export const dashboardService = {
+  getTeacherDashboard: async (): Promise<TeacherDashboard> => {
+    const response = await api.get<TeacherDashboard>('/dashboard/teacher');
+    return response.data;
+  },
   getMyLevel: async (): Promise<LevelInfo> => {
     const response = await api.get<LevelInfo>('/gamification/level/me');
     return response.data;

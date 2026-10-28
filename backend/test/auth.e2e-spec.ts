@@ -24,6 +24,7 @@ const getRefreshCookie = (response: request.Response) => {
 };
 
 describe('AuthController (e2e)', () => {
+  const mailService = { sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined) };
   let app: INestApplication;
   let prisma: PrismaService;
   let throttlerStorage: ThrottlerStorageService;
@@ -31,7 +32,10 @@ describe('AuthController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).overrideProvider(MailService).useValue({ sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined) }).compile();
+    })
+      .overrideProvider(MailService)
+      .useValue(mailService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');
@@ -255,12 +259,16 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should send reset password email', async () => {
+      mailService.sendPasswordResetEmail.mockClear();
       const response = await request(app.getHttpServer())
         .post('/api/v1/auth/forgot-password')
         .send({ email: testUser.email })
         .expect(201);
 
       expect(response.body).toHaveProperty('message');
+      expect(mailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: testUser.email, resetUrl: expect.any(String) }),
+      );
     });
 
     it('should return success even for non-existent email', async () => {

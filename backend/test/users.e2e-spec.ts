@@ -31,7 +31,10 @@ describe('UsersController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).overrideProvider(MailService).useValue({ sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined) }).compile();
+    })
+      .overrideProvider(MailService)
+      .useValue({ sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined) })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');

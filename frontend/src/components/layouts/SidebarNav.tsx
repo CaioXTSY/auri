@@ -6,6 +6,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Settings,
   Sparkles,
   Target,
@@ -86,7 +87,10 @@ export const SidebarNav = memo(({
               <LayoutDashboard className="h-4 w-4" /><span>Visão Geral</span>
             </Link>
             <Link to="/dashboard/teacher/classes" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/dashboard/teacher/classes')}`} onClick={onNavClick} {...marker('professor-classes')}>
-              <BookOpen className="h-4 w-4" /><span>Gerenciar Turmas</span>
+              <BookOpen className="h-4 w-4" /><span>Minhas Turmas</span>
+            </Link>
+            <Link to="/dashboard/posts" className={`flex items-center gap-3 rounded-md px-3 py-2 ${isActive('/dashboard/posts')}`} onClick={onNavClick} {...marker('professor-posts')}>
+              <MessageSquare className="h-4 w-4" /><span>Postagens</span>
             </Link>
           </>
         ) : (
